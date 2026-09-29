@@ -19,15 +19,23 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ResponseEntity<ApiError> unauthorized(InvalidCredentialsException exception) {
+        return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> validation(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new LinkedHashMap<>();
-        exception.getBindingResult().getFieldErrors()
+        exception
+                .getBindingResult()
+                .getFieldErrors()
                 .forEach(error -> errors.putIfAbsent(error.getField(), error.getDefaultMessage()));
         return build(HttpStatus.BAD_REQUEST, "Request validation failed", errors);
     }
 
-    private ResponseEntity<ApiError> build(HttpStatus status, String message, Map<String, String> errors) {
+    private ResponseEntity<ApiError> build(
+            HttpStatus status, String message, Map<String, String> errors) {
         return ResponseEntity.status(status)
                 .body(new ApiError(Instant.now(), status.value(), message, errors));
     }

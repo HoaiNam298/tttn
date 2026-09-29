@@ -1,10 +1,10 @@
 package com.project.shopapp.model;
 
-import java.time.Instant;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import java.time.Instant;
 
 @MappedSuperclass
 public abstract class BaseEntity {
@@ -22,8 +22,15 @@ public abstract class BaseEntity {
     }
 
     @PreUpdate
-    protected void onUpdate() { updatedAt = Instant.now(); }
+    protected void onUpdate() {
+        updatedAt = Instant.now();
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
 }

@@ -8,6 +8,5 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class ShopappApplicationTests {
     @Test
-    void contextLoads() {
-    }
+    void contextLoads() {}
 }

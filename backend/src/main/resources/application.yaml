@@ -16,6 +16,11 @@ spring:
   flyway:
     enabled: true
 
+app:
+  security:
+    jwt-secret: ${SHOPAPP_JWT_SECRET}
+    access-token-expiration: ${SHOPAPP_ACCESS_TOKEN_EXPIRATION:3600000}
+
 server:
   port: ${SERVER_PORT:8088}
 

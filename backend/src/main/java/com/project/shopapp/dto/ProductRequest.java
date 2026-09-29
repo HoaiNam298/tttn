@@ -1,7 +1,7 @@
 package com.project.shopapp.dto;
 
-import java.math.BigDecimal;
 import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
 
 public record ProductRequest(
         @NotBlank @Size(max = 350) String name,

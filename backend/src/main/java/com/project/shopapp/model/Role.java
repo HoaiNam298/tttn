@@ -3,20 +3,16 @@ package com.project.shopapp.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "categories")
-public class Category {
+@Table(name = "roles")
+public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, unique = true, length = 30)
     private String name;
 
-    protected Category() {}
-
-    public Category(String name) {
-        this.name = name;
-    }
+    protected Role() {}
 
     public Long getId() {
         return id;
@@ -24,9 +20,5 @@ public class Category {
 
     public String getName() {
         return name;
-    }
-
-    public void rename(String name) {
-        this.name = name;
     }
 }

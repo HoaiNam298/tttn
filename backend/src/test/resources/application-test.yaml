@@ -10,3 +10,8 @@ spring:
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
+
+app:
+  security:
+    jwt-secret: VGVzdC1TaG9wQXBwLUpXVC1TZWNyZXQtS2V5LU11c3QtQmUtQXQtTGVhc3QtMjU2LUJpdHM=
+    access-token-expiration: 3600000
