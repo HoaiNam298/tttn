@@ -1,6 +1,20 @@
 spring:
   application:
     name: shopapp-backend
+  datasource:
+    url: ${SHOPAPP_DB_URL:jdbc:postgresql://127.0.0.1:5433/shopapp}
+    username: ${SHOPAPP_DB_USERNAME:shopapp}
+    password: ${SHOPAPP_DB_PASSWORD:shopapp_dev_password}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
 
 server:
   port: ${SERVER_PORT:8088}
