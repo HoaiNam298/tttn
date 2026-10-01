@@ -16,8 +16,6 @@ docker compose up -d
 docker compose ps
 ```
 
-PostgreSQL chạy trong container `shopapp-postgres` và được mở tại `localhost:5433` để tránh xung đột với PostgreSQL cài trên máy. Dữ liệu được lưu trong Docker volume.
-
 Để dừng database:
 
 ```bash
