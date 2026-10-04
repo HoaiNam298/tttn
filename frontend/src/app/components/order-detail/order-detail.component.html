@@ -19,6 +19,9 @@
               <th>Đơn giá</th>
               <th>Số lượng</th>
               <th>Thành tiền</th>
+              @if (value.status === "DELIVERED") {
+                <th>Đánh giá</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -32,6 +35,17 @@
                 <td>
                   {{ item.lineTotal | currency: "VND" : "symbol" : "1.0-0" }}
                 </td>
+                @if (value.status === "DELIVERED") {
+                  <td>
+                    <a
+                      class="button-link"
+                      [routerLink]="['/products', item.productId]"
+                      [queryParams]="{ orderId: value.id }"
+                      fragment="reviews"
+                      >Đánh giá</a
+                    >
+                  </td>
+                }
               </tr>
             }
           </tbody>

@@ -4,7 +4,11 @@ import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 import { ProductPayload } from '../dtos/product-payload.dto';
 import { Category } from '../models/category.model';
-import { Product } from '../models/product.model';
+import {
+  Product,
+  ProductReview,
+  ProductReviewOverview,
+} from '../models/product.model';
 import { PageResponse } from '../responses/page.response';
 
 @Injectable({ providedIn: 'root' })
@@ -17,6 +21,29 @@ export class CatalogService {
   }
   product(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.api}/products/${id}`);
+  }
+  reviews(id: number, page = 0): Observable<ProductReviewOverview> {
+    return this.http.get<ProductReviewOverview>(
+      `${this.api}/products/${id}/reviews`,
+      {
+        params: { page, size: 10 },
+      },
+    );
+  }
+  createReview(
+    productId: number,
+    orderId: number,
+    rating: number,
+    comment: string,
+  ): Observable<ProductReview> {
+    return this.http.post<ProductReview>(
+      `${this.api}/products/${productId}/reviews`,
+      {
+        orderId,
+        rating,
+        comment,
+      },
+    );
   }
   products(
     keyword = '',

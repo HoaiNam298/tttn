@@ -5,8 +5,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${SHOPAPP_POSTGRES_DB:-shopapp}
-      POSTGRES_USER: ${SHOPAPP_POSTGRES_USER:-shopapp}
-      POSTGRES_PASSWORD: ${SHOPAPP_POSTGRES_PASSWORD:-shopapp_dev_password}
+      POSTGRES_USER: ${SHOPAPP_DB_USERNAME:-shopapp}
+      POSTGRES_PASSWORD: ${SHOPAPP_DB_PASSWORD}
     ports:
       - "${SHOPAPP_POSTGRES_PORT:-5433}:5432"
     volumes:
@@ -16,6 +16,47 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: shopapp-backend
+    restart: unless-stopped
+    environment:
+      SHOPAPP_DB_URL: jdbc:postgresql://postgres:5432/${SHOPAPP_POSTGRES_DB:-shopapp}
+      SHOPAPP_DB_USERNAME: ${SHOPAPP_DB_USERNAME:-shopapp}
+      SHOPAPP_DB_PASSWORD: ${SHOPAPP_DB_PASSWORD}
+      SHOPAPP_JWT_SECRET: ${SHOPAPP_JWT_SECRET}
+      SHOPAPP_ACCESS_TOKEN_EXPIRATION: ${SHOPAPP_ACCESS_TOKEN_EXPIRATION:-3600000}
+      SHOPAPP_ADMIN_PHONE: ${SHOPAPP_ADMIN_PHONE:-}
+      SHOPAPP_ADMIN_PASSWORD: ${SHOPAPP_ADMIN_PASSWORD:-}
+      SHOPAPP_CORS_ALLOWED_ORIGINS: http://localhost:4200
+      SERVER_PORT: 8088
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8088/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: shopapp-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   shopapp_postgres_data:

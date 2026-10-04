@@ -6,7 +6,23 @@ export interface Product {
   price: number;
   thumbnail: string | null;
   description: string;
+  stock?: number;
+  images?: string[];
   category: Category;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProductReview {
+  id: number;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface ProductReviewOverview {
+  averageRating: number;
+  totalReviews: number;
+  reviews: import('../responses/page.response').PageResponse<ProductReview>;
 }

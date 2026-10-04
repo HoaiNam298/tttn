@@ -3,34 +3,162 @@
   @if (error) {
     <p class="state error">{{ error }}</p>
   }
-  @if (product) {
-    <article class="detail panel">
-      <div class="detail-image">
-        @if (product.thumbnail) {
-          <img [src]="product.thumbnail" [alt]="product.name" />
-        }
-        @if (!product.thumbnail) {
-          <span>ShopApp</span>
-        }
-      </div>
-      <div>
-        <span class="badge">{{ product.category.name }}</span>
-        <h1>{{ product.name }}</h1>
-        <p class="price">
-          {{ product.price | currency: "VND" : "symbol" : "1.0-0" }}
-        </p>
-        <p class="description">
-          {{ product.description || "Sản phẩm chưa có mô tả." }}
-        </p>
-        <div class="actions">
-          <button type="button" (click)="addToCart()">Thêm vào giỏ hàng</button>
-          @if (added) {
-            <a class="button-link secondary-link" routerLink="/cart"
-              >Xem giỏ hàng</a
-            >
+  @if (product; as value) {
+    <article class="product-detail-card panel">
+      <section class="gallery">
+        <div class="detail-image">
+          @if (selectedImage) {
+            <img [src]="selectedImage" [alt]="value.name" />
+          } @else {
+            <span>ShopApp</span>
           }
         </div>
-      </div>
+        <div class="thumbnail-list">
+          @for (image of value.images || [value.thumbnail]; track image) {
+            @if (image) {
+              <button
+                type="button"
+                class="thumbnail"
+                [class.selected]="image === selectedImage"
+                (click)="selectedImage = image"
+              >
+                <img [src]="image" [alt]="value.name" />
+              </button>
+            }
+          }
+        </div>
+      </section>
+      <section class="product-purchase">
+        <span class="badge">{{ value.category.name }}</span>
+        <h1>{{ value.name }}</h1>
+        <div class="rating-summary">
+          <strong>{{ averageRating | number: "1.1-1" }}</strong
+          ><span class="stars">{{ starText(averageRating) }}</span
+          ><span>{{ totalReviews }} đánh giá</span>
+        </div>
+        <p class="price">
+          {{ value.price | currency: "VND" : "symbol" : "1.0-0" }}
+        </p>
+        <p class="stock">Còn {{ value.stock }} sản phẩm</p>
+        <div class="quantity-control">
+          <span>Số lượng</span
+          ><button
+            type="button"
+            [disabled]="quantity <= 1"
+            (click)="quantity = quantity - 1"
+          >
+            −</button
+          ><strong>{{ quantity }}</strong
+          ><button
+            type="button"
+            [disabled]="quantity >= (value.stock || 0)"
+            (click)="quantity = quantity + 1"
+          >
+            +
+          </button>
+        </div>
+        <div class="actions">
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="!value.stock"
+            (click)="addToCart()"
+          >
+            Thêm vào giỏ hàng</button
+          ><button type="button" [disabled]="!value.stock" (click)="buyNow()">
+            Mua ngay
+          </button>
+        </div>
+        @if (added) {
+          <p class="success">Đã thêm sản phẩm vào giỏ hàng.</p>
+        }
+      </section>
     </article>
+    <section class="panel product-description">
+      <h2>Chi tiết sản phẩm</h2>
+      <div class="spec-row">
+        <span>Danh mục</span><strong>{{ value.category.name }}</strong>
+      </div>
+      <div class="spec-row">
+        <span>Tình trạng</span
+        ><strong>{{ value.stock ? "Còn hàng" : "Hết hàng" }}</strong>
+      </div>
+      <h2>Mô tả sản phẩm</h2>
+      <p class="description">
+        {{ value.description || "Sản phẩm chưa có mô tả." }}
+      </p>
+    </section>
+    <section id="reviews" class="panel reviews-section">
+      <h2>Đánh giá sản phẩm</h2>
+      <div class="review-overview">
+        <strong>{{ averageRating | number: "1.1-1" }}/5</strong
+        ><span class="stars">{{ starText(averageRating) }}</span
+        ><span>{{ totalReviews }} lượt đánh giá</span>
+      </div>
+      @if (orderId) {
+        <form
+          class="review-form"
+          [formGroup]="reviewForm"
+          (ngSubmit)="submitReview()"
+        >
+          <h3>Đánh giá sản phẩm đã mua</h3>
+          <label
+            >Số sao<select formControlName="rating">
+              <option [value]="5">5 sao</option>
+              <option [value]="4">4 sao</option>
+              <option [value]="3">3 sao</option>
+              <option [value]="2">2 sao</option>
+              <option [value]="1">1 sao</option>
+            </select></label
+          >
+          <label
+            >Nhận xét<textarea
+              rows="4"
+              formControlName="comment"
+              placeholder="Chia sẻ trải nghiệm của bạn"
+            ></textarea>
+          </label>
+          <button type="submit">Gửi đánh giá</button>
+        </form>
+      }
+      @if (reviewMessage) {
+        <p class="success">{{ reviewMessage }}</p>
+      }
+      @if (reviewError) {
+        <p class="error">{{ reviewError }}</p>
+      }
+      <div class="review-list">
+        @for (review of reviews; track review.id) {
+          <article class="review-item">
+            <div>
+              <strong>{{ review.reviewerName }}</strong
+              ><span class="stars">{{ starText(review.rating) }}</span>
+            </div>
+            <small>{{ review.createdAt | date: "dd/MM/yyyy HH:mm" }}</small>
+            <p>{{ review.comment }}</p>
+          </article>
+        } @empty {
+          <p class="state">Sản phẩm chưa có đánh giá.</p>
+        }
+      </div>
+      @if (reviewTotalPages > 1) {
+        <div class="pagination">
+          <button
+            class="secondary"
+            [disabled]="reviewPage === 0"
+            (click)="loadReviews(value.id, reviewPage - 1)"
+          >
+            Trước</button
+          ><span>Trang {{ reviewPage + 1 }} / {{ reviewTotalPages }}</span
+          ><button
+            class="secondary"
+            [disabled]="reviewPage + 1 >= reviewTotalPages"
+            (click)="loadReviews(value.id, reviewPage + 1)"
+          >
+            Sau
+          </button>
+        </div>
+      }
+    </section>
   }
 </main>

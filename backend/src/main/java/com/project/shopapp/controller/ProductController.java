@@ -1,6 +1,7 @@
 package com.project.shopapp.controller;
 
 import com.project.shopapp.dtos.ProductRequest;
+import com.project.shopapp.responses.ProductDetailResponse;
 import com.project.shopapp.responses.ProductResponse;
 import com.project.shopapp.services.ProductService;
 import jakarta.validation.Valid;
@@ -39,7 +40,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductResponse findById(@PathVariable Long id) {
+    public ProductDetailResponse findById(@PathVariable Long id) {
         return service.findById(id);
     }
 

@@ -57,6 +57,14 @@ public class OrderItem {
         return product;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public Order getOrder() {
+        return order;
+    }
+
     public String getProductName() {
         return productName;
     }

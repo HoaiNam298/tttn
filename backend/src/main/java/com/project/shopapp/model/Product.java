@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
@@ -48,6 +49,7 @@ public class Product extends BaseEntity {
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
     private List<ProductImage> images = new ArrayList<>();
 
     protected Product() {}
@@ -91,6 +93,10 @@ public class Product extends BaseEntity {
 
     public int getStock() {
         return stock;
+    }
+
+    public List<ProductImage> getImages() {
+        return List.copyOf(images);
     }
 
     public void reserve(int quantity) {

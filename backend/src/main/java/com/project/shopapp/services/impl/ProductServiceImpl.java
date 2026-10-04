@@ -4,6 +4,7 @@ import com.project.shopapp.dtos.ProductRequest;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.repositories.ProductRepository;
+import com.project.shopapp.responses.ProductDetailResponse;
 import com.project.shopapp.responses.ProductResponse;
 import com.project.shopapp.services.CategoryService;
 import com.project.shopapp.services.ProductService;
@@ -38,8 +39,13 @@ public class ProductServiceImpl implements ProductService {
         return products.map(ProductResponse::from);
     }
 
-    public ProductResponse findById(Long id) {
-        return ProductResponse.from(getEntity(id));
+    public ProductDetailResponse findById(Long id) {
+        Product product =
+                repository
+                        .findDetailById(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Product not found: " + id));
+        return ProductDetailResponse.from(product);
     }
 
     @Transactional

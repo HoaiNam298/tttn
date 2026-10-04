@@ -62,6 +62,9 @@ public class SecurityConfig {
                                                 "/api/v1/products/**")
                                         .permitAll()
                                         .requestMatchers(
+                                                HttpMethod.POST, "/api/v1/products/*/reviews")
+                                        .authenticated()
+                                        .requestMatchers(
                                                 "/api/v1/categories/**", "/api/v1/products/**")
                                         .hasRole("ADMIN")
                                         .requestMatchers("/api/v1/admin/**")

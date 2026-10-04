@@ -109,6 +109,10 @@ public class Order extends BaseEntity {
         return orderNumber;
     }
 
+    public User getUser() {
+        return user;
+    }
+
     public String getRecipientName() {
         return recipientName;
     }

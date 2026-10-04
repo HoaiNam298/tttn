@@ -35,7 +35,12 @@ export class AuthService {
   }
 
   token(): string | null {
-    return this.session()?.accessToken ?? null;
+    const session = this.session();
+    if (!session || this.isExpired(session.accessToken)) {
+      this.clearSession();
+      return null;
+    }
+    return session.accessToken;
   }
 
   isAdmin(): boolean {
@@ -47,5 +52,26 @@ export class AuthService {
       catchError(() => of(undefined)),
       finalize(() => localStorage.removeItem(this.key)),
     );
+  }
+
+  clearSession(): void {
+    localStorage.removeItem(this.key);
+  }
+
+  private isExpired(token: string): boolean {
+    try {
+      const encodedPayload = token.split('.')[1];
+      const normalizedPayload = encodedPayload
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+      const paddedPayload = normalizedPayload.padEnd(
+        Math.ceil(normalizedPayload.length / 4) * 4,
+        '=',
+      );
+      const payload = JSON.parse(atob(paddedPayload)) as { exp?: number };
+      return !payload.exp || payload.exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
   }
 }
