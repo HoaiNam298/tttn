@@ -1,8 +1,8 @@
-<main class="welcome">
-  <section class="welcome__card">
-    <p class="welcome__eyebrow">TTTN ShopApp</p>
-    <h1>Nền tảng mua sắm trực tuyến</h1>
-    <p>Frontend Angular đã sẵn sàng. Các chức năng sản phẩm, giỏ hàng và đặt hàng sẽ được phát triển trong những giai đoạn tiếp theo.</p>
-    <span class="welcome__status">Tuần 1 · Khởi tạo thành công</span>
-  </section>
-</main>
+<header class="site-header">
+  <a class="brand" routerLink="/products">ShopApp</a>
+  <nav>
+    <a routerLink="/products" routerLinkActive="active">Sản phẩm</a
+    ><a routerLink="/admin" routerLinkActive="active">Quản trị</a>
+  </nav>
+</header>
+<router-outlet />

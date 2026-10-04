@@ -1,0 +1,94 @@
+<main class="container admin">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Quản trị catalog</p>
+      <h1>Sản phẩm và danh mục</h1>
+    </div>
+    <button class="secondary" (click)="logout()">Đăng xuất</button>
+  </div>
+  @if (message) {
+    <p class="success">{{ message }}</p>
+  }
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+  <section class="admin-grid">
+    <form
+      class="panel form"
+      [formGroup]="productForm"
+      (ngSubmit)="saveProduct()"
+    >
+      <h2>{{ editingId ? "Cập nhật sản phẩm" : "Thêm sản phẩm" }}</h2>
+      <label>
+        Tên sản phẩm
+        <input formControlName="name" />
+      </label>
+      <label>
+        Giá
+        <input type="number" formControlName="price" />
+      </label>
+      <label>
+        Danh mục
+        <select formControlName="categoryId">
+          <option [value]="0">Chọn danh mục</option>
+          @for (category of categories; track category) {
+            <option [value]="category.id">
+              {{ category.name }}
+            </option>
+          }
+        </select>
+      </label>
+      <label>
+        URL hình ảnh
+        <input formControlName="thumbnail" />
+      </label>
+      <label>
+        Mô tả
+        <textarea rows="5" formControlName="description"></textarea>
+      </label>
+      <div class="actions">
+        <button type="submit">
+          {{ editingId ? "Lưu thay đổi" : "Tạo sản phẩm" }}
+        </button>
+        @if (editingId) {
+          <button class="secondary" type="button" (click)="cancelEdit()">
+            Hủy
+          </button>
+        }
+      </div>
+    </form>
+    <app-category-management (changed)="reload()" />
+  </section>
+  <section class="panel table-panel">
+    <h2>Danh sách sản phẩm</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Sản phẩm</th>
+            <th>Danh mục</th>
+            <th>Giá</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products; track product) {
+            <tr>
+              <td>{{ product.name }}</td>
+              <td>{{ product.category.name }}</td>
+              <td>
+                {{ product.price | currency: "VND" : "symbol" : "1.0-0" }}
+              </td>
+              <td>
+                <button class="link" (click)="editProduct(product)">Sửa</button>
+                <button class="link danger" (click)="deleteProduct(product)">
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

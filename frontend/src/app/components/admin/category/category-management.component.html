@@ -1,0 +1,24 @@
+<section class="panel">
+  <h2>Danh mục</h2>
+
+  <form class="inline-form" [formGroup]="form" (ngSubmit)="create()">
+    <input placeholder="Tên danh mục mới" formControlName="name" />
+    <button type="submit">Thêm</button>
+  </form>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  @for (category of categories; track category) {
+    <div class="category-row">
+      <span>{{ category.name }}</span>
+      <div>
+        <button class="link" type="button" (click)="edit(category)">Sửa</button>
+        <button class="link danger" type="button" (click)="delete(category)">
+          Xóa
+        </button>
+      </div>
+    </div>
+  }
+</section>

@@ -1,0 +1,24 @@
+<main class="container narrow">
+  <form class="panel form" [formGroup]="form" (ngSubmit)="submit()">
+    <p class="eyebrow">Khu vực quản trị</p>
+    <h1>Đăng nhập Admin</h1>
+
+    <label>
+      Số điện thoại
+      <input formControlName="phoneNumber" />
+    </label>
+
+    <label>
+      Mật khẩu
+      <input type="password" formControlName="password" />
+    </label>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    <button [disabled]="form.invalid || loading">
+      {{ loading ? "Đang đăng nhập..." : "Đăng nhập" }}
+    </button>
+  </form>
+</main>

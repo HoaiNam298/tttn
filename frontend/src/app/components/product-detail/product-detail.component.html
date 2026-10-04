@@ -1,0 +1,28 @@
+<main class="container">
+  <a class="back" routerLink="/products">← Quay lại sản phẩm</a>
+  @if (error) {
+    <p class="state error">{{ error }}</p>
+  }
+  @if (product) {
+    <article class="detail panel">
+      <div class="detail-image">
+        @if (product.thumbnail) {
+          <img [src]="product.thumbnail" [alt]="product.name" />
+        }
+        @if (!product.thumbnail) {
+          <span>ShopApp</span>
+        }
+      </div>
+      <div>
+        <span class="badge">{{ product.category.name }}</span>
+        <h1>{{ product.name }}</h1>
+        <p class="price">
+          {{ product.price | currency: "VND" : "symbol" : "1.0-0" }}
+        </p>
+        <p class="description">
+          {{ product.description || "Sản phẩm chưa có mô tả." }}
+        </p>
+      </div>
+    </article>
+  }
+</main>
