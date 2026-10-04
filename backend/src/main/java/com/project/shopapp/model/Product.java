@@ -100,6 +100,10 @@ public class Product extends BaseEntity {
         stock -= quantity;
     }
 
+    public void release(int quantity) {
+        stock += quantity;
+    }
+
     public void update(
             String name,
             BigDecimal price,

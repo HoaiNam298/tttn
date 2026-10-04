@@ -4,7 +4,12 @@
       <p class="eyebrow">Quản trị catalog</p>
       <h1>Sản phẩm và danh mục</h1>
     </div>
-    <button class="secondary" (click)="logout()">Đăng xuất</button>
+    <div class="actions">
+      <a class="button-link secondary-link" routerLink="/admin/orders"
+        >Đơn hàng</a
+      >
+      <button class="secondary" (click)="logout()">Đăng xuất</button>
+    </div>
   </div>
   @if (message) {
     <p class="success">{{ message }}</p>

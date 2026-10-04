@@ -6,6 +6,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ProductPayload } from '../../../dtos/product-payload.dto';
 import { Category } from '../../../models/category.model';
 import { Product } from '../../../models/product.model';
@@ -15,7 +16,12 @@ import { CategoryManagementComponent } from '../category/category-management.com
 
 @Component({
   selector: 'app-admin-catalog',
-  imports: [CommonModule, ReactiveFormsModule, CategoryManagementComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    CategoryManagementComponent,
+    RouterLink,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './admin-catalog.component.html',
 })

@@ -321,6 +321,12 @@ button.danger {
 .table-wrap {
   overflow-x: auto;
 }
+.order-filters {
+  grid-template-columns: minmax(220px, 360px);
+}
+.order-actions {
+  white-space: nowrap;
+}
 table {
   width: 100%;
   border-collapse: collapse;

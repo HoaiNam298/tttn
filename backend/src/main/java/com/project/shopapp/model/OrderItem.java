@@ -53,6 +53,10 @@ public class OrderItem {
         return product.getId();
     }
 
+    public Product getProduct() {
+        return product;
+    }
+
     public String getProductName() {
         return productName;
     }

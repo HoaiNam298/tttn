@@ -46,6 +46,30 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'orders',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./components/order-history/order-history.component').then(
+        (m) => m.OrderHistoryComponent,
+      ),
+  },
+  {
+    path: 'orders/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./components/order-detail/order-detail.component').then(
+        (m) => m.OrderDetailComponent,
+      ),
+  },
+  {
+    path: 'admin/orders',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./components/admin/order/admin-orders.component').then(
+        (m) => m.AdminOrdersComponent,
+      ),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>

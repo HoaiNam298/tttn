@@ -1,0 +1,67 @@
+<main class="container">
+  <a class="back" routerLink="/orders">← Lịch sử đơn hàng</a>
+  @if (error) {
+    <p class="panel state error">{{ error }}</p>
+  } @else if (order; as value) {
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Chi tiết đơn hàng</p>
+        <h1>{{ value.orderNumber }}</h1>
+      </div>
+      <span class="badge">{{ value.status }}</span>
+    </div>
+    <div class="checkout-layout">
+      <section class="panel table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Đơn giá</th>
+              <th>Số lượng</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of value.items; track item.productId) {
+              <tr>
+                <td>{{ item.productName }}</td>
+                <td>
+                  {{ item.unitPrice | currency: "VND" : "symbol" : "1.0-0" }}
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>
+                  {{ item.lineTotal | currency: "VND" : "symbol" : "1.0-0" }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+      <aside class="panel order-summary">
+        <h2>Thông tin nhận hàng</h2>
+        <p>
+          <strong>{{ value.recipientName }}</strong>
+        </p>
+        <p>{{ value.phoneNumber }}</p>
+        <p>{{ value.shippingAddress }}</p>
+        <div class="summary-row">
+          <span>Tạm tính</span
+          ><strong>{{
+            value.subtotal | currency: "VND" : "symbol" : "1.0-0"
+          }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Phí vận chuyển</span
+          ><strong>{{
+            value.shippingFee | currency: "VND" : "symbol" : "1.0-0"
+          }}</strong>
+        </div>
+        <p class="summary-total">
+          {{ value.total | currency: "VND" : "symbol" : "1.0-0" }}
+        </p>
+      </aside>
+    </div>
+  } @else {
+    <p class="state">Đang tải đơn hàng...</p>
+  }
+</main>

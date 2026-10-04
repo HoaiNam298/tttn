@@ -27,6 +27,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    ResponseEntity<ApiError> invalidState(IllegalStateException exception) {
+        return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     ResponseEntity<ApiError> unauthorized(InvalidCredentialsException exception) {
         return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());

@@ -93,6 +93,14 @@ public class Order extends BaseEntity {
         total = subtotal.add(shippingFee);
     }
 
+    public void updateStatus(OrderStatus nextStatus) {
+        if (!status.canTransitionTo(nextStatus)) {
+            throw new IllegalStateException(
+                    "Cannot change order status from " + status + " to " + nextStatus);
+        }
+        status = nextStatus;
+    }
+
     public Long getId() {
         return id;
     }

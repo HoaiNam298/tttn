@@ -1,0 +1,84 @@
+<main class="container admin">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Quản trị</p>
+      <h1>Quản lý đơn hàng</h1>
+    </div>
+    <a class="button-link secondary-link" routerLink="/admin"
+      >Quản lý catalog</a
+    >
+  </div>
+  <section class="panel filters order-filters">
+    <select [(ngModel)]="selectedStatus" (ngModelChange)="load(0)">
+      @for (status of statuses; track status) {
+        <option [ngValue]="status">{{ status || "Tất cả trạng thái" }}</option>
+      }
+    </select>
+  </section>
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+  @if (loading) {
+    <p class="state">Đang tải đơn hàng...</p>
+  } @else {
+    <section class="panel table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã đơn</th>
+            <th>Khách hàng</th>
+            <th>Ngày đặt</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of items; track order.id) {
+            <tr>
+              <td>{{ order.orderNumber }}</td>
+              <td>{{ order.recipientName }}<br />{{ order.phoneNumber }}</td>
+              <td>{{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
+              <td>{{ order.total | currency: "VND" : "symbol" : "1.0-0" }}</td>
+              <td>
+                <span class="badge">{{ order.status }}</span>
+              </td>
+              <td class="order-actions">
+                @for (status of nextStatuses(order.status); track status) {
+                  <button
+                    class="link"
+                    [class.danger]="status === 'CANCELLED'"
+                    (click)="update(order, status)"
+                  >
+                    {{ status }}
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="state">Không có đơn hàng phù hợp.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    <div class="pagination">
+      <button
+        class="secondary"
+        [disabled]="page === 0"
+        (click)="load(page - 1)"
+      >
+        Trước
+      </button>
+      <span>Trang {{ page + 1 }} / {{ totalPages || 1 }}</span>
+      <button
+        class="secondary"
+        [disabled]="page + 1 >= totalPages"
+        (click)="load(page + 1)"
+      >
+        Sau
+      </button>
+    </div>
+  }
+</main>
