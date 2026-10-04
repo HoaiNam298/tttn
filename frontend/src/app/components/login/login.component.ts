@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -13,6 +13,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   loading = false;
   error = '';
@@ -33,14 +34,10 @@ export class LoginComponent {
       )
       .subscribe({
         next: (value) => {
-          if (value.user.role !== 'ADMIN') {
-            this.auth.logout().subscribe();
-            this.error = 'Tài khoản không có quyền Admin.';
-            this.loading = false;
-            return;
-          }
-
-          void this.router.navigate(['/admin']);
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+          const destination =
+            returnUrl ?? (value.user.role === 'ADMIN' ? '/admin' : '/products');
+          void this.router.navigateByUrl(destination);
         },
         error: () => {
           this.error = 'Thông tin đăng nhập không chính xác.';

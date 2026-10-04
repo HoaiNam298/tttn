@@ -228,6 +228,93 @@ button.link {
 button.danger {
   color: #b91c1c;
 }
+.button-link {
+  display: inline-block;
+  border-radius: 0.7rem;
+  padding: 0.72rem 1rem;
+  background: #0f766e;
+  color: white;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+.secondary-link {
+  background: #e2e8f0;
+  color: #334155;
+}
+.checkout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.cart-lines {
+  display: grid;
+  gap: 0.25rem;
+}
+.cart-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+.cart-line:last-child {
+  border-bottom: 0;
+}
+.cart-line h2,
+.cart-line p {
+  margin: 0.25rem 0;
+}
+.quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.quantity-control button {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+}
+.order-summary {
+  display: grid;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
+}
+.order-summary h2,
+.order-summary p {
+  margin: 0;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.summary-total {
+  color: #0f766e;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+.empty-cart,
+.success-card {
+  text-align: center;
+}
+.success-icon {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1rem;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #047857;
+  font-size: 2rem;
+  font-weight: 800;
+}
 .table-panel {
   margin-top: 1.25rem;
 }
@@ -249,8 +336,12 @@ td {
     grid-template-columns: repeat(2, 1fr);
   }
   .admin-grid,
-  .detail {
+  .detail,
+  .checkout-layout {
     grid-template-columns: 1fr;
+  }
+  .order-summary {
+    position: static;
   }
 }
 @media (max-width: 600px) {
@@ -263,5 +354,8 @@ td {
   }
   .detail-image {
     min-height: 280px;
+  }
+  .cart-line {
+    grid-template-columns: 1fr auto;
   }
 }

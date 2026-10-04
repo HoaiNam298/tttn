@@ -1,5 +1,6 @@
 package com.project.shopapp.model;
 
+import com.project.shopapp.exceptions.InsufficientStockException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,13 @@ public class Product extends BaseEntity {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+
+    @Column(nullable = false)
+    private int stock = 100;
+
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
@@ -78,6 +87,17 @@ public class Product extends BaseEntity {
 
     public Category getCategory() {
         return category;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void reserve(int quantity) {
+        if (quantity <= 0 || stock < quantity) {
+            throw new InsufficientStockException(name, stock, quantity);
+        }
+        stock -= quantity;
     }
 
     public void update(

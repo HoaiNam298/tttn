@@ -1,0 +1,72 @@
+<main class="container">
+  <a class="back" routerLink="/cart">← Quay lại giỏ hàng</a>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Thanh toán</p>
+      <h1>Thông tin nhận hàng</h1>
+    </div>
+  </div>
+
+  @if (loading) {
+    <p class="state">Đang tải đơn hàng...</p>
+  } @else if (lines.length === 0) {
+    <p class="state">
+      Giỏ hàng trống. <a routerLink="/products">Chọn sản phẩm</a>
+    </p>
+  } @else {
+    <form class="checkout-layout" [formGroup]="form" (ngSubmit)="submit()">
+      <section class="panel form">
+        <label
+          >Họ tên người nhận <input formControlName="recipientName"
+        /></label>
+        <label>Số điện thoại <input formControlName="phoneNumber" /></label>
+        <label
+          >Địa chỉ giao hàng
+          <textarea rows="3" formControlName="shippingAddress"></textarea>
+        </label>
+        <label
+          >Ghi chú <textarea rows="3" formControlName="note"></textarea>
+        </label>
+        <label
+          >Phương thức thanh toán
+          <input value="Thanh toán khi nhận hàng (COD)" disabled
+        /></label>
+        @if (form.invalid && form.touched) {
+          <p class="error">Vui lòng nhập đầy đủ thông tin nhận hàng hợp lệ.</p>
+        }
+        @if (error) {
+          <p class="error">{{ error }}</p>
+        }
+      </section>
+      <aside class="panel order-summary">
+        <h2>Đơn hàng</h2>
+        @for (line of lines; track line.product.id) {
+          <div class="summary-row">
+            <span>{{ line.product.name }} × {{ line.quantity }}</span
+            ><strong>{{
+              line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
+            }}</strong>
+          </div>
+        }
+        <div class="summary-row">
+          <span>Tạm tính</span
+          ><strong>{{
+            subtotal | currency: "VND" : "symbol" : "1.0-0"
+          }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Phí giao hàng</span
+          ><strong>{{
+            shippingFee | currency: "VND" : "symbol" : "1.0-0"
+          }}</strong>
+        </div>
+        <p class="summary-total">
+          {{ subtotal + shippingFee | currency: "VND" : "symbol" : "1.0-0" }}
+        </p>
+        <button [disabled]="form.invalid || submitting">
+          {{ submitting ? "Đang đặt hàng..." : "Xác nhận đặt hàng" }}
+        </button>
+      </aside>
+    </form>
+  }
+</main>

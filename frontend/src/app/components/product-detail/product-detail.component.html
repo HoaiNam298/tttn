@@ -22,6 +22,14 @@
         <p class="description">
           {{ product.description || "Sản phẩm chưa có mô tả." }}
         </p>
+        <div class="actions">
+          <button type="button" (click)="addToCart()">Thêm vào giỏ hàng</button>
+          @if (added) {
+            <a class="button-link secondary-link" routerLink="/cart"
+              >Xem giỏ hàng</a
+            >
+          }
+        </div>
       </div>
     </article>
   }

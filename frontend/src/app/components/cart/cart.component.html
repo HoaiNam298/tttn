@@ -1,0 +1,62 @@
+<main class="container">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Giỏ hàng</p>
+      <h1>Sản phẩm đã chọn</h1>
+    </div>
+    <a class="back" routerLink="/products">Tiếp tục mua hàng</a>
+  </div>
+
+  @if (loading) {
+    <p class="state">Đang tải giỏ hàng...</p>
+  } @else if (error) {
+    <p class="state error">{{ error }}</p>
+  } @else if (lines.length === 0) {
+    <section class="panel empty-cart">
+      <p>Giỏ hàng của bạn đang trống.</p>
+      <a class="button-link" routerLink="/products">Xem sản phẩm</a>
+    </section>
+  } @else {
+    <section class="checkout-layout">
+      <div class="panel cart-lines">
+        @for (line of lines; track line.product.id) {
+          <article class="cart-line">
+            <div>
+              <h2>{{ line.product.name }}</h2>
+              <p>
+                {{ line.product.price | currency: "VND" : "symbol" : "1.0-0" }}
+              </p>
+            </div>
+            <div class="quantity-control">
+              <button type="button" (click)="update(line, line.quantity - 1)">
+                −
+              </button>
+              <strong>{{ line.quantity }}</strong>
+              <button type="button" (click)="update(line, line.quantity + 1)">
+                +
+              </button>
+            </div>
+            <strong>{{
+              line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
+            }}</strong>
+            <button
+              class="link danger"
+              type="button"
+              (click)="remove(line.product.id)"
+            >
+              Xóa
+            </button>
+          </article>
+        }
+      </div>
+      <aside class="panel order-summary">
+        <h2>Tạm tính</h2>
+        <p class="summary-total">
+          {{ subtotal | currency: "VND" : "symbol" : "1.0-0" }}
+        </p>
+        <p>Phí giao hàng được xác nhận ở bước tiếp theo.</p>
+        <a class="button-link" routerLink="/checkout">Tiến hành đặt hàng</a>
+      </aside>
+    </section>
+  }
+</main>

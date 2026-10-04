@@ -22,6 +22,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(InsufficientStockException.class)
+    ResponseEntity<ApiError> insufficientStock(InsufficientStockException exception) {
+        return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     ResponseEntity<ApiError> unauthorized(InvalidCredentialsException exception) {
         return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());

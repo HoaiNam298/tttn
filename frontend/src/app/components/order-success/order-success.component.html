@@ -1,0 +1,24 @@
+<main class="container narrow">
+  @if (error) {
+    <p class="panel error">{{ error }}</p>
+  } @else if (!order) {
+    <p class="state">Đang tải kết quả đặt hàng...</p>
+  } @else {
+    <section class="panel success-card">
+      <div class="success-icon">✓</div>
+      <p class="eyebrow">Đặt hàng thành công</p>
+      <h1>Cảm ơn bạn!</h1>
+      <p>
+        Mã đơn hàng: <strong>{{ order.orderNumber }}</strong>
+      </p>
+      <p>
+        Tổng thanh toán:
+        <strong>{{
+          order.total | currency: "VND" : "symbol" : "1.0-0"
+        }}</strong>
+      </p>
+      <p>Phương thức: Thanh toán khi nhận hàng (COD)</p>
+      <a class="button-link" routerLink="/products">Tiếp tục mua sắm</a>
+    </section>
+  }
+</main>
