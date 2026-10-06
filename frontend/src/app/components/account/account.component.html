@@ -1,0 +1,18 @@
+<main class="container account-layout">
+  <aside class="panel account-menu">
+    <p class="eyebrow">Tài khoản của tôi</p>
+    <h2>{{ auth.session()?.user?.fullName }}</h2>
+    <nav aria-label="Thông tin cá nhân">
+      <a routerLink="profile" routerLinkActive="active">Thông tin cá nhân</a>
+      <a routerLink="addresses" routerLinkActive="active">Sổ địa chỉ</a>
+      <a routerLink="/orders">Đơn mua</a>
+      @if (auth.isAdmin()) {
+        <a routerLink="/admin">Quản trị cửa hàng</a>
+      }
+      <button class="secondary" [disabled]="loggingOut" (click)="logout()">
+        {{ loggingOut ? "Đang đăng xuất..." : "Đăng xuất" }}
+      </button>
+    </nav>
+  </aside>
+  <div class="account-content"><router-outlet /></div>
+</main>

@@ -58,6 +58,15 @@ class AdminOrderControllerTest {
     }
 
     @Test
+    void returnsOrderDetailForAdmin() throws Exception {
+        when(service.findAdminOrder(21L)).thenReturn(order());
+        mockMvc.perform(get("/api/v1/admin/orders/21"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(21));
+        verify(service).findAdminOrder(21L);
+    }
+
+    @Test
     void rejectsMissingStatus() throws Exception {
         mockMvc.perform(
                         patch("/api/v1/admin/orders/21/status")

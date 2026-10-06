@@ -44,6 +44,92 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private long version;
 
+    @Column(name = "inventory_revision", nullable = false)
+    private long inventoryRevision;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @OrderBy("id ASC")
+    private List<ProductVariant> variants = new ArrayList<>();
+
+    public List<ProductVariant> getVariants() {
+        return List.copyOf(variants);
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void addVariant(ProductVariant variant) {
+        variants.add(variant);
+    }
+
+    public void changeInventory(Integer legacyStock, List<String> imageUrls) {
+        if (variants.isEmpty()) {
+            if (legacyStock == null) {
+                throw new IllegalArgumentException(
+                        "Stock is required for a product without variants");
+            }
+            stock = legacyStock;
+        } else {
+            refreshVariantSummary();
+        }
+        images.removeIf(image -> !imageUrls.contains(image.getImageUrl()));
+        for (int index = 0; index < imageUrls.size(); index++) {
+            String url = imageUrls.get(index);
+            ProductImage image =
+                    images.stream()
+                            .filter(item -> item.getImageUrl().equals(url))
+                            .findFirst()
+                            .orElse(null);
+            if (image == null) {
+                image = new ProductImage(this, url);
+                images.add(image);
+            }
+            image.setPosition(index);
+        }
+        thumbnail = imageUrls.isEmpty() ? null : imageUrls.get(0);
+        inventoryRevision++;
+    }
+
+    public void refreshVariantSummary() {
+        if (!variants.isEmpty()) {
+            stock =
+                    variants.stream()
+                            .filter(ProductVariant::isActive)
+                            .mapToInt(ProductVariant::getStock)
+                            .reduce(0, Math::addExact);
+            price =
+                    variants.stream()
+                            .filter(ProductVariant::isActive)
+                            .map(ProductVariant::getPrice)
+                            .min(BigDecimal::compareTo)
+                            .orElse(price);
+        }
+    }
+
+    public void reserve(int quantity, ProductVariant variant) {
+        if (variant == null) {
+            if (!variants.isEmpty()) {
+                throw new IllegalStateException("Please select a product variant");
+            }
+            reserve(quantity);
+        } else {
+            variant.reserve(quantity);
+            refreshVariantSummary();
+            inventoryRevision++;
+        }
+    }
+
+    public void release(int quantity, ProductVariant variant) {
+        if (variant == null) {
+            release(quantity);
+        } else {
+            variant.release(quantity);
+            refreshVariantSummary();
+            inventoryRevision++;
+        }
+    }
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -96,7 +182,9 @@ public class Product extends BaseEntity {
     }
 
     public List<ProductImage> getImages() {
-        return List.copyOf(images);
+        return images.stream()
+                .sorted(java.util.Comparator.comparingInt(ProductImage::getPosition))
+                .toList();
     }
 
     public void reserve(int quantity) {
@@ -121,5 +209,6 @@ public class Product extends BaseEntity {
         this.thumbnail = thumbnail;
         this.description = description;
         this.category = category;
+        refreshVariantSummary();
     }
 }

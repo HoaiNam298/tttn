@@ -1,0 +1,15 @@
+<section class="panel">
+  <p class="eyebrow">Tài khoản</p>
+  <h1>Thông tin cá nhân</h1>
+  @if (auth.session()?.user; as user) {
+    <dl>
+      <dt>Họ và tên</dt>
+      <dd>{{ user.fullName }}</dd>
+      <dt>Số điện thoại</dt>
+      <dd>{{ user.phoneNumber }}</dd>
+      <dt>Địa chỉ đăng ký</dt>
+      <dd>{{ user.address || "Chưa cập nhật" }}</dd>
+    </dl>
+  }
+  <a routerLink="/account/addresses">Quản lý địa chỉ nhận hàng →</a>
+</section>

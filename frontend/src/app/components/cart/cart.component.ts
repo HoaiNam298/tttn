@@ -16,14 +16,35 @@ import { CartService } from '../../services/cart.service';
   templateUrl: './cart.component.html',
 })
 export class CartComponent implements OnInit {
-  private readonly cart = inject(CartService);
+  readonly cart = inject(CartService);
 
   lines: CartLine[] = [];
   loading = true;
   error = '';
 
   get subtotal(): number {
-    return this.lines.reduce((total, line) => total + line.lineTotal, 0);
+    return this.lines
+      .filter((line) => this.cart.isSelected(line.product.id, line.variantId))
+      .reduce((total, line) => total + line.lineTotal, 0);
+  }
+
+  get allSelected(): boolean {
+    return (
+      this.lines.length > 0 &&
+      this.lines.every((line) =>
+        this.cart.isSelected(line.product.id, line.variantId),
+      )
+    );
+  }
+
+  get canCheckout(): boolean {
+    const selected = this.lines.filter((line) =>
+      this.cart.isSelected(line.product.id, line.variantId),
+    );
+    return (
+      selected.length > 0 &&
+      selected.every((line) => (line.product.stock ?? 0) >= line.quantity)
+    );
   }
 
   ngOnInit(): void {
@@ -31,17 +52,22 @@ export class CartComponent implements OnInit {
   }
 
   update(line: CartLine, quantity: number): void {
-    this.cart.setQuantity(line.product.id, quantity);
+    if (quantity > (line.product.stock ?? 0)) {
+      this.error = 'Số lượng vượt quá tồn kho.';
+      return;
+    }
+    this.cart.setQuantity(line.product.id, quantity, line.variantId);
     this.load();
   }
 
-  remove(productId: number): void {
-    this.cart.remove(productId);
+  remove(productId: number, variantId?: number): void {
+    this.cart.remove(productId, variantId);
     this.load();
   }
 
   private load(): void {
     this.loading = true;
+    this.error = '';
     this.cart.lines().subscribe({
       next: (lines) => {
         this.lines = lines;

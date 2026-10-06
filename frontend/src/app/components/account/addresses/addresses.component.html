@@ -1,0 +1,92 @@
+<section>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Tài khoản</p>
+      <h1>Sổ địa chỉ</h1>
+    </div>
+    <button (click)="edit()">Thêm địa chỉ</button>
+  </div>
+  @if (error) {
+    <p class="error" role="alert">{{ error }}</p>
+  }
+  @if (loading) {
+    <p class="state">Đang tải địa chỉ...</p>
+  } @else {
+    @for (address of addresses; track address.id) {
+      <article class="panel address-card">
+        <div>
+          <h2>
+            {{ address.recipientName }} <span>{{ address.phoneNumber }}</span>
+          </h2>
+          <p>{{ address.shippingAddress }}</p>
+          @if (address.defaultAddress) {
+            <span class="badge">Mặc định</span>
+          }
+        </div>
+        <div class="actions">
+          <button class="link" (click)="edit(address)">Sửa</button
+          ><button class="link danger" (click)="remove(address)">Xóa</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="panel state">
+        Chưa có địa chỉ. Thêm địa chỉ để đặt hàng nhanh hơn.
+      </p>
+    }
+  }
+  <dialog
+    #editor
+    class="admin-editor"
+    aria-labelledby="address-title"
+    (cancel)="close($event)"
+  >
+    <form class="panel form" [formGroup]="form" (ngSubmit)="save()">
+      <div class="editor-heading">
+        <h2 id="address-title">
+          {{ editingId ? "Sửa địa chỉ" : "Thêm địa chỉ" }}
+        </h2>
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="saving"
+          aria-label="Đóng"
+          (click)="close()"
+        >
+          ×
+        </button>
+      </div>
+      <fieldset class="editor-fields" [disabled]="saving">
+        <label>Người nhận<input formControlName="recipientName" /></label
+        ><label>Số điện thoại<input formControlName="phoneNumber" /></label
+        ><label
+          >Địa chỉ<textarea
+            formControlName="shippingAddress"
+            rows="3"
+          ></textarea></label
+        ><label class="checkbox-label"
+          ><input type="checkbox" formControlName="defaultAddress" />Đặt làm mặc
+          định</label
+        >
+      </fieldset>
+      @if (form.touched && form.invalid) {
+        <p class="error">
+          Nhập đầy đủ người nhận, số điện thoại và địa chỉ hợp lệ.
+        </p>
+      }
+      @if (formError) {
+        <p class="error" role="alert">{{ formError }}</p>
+      }
+      <div class="actions">
+        <button [disabled]="saving">{{ saving ? "Đang lưu..." : "Lưu" }}</button
+        ><button
+          type="button"
+          class="secondary"
+          [disabled]="saving"
+          (click)="close()"
+        >
+          Hủy
+        </button>
+      </div>
+    </form>
+  </dialog>
+</section>

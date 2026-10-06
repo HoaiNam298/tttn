@@ -1,0 +1,44 @@
+.order-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+}
+.order-tabs button {
+  flex-shrink: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+.order-tabs button.active {
+  color: #0f766e;
+  background: #e0f2f1;
+}
+.order-cards {
+  display: grid;
+  gap: 1rem;
+}
+.order-card-heading,
+.order-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.order-card-footer {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+.order-card-footer strong {
+  color: #0f766e;
+  font-size: 1.25rem;
+  margin-left: 0.5rem;
+}
+.order-reference {
+  overflow-wrap: anywhere;
+  color: #64748b;
+  font-size: 0.8rem;
+}

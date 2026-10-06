@@ -33,7 +33,12 @@ class AdminOrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new OrderServiceImpl(orderRepository, productRepository, userRepository);
+        service =
+                new OrderServiceImpl(
+                        orderRepository,
+                        productRepository,
+                        userRepository,
+                        org.mockito.Mockito.mock(VoucherService.class));
         product = new Product("Phone", BigDecimal.TEN, "", "", new Category("Phone"));
         product.reserve(2);
         order = new Order(user(), "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);

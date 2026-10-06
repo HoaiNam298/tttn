@@ -32,6 +32,9 @@ services:
       SHOPAPP_ADMIN_PASSWORD: ${SHOPAPP_ADMIN_PASSWORD:-}
       SHOPAPP_CORS_ALLOWED_ORIGINS: http://localhost:4200
       SERVER_PORT: 8088
+      SHOPAPP_UPLOAD_DIR: /app/uploads
+    volumes:
+      - shopapp_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,3 +63,4 @@ services:
 
 volumes:
   shopapp_postgres_data:
+  shopapp_uploads:

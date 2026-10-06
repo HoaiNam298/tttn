@@ -1,0 +1,102 @@
+.home-banner {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem;
+  border-radius: 20px;
+  background: linear-gradient(120deg, #def7f2, #e9efff);
+}
+.home-banner h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.15;
+  margin: 1rem 0;
+  letter-spacing: -0.04em;
+}
+.home-banner p {
+  color: #475569;
+  line-height: 1.8;
+  max-width: 480px;
+}
+.banner-visual {
+  padding: 2rem;
+  border-radius: 24px;
+  background: #153d40;
+  transform: rotate(-3deg);
+}
+.banner-mark {
+  color: #b7f5df;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.08em;
+}
+.banner-visual p {
+  color: #d4e9e7;
+  font-size: 0.9rem;
+}
+.shopping-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+}
+.shopping-benefits div {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border-left: 3px solid #0f766e;
+}
+.shopping-benefits span {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+.category-tile {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  text-decoration: none;
+  color: #334155;
+  padding: 1rem 0.5rem;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-size: 0.85rem;
+}
+.category-tile:hover {
+  background: #e0f2f1;
+}
+.category-tile span {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  background: #ccfbf1;
+  border-radius: 14px;
+  color: #0f766e;
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+.home-products {
+  margin-top: 2.5rem;
+}
+@media (max-width: 760px) {
+  .home-banner {
+    grid-template-columns: 1fr;
+    padding: 2rem;
+  }
+  .banner-visual {
+    display: none;
+  }
+  .category-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .shopping-benefits {
+    grid-template-columns: 1fr;
+  }
+}

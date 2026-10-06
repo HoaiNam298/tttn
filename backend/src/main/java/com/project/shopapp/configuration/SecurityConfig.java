@@ -50,7 +50,9 @@ public class SecurityConfig {
                                                         HttpStatus.UNAUTHORIZED.value())))
                 .authorizeHttpRequests(
                         auth ->
-                                auth.requestMatchers(
+                                auth.dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR)
+                                        .permitAll()
+                                        .requestMatchers(
                                                 "/api/v1/auth/register",
                                                 "/api/v1/auth/login",
                                                 "/api/v1/health",
@@ -59,7 +61,8 @@ public class SecurityConfig {
                                         .requestMatchers(
                                                 HttpMethod.GET,
                                                 "/api/v1/categories/**",
-                                                "/api/v1/products/**")
+                                                "/api/v1/products/**",
+                                                "/api/v1/media/**")
                                         .permitAll()
                                         .requestMatchers(
                                                 HttpMethod.POST, "/api/v1/products/*/reviews")

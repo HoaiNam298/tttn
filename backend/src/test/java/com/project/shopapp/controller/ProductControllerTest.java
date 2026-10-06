@@ -2,6 +2,7 @@ package com.project.shopapp.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -35,7 +36,7 @@ class ProductControllerTest {
 
     @Test
     void searchesProducts() throws Exception {
-        when(service.findAll(eq("phone"), eq(1L), any()))
+        when(service.findAll(eq("phone"), eq(1L), isNull(), isNull(), any()))
                 .thenReturn(new PageImpl<>(List.of(product())));
 
         mockMvc.perform(get("/api/v1/products").param("keyword", "phone").param("categoryId", "1"))
@@ -56,6 +57,44 @@ class ProductControllerTest {
                                         """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(8));
+    }
+
+    @Test
+    void mapsPriceFiltersToService() throws Exception {
+        when(service.findAll(
+                        eq(""),
+                        isNull(),
+                        eq(new BigDecimal("100")),
+                        eq(new BigDecimal("500")),
+                        any()))
+                .thenReturn(new PageImpl<>(List.of()));
+        mockMvc.perform(
+                        get("/api/v1/products")
+                                .param("minPrice", "100")
+                                .param("maxPrice", "500")
+                                .param("sort", "price,asc"))
+                .andExpect(status().isOk());
+        verify(service)
+                .findAll(
+                        eq(""),
+                        isNull(),
+                        eq(new BigDecimal("100")),
+                        eq(new BigDecimal("500")),
+                        any());
+    }
+
+    @Test
+    void invalidPriceRangeReturns400() throws Exception {
+        when(service.findAll(
+                        eq(""),
+                        isNull(),
+                        eq(new BigDecimal("500")),
+                        eq(new BigDecimal("100")),
+                        any()))
+                .thenThrow(new IllegalArgumentException("Invalid price range"));
+        mockMvc.perform(get("/api/v1/products").param("minPrice", "500").param("maxPrice", "100"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid price range"));
     }
 
     @Test

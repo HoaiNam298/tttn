@@ -1,24 +1,135 @@
-<section class="panel">
-  <h2>Danh mục</h2>
-
-  <form class="inline-form" [formGroup]="form" (ngSubmit)="create()">
-    <input placeholder="Tên danh mục mới" formControlName="name" />
-    <button type="submit">Thêm</button>
-  </form>
-
-  @if (error) {
-    <p class="error">{{ error }}</p>
-  }
-
-  @for (category of categories; track category) {
-    <div class="category-row">
-      <span>{{ category.name }}</span>
-      <div>
-        <button class="link" type="button" (click)="edit(category)">Sửa</button>
-        <button class="link danger" type="button" (click)="delete(category)">
-          Xóa
-        </button>
-      </div>
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">Quản trị</p>
+    <h1>Quản lý danh mục</h1>
+  </div>
+  <button (click)="openCreate()">Thêm danh mục</button>
+</div>
+@if (message) {
+  <p class="success" role="status">{{ message }}</p>
+}
+<dialog
+  #editor
+  class="admin-editor category-editor"
+  aria-labelledby="category-editor-title"
+  (cancel)="onDialogCancel($event)"
+>
+  <section class="panel table-panel">
+    <div class="editor-heading">
+      <h2 id="category-editor-title">
+        {{ editingId ? "Cập nhật danh mục" : "Thêm danh mục" }}
+      </h2>
+      <button
+        type="button"
+        class="secondary"
+        aria-label="Đóng popup"
+        [disabled]="saving"
+        (click)="cancelEdit()"
+      >
+        ×
+      </button>
     </div>
-  }
-</section>
+    @if (formError) {
+      <p class="error" role="alert">{{ formError }}</p>
+    }
+    <form class="inline-form" [formGroup]="form" (ngSubmit)="create()">
+      <input
+        placeholder="Tên danh mục"
+        aria-label="Tên danh mục"
+        formControlName="name"
+        [readOnly]="saving"
+      />
+      <button type="submit" [disabled]="saving">
+        {{ saving ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Thêm" }}
+      </button>
+      <button
+        type="button"
+        class="secondary"
+        [disabled]="saving"
+        (click)="cancelEdit()"
+      >
+        Hủy
+      </button>
+    </form>
+    @if (form.controls.name.touched && form.controls.name.invalid) {
+      <p class="error">Tên danh mục bắt buộc, tối đa 100 ký tự.</p>
+    }
+  </section>
+</dialog>
+<form class="panel admin-filter-bar" (ngSubmit)="load(0)">
+  <input
+    name="keyword"
+    [(ngModel)]="keyword"
+    placeholder="Tìm danh mục"
+    aria-label="Tìm danh mục"
+  />
+  <label class="page-size-control"
+    >Hiển thị
+    <select
+      name="pageSize"
+      [(ngModel)]="pageSize"
+      aria-label="Số danh mục mỗi trang"
+    >
+      <option [ngValue]="10">10 / trang</option>
+      <option [ngValue]="20">20 / trang</option>
+      <option [ngValue]="50">50 / trang</option>
+    </select>
+  </label>
+  <button type="submit" [disabled]="loading">Tìm kiếm</button>
+</form>
+@if (error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+@if (loading) {
+  <p class="state">Đang tải danh mục...</p>
+} @else {
+  <section class="panel table-panel">
+    <h2>Danh mục ({{ totalElements }})</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tên danh mục</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (category of categories; track category.id) {
+            <tr>
+              <td>{{ category.id }}</td>
+              <td>{{ category.name }}</td>
+              <td>
+                <button class="link" type="button" (click)="edit(category)">
+                  Sửa</button
+                ><button
+                  class="link danger"
+                  type="button"
+                  (click)="delete(category)"
+                >
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="state">Không có danh mục phù hợp.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="pagination">
+    <button class="secondary" [disabled]="page === 0" (click)="load(page - 1)">
+      Trước</button
+    ><span>Trang {{ page + 1 }} / {{ totalPages || 1 }}</span
+    ><button
+      class="secondary"
+      [disabled]="page + 1 >= totalPages"
+      (click)="load(page + 1)"
+    >
+      Sau
+    </button>
+  </div>
+}

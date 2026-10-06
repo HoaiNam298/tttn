@@ -1,48 +1,125 @@
 <main class="container">
-  <a class="back" routerLink="/cart">← Quay lại giỏ hàng</a>
+  <a class="back" [routerLink]="buyNow ? '/products' : '/cart'"
+    >← Tiếp tục mua sắm</a
+  >
   <div class="page-heading">
     <div>
       <p class="eyebrow">Thanh toán</p>
       <h1>Thông tin nhận hàng</h1>
     </div>
   </div>
+  @if (error) {
+    <p class="error" role="alert">{{ error }}</p>
+  }
+  @if (pending) {
+    <p class="panel">
+      Yêu cầu đặt hàng đang chờ xác nhận. Bấm xác nhận lại để kiểm tra đơn cũ;
+      thông tin được giữ nguyên để tránh tạo đơn trùng.
+    </p>
+  }
 
   @if (loading) {
     <p class="state">Đang tải đơn hàng...</p>
   } @else if (lines.length === 0) {
-    <p class="state">
-      Giỏ hàng trống. <a routerLink="/products">Chọn sản phẩm</a>
-    </p>
+    @if (pending) {
+      <section class="panel">
+        <p>
+          Chưa tải được thông tin sản phẩm. Bạn vẫn có thể xác nhận lại yêu cầu
+          đã gửi.
+        </p>
+        <button [disabled]="submitting" (click)="submit()">
+          {{ submitting ? "Đang kiểm tra..." : "Xác nhận lại yêu cầu" }}
+        </button>
+      </section>
+    } @else {
+      <p class="state">
+        Giỏ hàng trống. <a routerLink="/products">Chọn sản phẩm</a>
+      </p>
+    }
   } @else {
     <form class="checkout-layout" [formGroup]="form" (ngSubmit)="submit()">
       <section class="panel form">
-        <label
-          >Họ tên người nhận <input formControlName="recipientName"
-        /></label>
-        <label>Số điện thoại <input formControlName="phoneNumber" /></label>
-        <label
-          >Địa chỉ giao hàng
-          <textarea rows="3" formControlName="shippingAddress"></textarea>
-        </label>
-        <label
-          >Ghi chú <textarea rows="3" formControlName="note"></textarea>
-        </label>
-        <label
-          >Phương thức thanh toán
-          <input value="Thanh toán khi nhận hàng (COD)" disabled
-        /></label>
-        @if (form.invalid && form.touched) {
-          <p class="error">Vui lòng nhập đầy đủ thông tin nhận hàng hợp lệ.</p>
+        <a routerLink="/account/addresses">Quản lý sổ địa chỉ</a>
+        @if (addressError) {
+          <p class="error">{{ addressError }}</p>
         }
-        @if (error) {
-          <p class="error">{{ error }}</p>
+        @if (addresses.length) {
+          <label
+            >Chọn địa chỉ đã lưu<select
+              [disabled]="submitting || !!pending"
+              (change)="selectAddress($event)"
+            >
+              <option value="">Chọn địa chỉ</option>
+              @for (address of addresses; track address.id) {
+                <option [value]="address.id">
+                  {{ address.recipientName }} — {{ address.shippingAddress }}
+                </option>
+              }
+            </select></label
+          >
         }
+        <fieldset class="editor-fields" [disabled]="submitting || !!pending">
+          <label
+            >Họ tên người nhận <input formControlName="recipientName"
+          /></label>
+          <label>Số điện thoại <input formControlName="phoneNumber" /></label>
+          <label
+            >Địa chỉ giao hàng
+            <textarea rows="3" formControlName="shippingAddress"></textarea>
+          </label>
+          <label
+            >Ghi chú <textarea rows="3" formControlName="note"></textarea>
+          </label>
+          <label
+            >Phương thức thanh toán
+            <input value="Thanh toán khi nhận hàng (COD)" disabled
+          /></label>
+          <label
+            >Giao hàng (phí demo)
+            <select formControlName="shippingMethod" (change)="refreshQuote()">
+              <option value="STANDARD">Tiêu chuẩn</option>
+              <option value="EXPRESS">Nhanh</option>
+            </select>
+          </label>
+          <label
+            >Mã giảm giá
+            <input
+              formControlName="voucherCode"
+              (input)="invalidateQuote()"
+              placeholder="Nhập mã voucher"
+            />
+          </label>
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="quoting"
+            (click)="refreshQuote()"
+          >
+            {{ quoting ? "Đang tính..." : "Áp dụng / Tính lại tổng tiền" }}
+          </button>
+          @if (quoteError) {
+            <p class="error" role="alert">{{ quoteError }}</p>
+          }
+          @if (form.invalid && form.touched) {
+            <p class="error">
+              Vui lòng nhập đầy đủ thông tin nhận hàng hợp lệ.
+            </p>
+          }
+        </fieldset>
       </section>
       <aside class="panel order-summary">
         <h2>Đơn hàng</h2>
-        @for (line of lines; track line.product.id) {
+        @for (
+          line of lines;
+          track line.product.id + ":" + (line.variantId ?? "")
+        ) {
           <div class="summary-row">
-            <span>{{ line.product.name }} × {{ line.quantity }}</span
+            <span
+              >{{ line.product.name }}
+              @if (line.variantName) {
+                ({{ line.variantName }})
+              }
+              × {{ line.quantity }}</span
             ><strong>{{
               line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
             }}</strong>
@@ -51,19 +128,36 @@
         <div class="summary-row">
           <span>Tạm tính</span
           ><strong>{{
-            subtotal | currency: "VND" : "symbol" : "1.0-0"
+            quote?.subtotal ?? subtotal | currency: "VND" : "symbol" : "1.0-0"
           }}</strong>
         </div>
         <div class="summary-row">
           <span>Phí giao hàng</span
           ><strong>{{
-            shippingFee | currency: "VND" : "symbol" : "1.0-0"
+            quote?.shippingFee ?? 0 | currency: "VND" : "symbol" : "1.0-0"
           }}</strong>
         </div>
-        <p class="summary-total">
-          {{ subtotal + shippingFee | currency: "VND" : "symbol" : "1.0-0" }}
-        </p>
-        <button [disabled]="form.invalid || submitting">
+        @if (quote; as price) {
+          <div class="summary-row">
+            <span>Giảm giá {{ price.voucherCode }}</span>
+            <strong
+              >−{{
+                price.discount | currency: "VND" : "symbol" : "1.0-0"
+              }}</strong
+            >
+          </div>
+          <p class="summary-total">
+            {{ price.total | currency: "VND" : "symbol" : "1.0-0" }}
+          </p>
+          <p>Giá, tồn kho và voucher sẽ được kiểm tra lại khi đặt hàng.</p>
+        } @else if (!pending) {
+          <p>Hãy tính tổng tiền từ hệ thống trước khi đặt hàng.</p>
+        }
+        <button
+          [disabled]="
+            form.invalid || submitting || (!pending && (!quote || quoting))
+          "
+        >
           {{ submitting ? "Đang đặt hàng..." : "Xác nhận đặt hàng" }}
         </button>
       </aside>

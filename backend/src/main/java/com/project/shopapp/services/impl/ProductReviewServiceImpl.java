@@ -43,13 +43,24 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     public ProductReviewResponse create(
             Long productId, String phoneNumber, CreateProductReviewRequest request) {
         OrderItem orderItem =
-                orderItemRepository
-                        .findByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_Status(
-                                request.orderId(), productId, phoneNumber, OrderStatus.DELIVERED)
+                (request.variantId() == null
+                                ? orderItemRepository
+                                        .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
+                                                request.orderId(),
+                                                productId,
+                                                phoneNumber,
+                                                OrderStatus.COMPLETED)
+                                : orderItemRepository
+                                        .findByOrder_IdAndProduct_IdAndVariant_IdAndOrder_User_PhoneNumberAndOrder_Status(
+                                                request.orderId(),
+                                                productId,
+                                                request.variantId(),
+                                                phoneNumber,
+                                                OrderStatus.COMPLETED))
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
-                                                "Delivered order item not found for this product"));
+                                                "Completed order item not found for this product"));
         if (reviewRepository.existsByOrderItemId(orderItem.getId())) {
             throw new DuplicateResourceException("This order item has already been reviewed");
         }

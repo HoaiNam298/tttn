@@ -26,6 +26,32 @@ public class OrderItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id")
+    private ProductVariant variant;
+
+    @Column(name = "variant_name", length = 150)
+    private String variantName;
+
+    @Column(length = 64)
+    private String sku;
+
+    public ProductVariant getVariant() {
+        return variant;
+    }
+
+    public Long getVariantId() {
+        return variant == null ? null : variant.getId();
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
     @Column(name = "product_name", nullable = false, length = 350)
     private String productName;
 
@@ -41,10 +67,17 @@ public class OrderItem {
     protected OrderItem() {}
 
     OrderItem(Order order, Product product, int quantity) {
+        this(order, product, null, quantity);
+    }
+
+    OrderItem(Order order, Product product, ProductVariant variant, int quantity) {
         this.order = order;
         this.product = product;
         this.productName = product.getName();
-        this.unitPrice = product.getPrice();
+        this.variant = variant;
+        this.variantName = variant == null ? null : variant.getName();
+        this.sku = variant == null ? null : variant.getSku();
+        this.unitPrice = variant == null ? product.getPrice() : variant.getPrice();
         this.quantity = quantity;
         this.lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     }

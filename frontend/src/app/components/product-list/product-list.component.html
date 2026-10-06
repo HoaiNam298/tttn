@@ -1,62 +1,77 @@
 <main class="container">
-  <section class="hero">
-    <p class="eyebrow">Bộ sưu tập mới</p>
-    <h1>Sản phẩm dành cho bạn</h1>
-    <p>Tìm kiếm và khám phá sản phẩm theo từng danh mục.</p>
-  </section>
-  <form class="filters panel" (ngSubmit)="load()">
-    <input
-      name="keyword"
-      [(ngModel)]="keyword"
-      placeholder="Tìm tên sản phẩm"
-    /><select name="category" [(ngModel)]="categoryId">
-      <option [ngValue]="undefined">Tất cả danh mục</option>
-      @for (category of categories; track category) {
-        <option [ngValue]="category.id">
-          {{ category.name }}
-        </option>
-      }</select
-    ><button type="submit">Tìm kiếm</button
-    ><button class="secondary" type="button" (click)="clear()">Đặt lại</button>
-  </form>
-  @if (loading) {
-    <p class="state">Đang tải sản phẩm...</p>
-  }
-  @if (error) {
-    <p class="state error">{{ error }}</p>
-  }
-  @if (!loading && !error && products.length === 0) {
-    <p class="state">Chưa có sản phẩm phù hợp.</p>
-  }
-  @if (!loading) {
-    <section class="product-grid">
-      @for (product of products; track product) {
-        <a class="product-card" [routerLink]="['/products', product.id]"
-          ><div class="product-image">
-            @if (product.thumbnail) {
-              <img [src]="product.thumbnail" [alt]="product.name" />
-            } @else {
-              <span>ShopApp</span>
-            }
-          </div>
-          <div class="product-body">
-            <span class="badge">{{ product.category.name }}</span>
-            <h2>{{ product.name }}</h2>
-            <strong>{{
-              product.price | currency: "VND" : "symbol" : "1.0-0"
-            }}</strong>
-          </div></a
-        >
-      }
-    </section>
-  }
-  @if (totalPages > 1) {
-    <div class="pagination">
-      <button [disabled]="page === 0" (click)="load(page - 1)">Trước</button
-      ><span>Trang {{ page + 1 }} / {{ totalPages }}</span
-      ><button [disabled]="page + 1 >= totalPages" (click)="load(page + 1)">
-        Sau
+  <nav class="breadcrumb" aria-label="Đường dẫn">
+    <a routerLink="/">Trang chủ</a><span>/</span><span>Sản phẩm</span>
+  </nav>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Khám phá cửa hàng</p>
+      <h1>Sản phẩm dành cho bạn</h1>
+    </div>
+  </div>
+  <form class="panel catalog-filters" [formGroup]="form" (ngSubmit)="load()">
+    <label
+      >Tìm kiếm<input formControlName="keyword" placeholder="Tên sản phẩm"
+    /></label>
+    <label
+      >Danh mục<select formControlName="categoryId">
+        <option [ngValue]="null">Tất cả danh mục</option>
+        @for (category of categories; track category.id) {
+          <option [ngValue]="category.id">{{ category.name }}</option>
+        }
+      </select></label
+    >
+    <label
+      >Giá từ (đ)<input
+        type="number"
+        min="0"
+        formControlName="minPrice"
+        placeholder="Không giới hạn"
+    /></label>
+    <label
+      >Giá đến (đ)<input
+        type="number"
+        min="0"
+        formControlName="maxPrice"
+        placeholder="Không giới hạn"
+    /></label>
+    <label
+      >Sắp xếp<select formControlName="sort">
+        <option value="newest">Mới nhất</option>
+        <option value="priceAsc">Giá: thấp đến cao</option>
+        <option value="priceDesc">Giá: cao đến thấp</option>
+      </select></label
+    >
+    <div class="actions">
+      <button type="submit">Áp dụng</button
+      ><button class="secondary" type="button" (click)="clear()">
+        Đặt lại
       </button>
     </div>
+  </form>
+  @if (filterError || categoryError) {
+    <p class="error" role="alert">{{ filterError || categoryError }}</p>
+  }
+  @if (loading) {
+    <p class="state" aria-live="polite">Đang tải sản phẩm...</p>
+  } @else if (error) {
+    <p class="state error" role="alert">{{ error }}</p>
+  } @else {
+    <p class="result-count">{{ totalElements }} sản phẩm phù hợp</p>
+    <section class="product-grid">
+      @for (product of products; track product.id) {
+        <app-product-card [product]="product" />
+      } @empty {
+        <p class="state">Chưa có sản phẩm phù hợp.</p>
+      }
+    </section>
+    @if (totalPages > 1) {
+      <div class="pagination">
+        <button [disabled]="page === 0" (click)="load(page - 1)">Trước</button
+        ><span>Trang {{ page + 1 }} / {{ totalPages }}</span
+        ><button [disabled]="page + 1 >= totalPages" (click)="load(page + 1)">
+          Sau
+        </button>
+      </div>
+    }
   }
 </main>

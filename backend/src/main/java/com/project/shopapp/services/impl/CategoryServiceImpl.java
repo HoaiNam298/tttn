@@ -8,6 +8,8 @@ import com.project.shopapp.repositories.CategoryRepository;
 import com.project.shopapp.responses.CategoryResponse;
 import com.project.shopapp.services.CategoryService;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     public List<CategoryResponse> findAll() {
         return repository.findAll().stream().map(CategoryResponse::from).toList();
+    }
+
+    @Override
+    public Page<CategoryResponse> findPage(String keyword, Pageable pageable) {
+        return repository
+                .findByNameContainingIgnoreCase(keyword.trim(), pageable)
+                .map(CategoryResponse::from);
     }
 
     public CategoryResponse findById(Long id) {

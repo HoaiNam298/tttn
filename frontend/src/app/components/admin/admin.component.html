@@ -1,0 +1,25 @@
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <a class="admin-brand" routerLink="/admin/dashboard"
+      >ShopApp <span>ADMIN PANEL</span></a
+    >
+    <nav aria-label="Điều hướng quản trị">
+      <a routerLink="/admin/dashboard" routerLinkActive="selected">Tổng quan</a>
+      <a routerLink="/admin/products" routerLinkActive="selected">Sản phẩm</a>
+      <a routerLink="/admin/categories" routerLinkActive="selected">Danh mục</a>
+      <a routerLink="/admin/orders" routerLinkActive="selected">Đơn hàng</a>
+      <a routerLink="/admin/vouchers" routerLinkActive="selected">Voucher</a>
+    </nav>
+    <a class="store-link" routerLink="/products">← Về cửa hàng</a>
+  </aside>
+  <div class="admin-workspace">
+    <header class="admin-toolbar">
+      <span>Quản lý cửa hàng</span>
+      <div class="actions">
+        <span>{{ auth.session()?.user?.fullName }}</span
+        ><button class="secondary" (click)="logout()">Đăng xuất</button>
+      </div>
+    </header>
+    <div class="admin-content"><router-outlet /></div>
+  </div>
+</div>

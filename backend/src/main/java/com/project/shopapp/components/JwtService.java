@@ -32,6 +32,7 @@ public class JwtService {
                         .map(Object::toString)
                         .orElse("ROLE_USER");
         return Jwts.builder()
+                .id(java.util.UUID.randomUUID().toString())
                 .subject(user.getUsername())
                 .claim("role", role)
                 .issuedAt(Date.from(now))

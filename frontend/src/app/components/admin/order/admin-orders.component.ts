@@ -6,7 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { OrderStatus, OrderSummary } from '../../../models/order.model';
 import { OrderService } from '../../../services/order.service';
 
@@ -18,12 +18,16 @@ import { OrderService } from '../../../services/order.service';
 })
 export class AdminOrdersComponent implements OnInit {
   private readonly orders = inject(OrderService);
+  private readonly route = inject(ActivatedRoute);
+  pageSize = 10;
+  totalElements = 0;
   readonly statuses: Array<OrderStatus | ''> = [
     '',
     'PENDING',
     'CONFIRMED',
     'SHIPPING',
     'DELIVERED',
+    'COMPLETED',
     'CANCELLED',
   ];
   items: OrderSummary[] = [];
@@ -34,17 +38,22 @@ export class AdminOrdersComponent implements OnInit {
   error = '';
 
   ngOnInit(): void {
+    const status = this.route.snapshot.queryParamMap.get('status');
+    if (status && this.statuses.includes(status as OrderStatus)) {
+      this.selectedStatus = status as OrderStatus;
+    }
     this.load();
   }
 
   load(page = 0): void {
     this.loading = true;
     this.error = '';
-    this.orders.findAll(this.selectedStatus, page).subscribe({
+    this.orders.findAll(this.selectedStatus, page, this.pageSize).subscribe({
       next: (response) => {
         this.items = response.content;
         this.page = response.number;
         this.totalPages = response.totalPages;
+        this.totalElements = response.totalElements;
         this.loading = false;
       },
       error: () => {

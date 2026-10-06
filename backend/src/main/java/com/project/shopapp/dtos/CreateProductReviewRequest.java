@@ -9,4 +9,9 @@ import jakarta.validation.constraints.Size;
 public record CreateProductReviewRequest(
         @NotNull Long orderId,
         @Min(1) @Max(5) int rating,
-        @NotBlank @Size(max = 1000) String comment) {}
+        @NotBlank @Size(max = 1000) String comment,
+        @Min(1) Long variantId) {
+    public CreateProductReviewRequest(Long orderId, int rating, String comment) {
+        this(orderId, rating, comment, null);
+    }
+}

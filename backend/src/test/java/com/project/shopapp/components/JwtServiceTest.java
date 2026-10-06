@@ -2,6 +2,7 @@ package com.project.shopapp.components;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -27,6 +28,15 @@ class JwtServiceTest {
 
         assertEquals("0900000000", service.extractUsername(token));
         assertTrue(service.isValid(token, user));
+    }
+
+    @Test
+    void issuesDistinctTokensForConsecutiveRequests() {
+        JwtService service = new JwtService(SECRET, 60_000);
+        UserDetails user =
+                User.withUsername("0900000000").password("password").roles("USER").build();
+
+        assertNotEquals(service.generateToken(user), service.generateToken(user));
     }
 
     @Test

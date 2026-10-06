@@ -40,4 +40,9 @@ public class AdminOrderController {
             @PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request) {
         return service.updateStatus(id, request.status());
     }
+
+    @GetMapping("/{id}")
+    OrderResponse findById(@PathVariable Long id) {
+        return service.findAdminOrder(id);
+    }
 }

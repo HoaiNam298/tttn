@@ -1,5 +1,7 @@
 <main class="container">
-  <a class="back" routerLink="/orders">← Lịch sử đơn hàng</a>
+  <a class="back" [routerLink]="adminMode ? '/admin/orders' : '/orders'"
+    >← Danh sách đơn hàng</a
+  >
   @if (error) {
     <p class="panel state error">{{ error }}</p>
   } @else if (order; as value) {
@@ -8,7 +10,7 @@
         <p class="eyebrow">Chi tiết đơn hàng</p>
         <h1>{{ value.orderNumber }}</h1>
       </div>
-      <span class="badge">{{ value.status }}</span>
+      <span class="badge">{{ statusLabels[value.status] }}</span>
     </div>
     <div class="checkout-layout">
       <section class="panel table-wrap">
@@ -19,15 +21,23 @@
               <th>Đơn giá</th>
               <th>Số lượng</th>
               <th>Thành tiền</th>
-              @if (value.status === "DELIVERED") {
+              @if (!adminMode && value.status === "COMPLETED") {
                 <th>Đánh giá</th>
               }
             </tr>
           </thead>
           <tbody>
-            @for (item of value.items; track item.productId) {
+            @for (
+              item of value.items;
+              track item.productId + ":" + (item.variantId ?? "")
+            ) {
               <tr>
-                <td>{{ item.productName }}</td>
+                <td>
+                  {{ item.productName }}
+                  @if (item.variantName) {
+                    <p>{{ item.variantName }} · {{ item.sku }}</p>
+                  }
+                </td>
                 <td>
                   {{ item.unitPrice | currency: "VND" : "symbol" : "1.0-0" }}
                 </td>
@@ -35,12 +45,15 @@
                 <td>
                   {{ item.lineTotal | currency: "VND" : "symbol" : "1.0-0" }}
                 </td>
-                @if (value.status === "DELIVERED") {
+                @if (!adminMode && value.status === "COMPLETED") {
                   <td>
                     <a
                       class="button-link"
                       [routerLink]="['/products', item.productId]"
-                      [queryParams]="{ orderId: value.id }"
+                      [queryParams]="{
+                        orderId: value.id,
+                        variantId: item.variantId,
+                      }"
                       fragment="reviews"
                       >Đánh giá</a
                     >
@@ -52,6 +65,42 @@
         </table>
       </section>
       <aside class="panel order-summary">
+        @if (!adminMode && value.status === "PENDING") {
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="cancelling"
+            (click)="cancel()"
+          >
+            {{ cancelling ? "Đang hủy..." : "Hủy đơn hàng" }}
+          </button>
+        }
+        @if (
+          !adminMode &&
+          (value.status === "COMPLETED" || value.status === "CANCELLED")
+        ) {
+          <button type="button" [disabled]="reordering" (click)="reorder()">
+            {{ reordering ? "Đang kiểm tra..." : "Mua lại theo giá hiện tại" }}
+          </button>
+        }
+        @if (actionError) {
+          <p class="error" role="alert">{{ actionError }}</p>
+        }
+        @if (!adminMode && value.status === "DELIVERED") {
+          <p>
+            Đơn đã được giao. Hãy xác nhận sau khi bạn thực sự nhận được hàng.
+          </p>
+          <button
+            type="button"
+            [disabled]="confirming"
+            (click)="confirmReceipt()"
+          >
+            {{ confirming ? "Đang xác nhận..." : "Đã nhận được hàng" }}
+          </button>
+        }
+        @if (confirmationError) {
+          <p class="error">{{ confirmationError }}</p>
+        }
         <h2>Thông tin nhận hàng</h2>
         <p>
           <strong>{{ value.recipientName }}</strong>
@@ -70,11 +119,51 @@
             value.shippingFee | currency: "VND" : "symbol" : "1.0-0"
           }}</strong>
         </div>
+        <p>
+          Giao hàng:
+          {{ value.shippingMethod === "EXPRESS" ? "Nhanh" : "Tiêu chuẩn" }}
+        </p>
+        @if (value.voucherCode) {
+          <div class="summary-row">
+            <span>Giảm giá {{ value.voucherCode }}</span>
+            <strong
+              >−{{
+                value.discount | currency: "VND" : "symbol" : "1.0-0"
+              }}</strong
+            >
+          </div>
+        }
         <p class="summary-total">
           {{ value.total | currency: "VND" : "symbol" : "1.0-0" }}
         </p>
       </aside>
     </div>
+    <section class="panel order-timeline">
+      <h2>Lịch sử đơn hàng</h2>
+      <ol>
+        @for (event of value.history ?? []; track $index) {
+          <li>
+            <strong>{{ statusLabels[event.status] }}</strong>
+            <time>{{ event.occurredAt | date: "dd/MM/yyyy HH:mm" }}</time>
+            <span>{{
+              event.actor === "CUSTOMER"
+                ? "Khách hàng"
+                : event.actor === "ADMIN"
+                  ? "Cửa hàng"
+                  : "Hệ thống"
+            }}</span>
+            @if (event.imported) {
+              <small
+                >Trạng thái được ghi nhận khi nâng cấp; lịch sử trước đó không
+                có dữ liệu.</small
+              >
+            }
+          </li>
+        } @empty {
+          <li>Chưa có dữ liệu lịch sử.</li>
+        }
+      </ol>
+    </section>
   } @else {
     <p class="state">Đang tải đơn hàng...</p>
   }

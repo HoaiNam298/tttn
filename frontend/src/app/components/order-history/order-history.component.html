@@ -1,62 +1,80 @@
 <main class="container">
+  <nav class="breadcrumb" aria-label="Đường dẫn">
+    <a routerLink="/account">Tài khoản</a><span>/</span><span>Đơn mua</span>
+  </nav>
   <div class="page-heading">
     <div>
-      <p class="eyebrow">Tài khoản</p>
-      <h1>Lịch sử đơn hàng</h1>
+      <p class="eyebrow">Tài khoản của tôi</p>
+      <h1>Đơn mua</h1>
     </div>
   </div>
+  <nav class="panel order-tabs" aria-label="Lọc đơn theo trạng thái">
+    @for (tab of tabs; track tab) {
+      <button
+        type="button"
+        [class.active]="status === tab"
+        [attr.aria-pressed]="status === tab"
+        (click)="selectStatus(tab)"
+      >
+        {{ tab ? labels[tab] : "Tất cả" }}
+      </button>
+    }
+  </nav>
   @if (loading) {
-    <p class="state">Đang tải đơn hàng...</p>
+    <p class="state" aria-live="polite">Đang tải đơn hàng...</p>
   } @else if (error) {
-    <p class="state error">{{ error }}</p>
-  } @else if (!items.length) {
-    <section class="panel state">
-      <p>Bạn chưa có đơn hàng nào.</p>
-      <a class="button-link" routerLink="/products">Tiếp tục mua sắm</a>
-    </section>
+    <p class="state error" role="alert">{{ error }}</p>
+    <button (click)="load()">Thử lại</button>
   } @else {
-    <section class="panel table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Mã đơn</th>
-            <th>Ngày đặt</th>
-            <th>Trạng thái</th>
-            <th>Tổng tiền</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (order of items; track order.id) {
-            <tr>
-              <td>{{ order.orderNumber }}</td>
-              <td>{{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
-              <td>
-                <span class="badge">{{ order.status }}</span>
-              </td>
-              <td>{{ order.total | currency: "VND" : "symbol" : "1.0-0" }}</td>
-              <td><a [routerLink]="['/orders', order.id]">Chi tiết</a></td>
-            </tr>
+    <section class="order-cards">
+      @for (order of items; track order.id) {
+        <article class="panel order-card">
+          <div class="order-card-heading">
+            <strong>Đơn #{{ order.id }}</strong
+            ><span class="badge">{{ labels[order.status] }}</span>
+          </div>
+          <p class="order-reference">{{ order.orderNumber }}</p>
+          <p>Ngày đặt: {{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</p>
+          <p>Người nhận: {{ order.recipientName }}</p>
+          @if (order.status === "DELIVERED") {
+            <p class="success">
+              Đơn đã được giao. Vào chi tiết để xác nhận đã nhận hàng.
+            </p>
           }
-        </tbody>
-      </table>
+          <div class="order-card-footer">
+            <span
+              >Tổng tiền
+              <strong>{{
+                order.total | currency: "VND" : "symbol" : "1.0-0"
+              }}</strong></span
+            ><a class="button-link" [routerLink]="['/orders', order.id]">{{
+              order.status === "DELIVERED"
+                ? "Xác nhận nhận hàng"
+                : "Xem chi tiết"
+            }}</a>
+          </div>
+        </article>
+      } @empty {
+        <section class="panel state">
+          <p>
+            {{
+              status
+                ? "Chưa có đơn hàng ở trạng thái này."
+                : "Bạn chưa có đơn hàng nào."
+            }}
+          </p>
+          <a class="button-link" routerLink="/products">Tiếp tục mua sắm</a>
+        </section>
+      }
     </section>
-    <div class="pagination">
-      <button
-        class="secondary"
-        [disabled]="page === 0"
-        (click)="load(page - 1)"
-      >
-        Trước
-      </button>
-      <span>Trang {{ page + 1 }} / {{ totalPages }}</span>
-      <button
-        class="secondary"
-        [disabled]="page + 1 >= totalPages"
-        (click)="load(page + 1)"
-      >
-        Sau
-      </button>
-    </div>
+    @if (totalPages > 1) {
+      <div class="pagination">
+        <button [disabled]="page === 0" (click)="load(page - 1)">Trước</button
+        ><span>Trang {{ page + 1 }} / {{ totalPages }}</span
+        ><button [disabled]="page + 1 >= totalPages" (click)="load(page + 1)">
+          Sau
+        </button>
+      </div>
+    }
   }
 </main>

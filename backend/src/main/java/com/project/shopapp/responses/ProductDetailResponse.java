@@ -12,7 +12,9 @@ public record ProductDetailResponse(
         String description,
         int stock,
         CategoryResponse category,
-        List<String> images) {
+        List<String> images,
+        List<ProductVariantResponse> variants,
+        long version) {
     public static ProductDetailResponse from(Product product) {
         return new ProductDetailResponse(
                 product.getId(),
@@ -22,6 +24,8 @@ public record ProductDetailResponse(
                 product.getDescription(),
                 product.getStock(),
                 CategoryResponse.from(product.getCategory()),
-                product.getImages().stream().map(image -> image.getImageUrl()).toList());
+                product.getImages().stream().map(image -> image.getImageUrl()).toList(),
+                product.getVariants().stream().map(ProductVariantResponse::from).toList(),
+                product.getVersion());
     }
 }

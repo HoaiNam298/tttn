@@ -1,0 +1,72 @@
+<main class="container home">
+  <section class="home-banner">
+    <div>
+      <p class="eyebrow">ShopApp · Công nghệ mỗi ngày</p>
+      <h1>Khám phá công nghệ.<br />Chọn điều bạn thích.</h1>
+      <p>
+        Điện thoại, máy tính và phụ kiện — tìm sản phẩm phù hợp với nhu cầu của
+        bạn.
+      </p>
+      <a class="button-link" routerLink="/products">Khám phá cửa hàng →</a>
+    </div>
+    <div class="banner-visual">
+      <span class="banner-mark">SHOP<br />APP.</span>
+      <p>Một nơi cho mọi lựa chọn công nghệ</p>
+    </div>
+  </section>
+  <section class="shopping-benefits" aria-label="Trải nghiệm mua sắm">
+    <div>
+      <strong>Khám phá dễ dàng</strong
+      ><span>Tìm theo danh mục và ngân sách</span>
+    </div>
+    <div>
+      <strong>Thanh toán COD</strong><span>Thanh toán khi nhận hàng</span>
+    </div>
+    <div>
+      <strong>Theo dõi đơn mua</strong
+      ><span>Cập nhật trạng thái trong tài khoản</span>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="section-heading">
+      <h2>Mua sắm theo danh mục</h2>
+      <a routerLink="/products">Xem tất cả →</a>
+    </div>
+    @if (categoryError) {
+      <p class="error" role="alert">{{ categoryError }}</p>
+    }
+    <div class="category-grid">
+      @for (category of categories; track category.id) {
+        <a
+          class="category-tile"
+          routerLink="/products"
+          [queryParams]="{ categoryId: category.id }"
+          ><span aria-hidden="true">{{ category.name.slice(0, 1) }}</span
+          ><strong>{{ category.name }}</strong></a
+        >
+      }
+    </div>
+  </section>
+  <section class="home-products">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Gợi ý khám phá</p>
+        <h2>Sản phẩm mới lên kệ</h2>
+      </div>
+      <a routerLink="/products">Xem thêm →</a>
+    </div>
+    @if (loading) {
+      <p class="state">Đang tải sản phẩm...</p>
+    } @else if (error) {
+      <p class="state error" role="alert">{{ error }}</p>
+    } @else {
+      <div class="product-grid">
+        @for (product of products; track product.id) {
+          <app-product-card [product]="product" />
+        } @empty {
+          <p>Chưa có sản phẩm.</p>
+        }
+      </div>
+    }
+  </section>
+</main>

@@ -1,13 +1,26 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, of, tap } from 'rxjs';
 import { environment } from '../environments/environment';
 import { AuthResponse } from '../responses/auth.response';
+import { RegisterPayload } from '../dtos/register.dto';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly key = 'shopapp_auth';
+  readonly userId = signal<number | null>(this.session()?.user.id ?? null);
+
+  private storeSession(value: AuthResponse): void {
+    localStorage.setItem(this.key, JSON.stringify(value));
+    this.userId.set(value.user.id);
+  }
+
+  register(payload: RegisterPayload): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(`${environment.apiUrl}/auth/register`, payload)
+      .pipe(tap((value) => this.storeSession(value)));
+  }
 
   login(phoneNumber: string, password: string): Observable<AuthResponse> {
     return this.http
@@ -15,9 +28,7 @@ export class AuthService {
         phoneNumber,
         password,
       })
-      .pipe(
-        tap((value) => localStorage.setItem(this.key, JSON.stringify(value))),
-      );
+      .pipe(tap((value) => this.storeSession(value)));
   }
 
   session(): AuthResponse | null {
@@ -50,12 +61,13 @@ export class AuthService {
   logout(): Observable<void> {
     return this.http.post<void>(`${environment.apiUrl}/auth/logout`, {}).pipe(
       catchError(() => of(undefined)),
-      finalize(() => localStorage.removeItem(this.key)),
+      finalize(() => this.clearSession()),
     );
   }
 
   clearSession(): void {
     localStorage.removeItem(this.key);
+    this.userId.set(null);
   }
 
   private isExpired(token: string): boolean {

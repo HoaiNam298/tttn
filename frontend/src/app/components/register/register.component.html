@@ -1,0 +1,39 @@
+<main class="container narrow">
+  <form class="panel form" [formGroup]="form" (ngSubmit)="submit()">
+    <p class="eyebrow">Tài khoản ShopApp</p>
+    <h1>Đăng ký</h1>
+    <label
+      >Họ tên<input formControlName="fullName" autocomplete="name"
+    /></label>
+    <label
+      >Số điện thoại<input formControlName="phoneNumber" autocomplete="tel"
+    /></label>
+    <label
+      >Địa chỉ<input formControlName="address" autocomplete="street-address"
+    /></label>
+    <label
+      >Mật khẩu<input
+        type="password"
+        formControlName="password"
+        autocomplete="new-password"
+    /></label>
+    <label
+      >Nhập lại mật khẩu<input
+        type="password"
+        formControlName="confirmPassword"
+        autocomplete="new-password"
+    /></label>
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+    <button [disabled]="loading">
+      {{ loading ? "Đang đăng ký..." : "Tạo tài khoản" }}
+    </button>
+    <p>
+      Đã có tài khoản?
+      <a routerLink="/login" [queryParams]="{ returnUrl: returnUrl }"
+        >Đăng nhập</a
+      >
+    </p>
+  </form>
+</main>

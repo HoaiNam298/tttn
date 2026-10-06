@@ -38,7 +38,12 @@ class OrderServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new OrderServiceImpl(orderRepository, productRepository, userRepository);
+        service =
+                new OrderServiceImpl(
+                        orderRepository,
+                        productRepository,
+                        userRepository,
+                        org.mockito.Mockito.mock(VoucherService.class));
         product = new Product("Phone", new BigDecimal("100000"), "", "", new Category("Phone"));
         ReflectionTestUtils.setField(product, "id", 8L);
         when(userRepository.findByPhoneNumber("0900000000")).thenReturn(Optional.of(user()));
@@ -62,11 +67,10 @@ class OrderServiceImplTest {
 
     @Test
     void rejectsQuantityAboveStock() {
+        ReflectionTestUtils.setField(product, "stock", 10);
         assertThrows(
                 InsufficientStockException.class,
-                () ->
-                        service.create(
-                                "0900000000", request(List.of(new OrderItemRequest(8L, 101)))));
+                () -> service.create("0900000000", request(List.of(new OrderItemRequest(8L, 11)))));
     }
 
     private CreateOrderRequest request(List<OrderItemRequest> items) {

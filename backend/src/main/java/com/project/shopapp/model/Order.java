@@ -28,6 +28,21 @@ public class Order extends BaseEntity {
     @Column(name = "order_number", nullable = false, unique = true)
     private UUID orderNumber;
 
+    @Column(name = "request_id")
+    private UUID requestId;
+
+    @Column(name = "request_fingerprint", length = 64)
+    private String requestFingerprint;
+
+    public void identifyRequest(UUID requestId, String fingerprint) {
+        this.requestId = requestId;
+        this.requestFingerprint = fingerprint;
+    }
+
+    public String getRequestFingerprint() {
+        return requestFingerprint;
+    }
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -61,6 +76,24 @@ public class Order extends BaseEntity {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal total;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shipping_method", nullable = false, length = 20)
+    private ShippingMethod shippingMethod = ShippingMethod.STANDARD;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
+
+    @Column(name = "voucher_code", length = 40)
+    private String voucherCode;
+
+    @Column(nullable = false, precision = 14, scale = 2)
+    private BigDecimal discount = BigDecimal.ZERO;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @jakarta.persistence.OrderBy("occurredAt ASC, id ASC")
+    private List<OrderStatusHistory> history = new ArrayList<>();
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
@@ -84,21 +117,64 @@ public class Order extends BaseEntity {
         this.subtotal = BigDecimal.ZERO;
         this.shippingFee = shippingFee;
         this.total = shippingFee;
+        history.add(new OrderStatusHistory(this, status, "CUSTOMER"));
     }
 
     public void addItem(Product product, int quantity) {
-        OrderItem item = new OrderItem(this, product, quantity);
+        addItem(product, null, quantity);
+    }
+
+    public void addItem(Product product, ProductVariant variant, int quantity) {
+        OrderItem item = new OrderItem(this, product, variant, quantity);
         items.add(item);
         subtotal = subtotal.add(item.getLineTotal());
         total = subtotal.add(shippingFee);
     }
 
     public void updateStatus(OrderStatus nextStatus) {
+        updateStatus(nextStatus, "ADMIN");
+    }
+
+    public void updateStatus(OrderStatus nextStatus, String actor) {
         if (!status.canTransitionTo(nextStatus)) {
             throw new IllegalStateException(
                     "Cannot change order status from " + status + " to " + nextStatus);
         }
         status = nextStatus;
+        history.add(new OrderStatusHistory(this, status, actor));
+    }
+
+    public void selectShipping(ShippingMethod method) {
+        shippingMethod = method;
+        shippingFee = method.getFee();
+        total = subtotal.add(shippingFee).subtract(discount);
+    }
+
+    public void applyVoucher(Voucher voucher) {
+        this.voucher = voucher;
+        voucherCode = voucher.getCode();
+        discount = voucher.calculateDiscount(subtotal);
+        total = subtotal.add(shippingFee).subtract(discount);
+    }
+
+    public ShippingMethod getShippingMethod() {
+        return shippingMethod;
+    }
+
+    public Voucher getVoucher() {
+        return voucher;
+    }
+
+    public String getVoucherCode() {
+        return voucherCode;
+    }
+
+    public BigDecimal getDiscount() {
+        return discount;
+    }
+
+    public List<OrderStatusHistory> getHistory() {
+        return List.copyOf(history);
     }
 
     public Long getId() {

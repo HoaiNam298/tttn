@@ -47,15 +47,16 @@ class ProductReviewServiceImplTest {
         order.updateStatus(OrderStatus.CONFIRMED);
         order.updateStatus(OrderStatus.SHIPPING);
         order.updateStatus(OrderStatus.DELIVERED);
+        order.updateStatus(OrderStatus.COMPLETED);
         orderItem = order.getItems().get(0);
         ReflectionTestUtils.setField(orderItem, "id", 11L);
     }
 
     @Test
-    void createsReviewForDeliveredOwnedOrder() {
+    void createsReviewForCompletedOwnedOrder() {
         when(orderItemRepository
-                        .findByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_Status(
-                                21L, 8L, "0900000000", OrderStatus.DELIVERED))
+                        .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
+                                21L, 8L, "0900000000", OrderStatus.COMPLETED))
                 .thenReturn(Optional.of(orderItem));
         when(reviewRepository.existsByOrderItemId(11L)).thenReturn(false);
         when(reviewRepository.save(any(ProductReview.class)))
@@ -70,10 +71,10 @@ class ProductReviewServiceImplTest {
     }
 
     @Test
-    void rejectsReviewWhenDeliveredOrderDoesNotBelongToUser() {
+    void rejectsReviewWhenCompletedOrderDoesNotBelongToUser() {
         when(orderItemRepository
-                        .findByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_Status(
-                                21L, 8L, "0999999999", OrderStatus.DELIVERED))
+                        .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
+                                21L, 8L, "0999999999", OrderStatus.COMPLETED))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -88,8 +89,8 @@ class ProductReviewServiceImplTest {
     @Test
     void rejectsDuplicateReviewForSameOrderItem() {
         when(orderItemRepository
-                        .findByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_Status(
-                                21L, 8L, "0900000000", OrderStatus.DELIVERED))
+                        .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
+                                21L, 8L, "0900000000", OrderStatus.COMPLETED))
                 .thenReturn(Optional.of(orderItem));
         when(reviewRepository.existsByOrderItemId(11L)).thenReturn(true);
 

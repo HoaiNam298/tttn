@@ -1,0 +1,158 @@
+<dialog
+  #dialog
+  class="admin-editor inventory-editor"
+  aria-labelledby="inventory-title"
+  (cancel)="close($event)"
+>
+  <form class="panel form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="editor-heading">
+      <h2 id="inventory-title">Ảnh, phân loại và tồn kho</h2>
+      <button
+        type="button"
+        class="secondary"
+        [disabled]="saving || uploading || loading"
+        (click)="close()"
+      >
+        Đóng ×
+      </button>
+    </div>
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+    @if (loading) {
+      <p>Đang tải...</p>
+    }
+    @if (product) {
+      <h3>{{ product.name }}</h3>
+      <fieldset class="editor-fields" [disabled]="saving || uploading">
+        <section>
+          <h3>Gallery (tối đa 10 ảnh)</h3>
+          <p>
+            Ảnh đầu tiên là ảnh đại diện. JPEG/PNG, tối đa 5 MB và 16 megapixel.
+          </p>
+          <div class="inventory-images">
+            @for (image of images; track image; let i = $index) {
+              <div>
+                <img [src]="image" alt="Ảnh sản phẩm" /><small>{{
+                  i === 0 ? "Ảnh đại diện" : "Ảnh " + (i + 1)
+                }}</small>
+                <div class="actions">
+                  <button type="button" class="link" (click)="makePrimary(i)">
+                    Đại diện</button
+                  ><button
+                    type="button"
+                    class="link danger"
+                    (click)="images.splice(i, 1)"
+                  >
+                    Bỏ ảnh
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+          <label
+            >Thêm ảnh gallery<input
+              type="file"
+              accept="image/jpeg,image/png"
+              [disabled]="images.length >= 10"
+              (change)="upload($event)"
+          /></label>
+        </section>
+        @if (!variants.length) {
+          <label
+            >Tồn kho sản phẩm<input
+              type="number"
+              min="0"
+              max="1000000"
+              formControlName="stock"
+          /></label>
+        }
+        <section formArrayName="variants">
+          <div class="editor-heading">
+            <h3>Phân loại SKU</h3>
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="variants.length >= 50"
+              (click)="addVariant()"
+            >
+              Thêm SKU
+            </button>
+          </div>
+          <p>
+            SKU đã lưu không bị xóa; bỏ chọn “Đang bán” để ngừng bán và giữ lịch
+            sử đơn.
+          </p>
+          @for (variant of variants.controls; track variant; let i = $index) {
+            <article class="variant-editor" [formGroupName]="i">
+              <div class="variant-form-grid">
+                <label
+                  >Mã SKU<input
+                    formControlName="sku"
+                    placeholder="PHONE-BLACK-128"
+                /></label>
+                <label
+                  >Tên phân loại<input
+                    formControlName="name"
+                    placeholder="Đen / 128 GB"
+                /></label>
+                <label>Màu<input formControlName="color" /></label>
+                <label>Size<input formControlName="size" /></label>
+                <label>Dung lượng<input formControlName="capacity" /></label>
+                <label
+                  >Giá (đ)<input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    formControlName="price"
+                /></label>
+                <label
+                  >Tồn kho<input
+                    type="number"
+                    min="0"
+                    max="1000000"
+                    formControlName="stock"
+                /></label>
+                <label>Ảnh SKU (URL)<input formControlName="imageUrl" /></label>
+                <label
+                  >Upload ảnh SKU<input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    (change)="upload($event, i)"
+                /></label>
+              </div>
+              @if (variant.controls.imageUrl.value) {
+                <img
+                  class="variant-image"
+                  [src]="variant.controls.imageUrl.value"
+                  alt="Ảnh SKU"
+                />
+              }
+              <div class="actions">
+                <label class="checkbox-label"
+                  ><input type="checkbox" formControlName="active" />Đang
+                  bán</label
+                ><button
+                  type="button"
+                  class="link danger"
+                  (click)="removeVariant(i)"
+                >
+                  {{ variant.controls.id.value ? "Ngừng bán" : "Bỏ SKU" }}
+                </button>
+              </div>
+            </article>
+          }
+        </section>
+      </fieldset>
+      @if (uploading) {
+        <p>Đang upload ảnh...</p>
+      }
+      @if (form.touched && form.invalid) {
+        <p class="error">Kiểm tra SKU, tên, giá và tồn kho nguyên không âm.</p>
+      }
+      <button type="submit" [disabled]="saving || uploading || form.invalid">
+        {{ saving ? "Đang lưu..." : "Lưu ảnh và tồn kho" }}
+      </button>
+    }
+  </form>
+</dialog>

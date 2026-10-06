@@ -12,6 +12,34 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    ResponseEntity<ApiError> unreadableRequest(Exception exception) {
+        return build(HttpStatus.BAD_REQUEST, "Invalid request JSON or enum value", Map.of());
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    ResponseEntity<ApiError> concurrentUpdate(Exception exception) {
+        return build(HttpStatus.CONFLICT, "Data changed concurrently. Reload and retry", Map.of());
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> uploadTooLarge(Exception exception) {
+        return build(
+                HttpStatus.PAYLOAD_TOO_LARGE, "Image upload exceeds the allowed size", Map.of());
+    }
+
+    @ExceptionHandler(java.io.IOException.class)
+    ResponseEntity<ApiError> storageFailure(java.io.IOException exception) {
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
+                .error("Image storage operation failed", exception);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Image storage is unavailable", Map.of());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    ResponseEntity<ApiError> invalidArgument(IllegalArgumentException exception) {
+        return build(HttpStatus.BAD_REQUEST, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<ApiError> notFound(ResourceNotFoundException exception) {
         return build(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());

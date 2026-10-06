@@ -1,14 +1,12 @@
 <main class="container admin">
+  <app-product-inventory-editor #inventoryEditor (saved)="load(page)" />
   <div class="page-heading">
     <div>
       <p class="eyebrow">Quản trị catalog</p>
-      <h1>Sản phẩm và danh mục</h1>
+      <h1>Quản lý sản phẩm</h1>
     </div>
     <div class="actions">
-      <a class="button-link secondary-link" routerLink="/admin/orders"
-        >Đơn hàng</a
-      >
-      <button class="secondary" (click)="logout()">Đăng xuất</button>
+      <button (click)="openCreate()">Thêm sản phẩm</button>
     </div>
   </div>
   @if (message) {
@@ -17,83 +15,181 @@
   @if (error) {
     <p class="error">{{ error }}</p>
   }
-  <section class="admin-grid">
-    <form
-      class="panel form"
-      [formGroup]="productForm"
-      (ngSubmit)="saveProduct()"
-    >
-      <h2>{{ editingId ? "Cập nhật sản phẩm" : "Thêm sản phẩm" }}</h2>
-      <label>
-        Tên sản phẩm
-        <input formControlName="name" />
-      </label>
-      <label>
-        Giá
-        <input type="number" formControlName="price" />
-      </label>
-      <label>
-        Danh mục
-        <select formControlName="categoryId">
-          <option [value]="0">Chọn danh mục</option>
-          @for (category of categories; track category) {
-            <option [value]="category.id">
-              {{ category.name }}
-            </option>
-          }
-        </select>
-      </label>
-      <label>
-        URL hình ảnh
-        <input formControlName="thumbnail" />
-      </label>
-      <label>
-        Mô tả
-        <textarea rows="5" formControlName="description"></textarea>
-      </label>
-      <div class="actions">
-        <button type="submit">
-          {{ editingId ? "Lưu thay đổi" : "Tạo sản phẩm" }}
-        </button>
-        @if (editingId) {
-          <button class="secondary" type="button" (click)="cancelEdit()">
-            Hủy
+  <dialog
+    #editor
+    class="admin-editor"
+    aria-labelledby="product-editor-title"
+    (cancel)="onDialogCancel($event)"
+  >
+    <section>
+      <form
+        class="panel form"
+        [formGroup]="productForm"
+        (ngSubmit)="saveProduct()"
+      >
+        <div class="editor-heading">
+          <h2 id="product-editor-title">
+            {{ editingId ? "Cập nhật sản phẩm" : "Thêm sản phẩm" }}
+          </h2>
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Đóng popup"
+            [disabled]="saving"
+            (click)="cancelEdit()"
+          >
+            ×
           </button>
+        </div>
+        @if (formError) {
+          <p class="error" role="alert">{{ formError }}</p>
         }
-      </div>
-    </form>
-    <app-category-management (changed)="reload()" />
-  </section>
-  <section class="panel table-panel">
-    <h2>Danh sách sản phẩm</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Sản phẩm</th>
-            <th>Danh mục</th>
-            <th>Giá</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (product of products; track product) {
+        <fieldset [disabled]="saving" class="editor-fields">
+          <label>
+            Tên sản phẩm
+            <input formControlName="name" />
+          </label>
+          <label>
+            Giá
+            <input type="number" formControlName="price" />
+          </label>
+          <label>
+            Danh mục
+            <select formControlName="categoryId">
+              <option [value]="0">Chọn danh mục</option>
+              @for (category of categories; track category) {
+                <option [value]="category.id">
+                  {{ category.name }}
+                </option>
+              }
+            </select>
+          </label>
+          <label>
+            URL hình ảnh
+            <input formControlName="thumbnail" />
+          </label>
+          <label>
+            Mô tả
+            <textarea rows="5" formControlName="description"></textarea>
+          </label>
+          <div class="actions">
+            @if (productForm.touched && productForm.invalid) {
+              <p class="error">
+                Vui lòng nhập tên sản phẩm, giá không âm và chọn danh mục hợp
+                lệ.
+              </p>
+            }
+            <button type="submit" [disabled]="saving">
+              {{
+                saving
+                  ? "Đang lưu..."
+                  : editingId
+                    ? "Lưu thay đổi"
+                    : "Tạo sản phẩm"
+              }}
+            </button>
+            <button
+              class="secondary"
+              type="button"
+              [disabled]="saving"
+              (click)="cancelEdit()"
+            >
+              Hủy
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  </dialog>
+  <form class="panel admin-filter-bar" (ngSubmit)="load(0)">
+    <input
+      name="keyword"
+      [(ngModel)]="keyword"
+      placeholder="Tìm tên sản phẩm"
+      aria-label="Tên sản phẩm"
+    />
+    <select name="category" [(ngModel)]="categoryId" aria-label="Danh mục">
+      <option [ngValue]="undefined">Tất cả danh mục</option>
+      @for (category of categories; track category.id) {
+        <option [ngValue]="category.id">{{ category.name }}</option>
+      }
+    </select>
+    <label class="page-size-control"
+      >Hiển thị
+      <select
+        name="pageSize"
+        [(ngModel)]="pageSize"
+        aria-label="Số sản phẩm mỗi trang"
+      >
+        <option [ngValue]="10">10 / trang</option>
+        <option [ngValue]="20">20 / trang</option>
+        <option [ngValue]="50">50 / trang</option>
+      </select>
+    </label>
+    <button type="submit" [disabled]="loading">Tìm kiếm</button>
+  </form>
+  @if (loading) {
+    <p class="state">Đang tải sản phẩm...</p>
+  } @else {
+    <section class="panel table-panel">
+      <h2>Danh sách sản phẩm ({{ totalElements }})</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
             <tr>
-              <td>{{ product.name }}</td>
-              <td>{{ product.category.name }}</td>
-              <td>
-                {{ product.price | currency: "VND" : "symbol" : "1.0-0" }}
-              </td>
-              <td>
-                <button class="link" (click)="editProduct(product)">Sửa</button>
-                <button class="link danger" (click)="deleteProduct(product)">
-                  Xóa
-                </button>
-              </td>
+              <th>Sản phẩm</th>
+              <th>Danh mục</th>
+              <th>Giá</th>
+              <th>Thao tác</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (product of products; track product) {
+              <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.category.name }}</td>
+                <td>
+                  {{ product.price | currency: "VND" : "symbol" : "1.0-0" }}
+                </td>
+                <td>
+                  <button class="link" (click)="editProduct(product)">
+                    Sửa
+                  </button>
+                  <button
+                    class="link"
+                    (click)="inventoryEditor.open(product.id)"
+                  >
+                    Ảnh / SKU / Kho
+                  </button>
+                  <button class="link danger" (click)="deleteProduct(product)">
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="state">Không có sản phẩm phù hợp.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <div class="pagination">
+      <button
+        class="secondary"
+        [disabled]="page === 0"
+        (click)="load(page - 1)"
+      >
+        Trước</button
+      ><span>Trang {{ page + 1 }} / {{ totalPages || 1 }}</span
+      ><button
+        class="secondary"
+        [disabled]="page + 1 >= totalPages"
+        (click)="load(page + 1)"
+      >
+        Sau
+      </button>
     </div>
-  </section>
+  }
 </main>

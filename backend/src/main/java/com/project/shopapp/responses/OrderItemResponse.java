@@ -8,13 +8,28 @@ public record OrderItemResponse(
         String productName,
         BigDecimal unitPrice,
         int quantity,
-        BigDecimal lineTotal) {
+        BigDecimal lineTotal,
+        Long variantId,
+        String variantName,
+        String sku) {
+    public OrderItemResponse(
+            Long productId,
+            String productName,
+            BigDecimal unitPrice,
+            int quantity,
+            BigDecimal lineTotal) {
+        this(productId, productName, unitPrice, quantity, lineTotal, null, null, null);
+    }
+
     public static OrderItemResponse from(OrderItem item) {
         return new OrderItemResponse(
                 item.getProductId(),
                 item.getProductName(),
                 item.getUnitPrice(),
                 item.getQuantity(),
-                item.getLineTotal());
+                item.getLineTotal(),
+                item.getVariantId(),
+                item.getVariantName(),
+                item.getSku());
     }
 }

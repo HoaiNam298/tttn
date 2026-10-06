@@ -4,10 +4,13 @@ import {
   Component,
   OnInit,
   inject,
+  DestroyRef,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Order } from '../../models/order.model';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
+import { Order, ORDER_STATUS_LABELS } from '../../models/order.model';
 import { OrderService } from '../../services/order.service';
+import { CartService } from '../../services/cart.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-order-detail',
@@ -16,10 +19,109 @@ import { OrderService } from '../../services/order.service';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class OrderDetailComponent implements OnInit {
+  readonly statusLabels = ORDER_STATUS_LABELS;
   private readonly route = inject(ActivatedRoute);
   private readonly orders = inject(OrderService);
+  private readonly cart = inject(CartService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  cancelling = false;
+  reordering = false;
+  actionError = '';
+
+  cancel(): void {
+    if (
+      this.adminMode ||
+      !this.order ||
+      this.order.status !== 'PENDING' ||
+      this.cancelling ||
+      this.confirming
+    ) {
+      return;
+    }
+    if (
+      !window.confirm('Hủy đơn hàng này? Tồn kho và lượt voucher sẽ được hoàn.')
+    ) {
+      return;
+    }
+    this.cancelling = true;
+    this.actionError = '';
+    this.orders
+      .cancel(this.order.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (order) => {
+          this.order = order;
+          this.cancelling = false;
+        },
+        error: (response) => {
+          this.actionError =
+            response.error?.message ??
+            'Không hủy được đơn. Vui lòng tải lại trạng thái.';
+          this.cancelling = false;
+        },
+      });
+  }
+
+  reorder(): void {
+    if (
+      this.adminMode ||
+      !this.order ||
+      this.reordering ||
+      !['COMPLETED', 'CANCELLED'].includes(this.order.status)
+    ) {
+      return;
+    }
+    this.reordering = true;
+    this.actionError = '';
+    this.cart
+      .addOrder(this.order)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.reordering = false;
+          void this.router.navigate(['/cart']);
+        },
+        error: (response) => {
+          this.actionError =
+            response.message ??
+            'Sản phẩm hoặc phân loại không còn khả dụng. Hãy chọn lại từ cửa hàng.';
+          this.reordering = false;
+        },
+      });
+  }
   order?: Order;
   error = '';
+  confirming = false;
+  confirmationError = '';
+  readonly adminMode = this.route.snapshot.data['adminMode'] === true;
+
+  confirmReceipt(): void {
+    if (
+      this.adminMode ||
+      !this.order ||
+      this.confirming ||
+      this.order.status !== 'DELIVERED'
+    ) {
+      return;
+    }
+    this.confirming = true;
+    this.confirmationError = '';
+    this.orders
+      .confirmReceipt(this.order.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (order) => {
+          this.order = order;
+          this.confirming = false;
+        },
+        error: () => {
+          this.confirmationError =
+            'Không thể xác nhận nhận hàng. Vui lòng tải lại đơn và thử lại.';
+          this.confirming = false;
+        },
+      });
+  }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -27,7 +129,10 @@ export class OrderDetailComponent implements OnInit {
       this.error = 'Mã đơn hàng không hợp lệ.';
       return;
     }
-    this.orders.findById(id).subscribe({
+    const request = this.adminMode
+      ? this.orders.findAdminOrder(id)
+      : this.orders.findById(id);
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (order) => (this.order = order),
       error: () => (this.error = 'Không tìm thấy đơn hàng.'),
     });

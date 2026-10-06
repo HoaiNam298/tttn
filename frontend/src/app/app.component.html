@@ -1,11 +1,54 @@
-<header class="site-header">
-  <a class="brand" routerLink="/products">ShopApp</a>
-  <nav>
-    <a routerLink="/products" routerLinkActive="active">Sản phẩm</a
-    ><a routerLink="/cart" routerLinkActive="active"
-      >Giỏ hàng ({{ cart.count() }})</a
-    ><a routerLink="/orders" routerLinkActive="active">Đơn hàng</a
-    ><a routerLink="/admin" routerLinkActive="active">Quản trị</a>
-  </nav>
-</header>
+@if (!router.url.startsWith("/admin")) {
+  <header class="site-header">
+    <a class="brand" routerLink="/">ShopApp</a>
+    <form
+      class="header-search"
+      [formGroup]="searchForm"
+      (ngSubmit)="search()"
+      role="search"
+    >
+      <input
+        formControlName="keyword"
+        aria-label="Tìm sản phẩm"
+        placeholder="Bạn đang tìm sản phẩm gì?"
+      />
+      <button type="submit">Tìm kiếm</button>
+    </form>
+    <nav>
+      <a routerLink="/products" routerLinkActive="active">Sản phẩm</a
+      ><a routerLink="/cart" routerLinkActive="active"
+        >Giỏ hàng ({{ cart.count() }})</a
+      >
+      @if (auth.userId() !== null && auth.token()) {
+        <a routerLink="/orders" routerLinkActive="active">Đơn hàng</a>
+        <a routerLink="/account" routerLinkActive="active">Tài khoản</a>
+        @if (auth.isAdmin()) {
+          <a routerLink="/admin" routerLinkActive="active">Quản trị</a>
+        }
+      } @else {
+        <a routerLink="/login" routerLinkActive="active">Đăng nhập</a>
+        <a routerLink="/register" routerLinkActive="active">Đăng ký</a>
+      }
+    </nav>
+  </header>
+}
 <router-outlet />
+@if (!router.url.startsWith("/admin")) {
+  <footer class="site-footer">
+    <div>
+      <a class="footer-brand" routerLink="/">ShopApp</a>
+      <p>Khám phá sản phẩm công nghệ theo cách của bạn.</p>
+    </div>
+    <nav aria-label="Liên kết cửa hàng">
+      <a routerLink="/products">Khám phá sản phẩm</a
+      ><a routerLink="/cart">Giỏ hàng</a>
+      @if (auth.userId() !== null && auth.token()) {
+        <a routerLink="/account">Tài khoản của tôi</a>
+      } @else {
+        <a routerLink="/login">Đăng nhập</a
+        ><a routerLink="/register">Đăng ký</a>
+      }
+    </nav>
+    <small>ShopApp · Dự án học tập · Thanh toán khi nhận hàng (COD)</small>
+  </footer>
+}

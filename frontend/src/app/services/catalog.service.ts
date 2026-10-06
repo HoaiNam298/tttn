@@ -10,6 +10,9 @@ import {
   ProductReviewOverview,
 } from '../models/product.model';
 import { PageResponse } from '../responses/page.response';
+import { ProductFilter, PRODUCT_SORT } from '../models/product-filter.model';
+import { ProductInventoryPayload } from '../dtos/product-inventory.dto';
+import { ImageUploadResponse } from '../responses/image-upload.response';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -18,6 +21,17 @@ export class CatalogService {
 
   categories(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.api}/categories`);
+  }
+
+  categoryPage(
+    keyword = '',
+    page = 0,
+    size = 10,
+  ): Observable<PageResponse<Category>> {
+    return this.http.get<PageResponse<Category>>(
+      `${this.api}/categories/page`,
+      { params: { keyword, page, size } },
+    );
   }
   product(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.api}/products/${id}`);
@@ -35,6 +49,7 @@ export class CatalogService {
     orderId: number,
     rating: number,
     comment: string,
+    variantId?: number,
   ): Observable<ProductReview> {
     return this.http.post<ProductReview>(
       `${this.api}/products/${productId}/reviews`,
@@ -42,6 +57,7 @@ export class CatalogService {
         orderId,
         rating,
         comment,
+        ...(variantId != null ? { variantId } : {}),
       },
     );
   }
@@ -50,11 +66,19 @@ export class CatalogService {
     categoryId?: number,
     page = 0,
     size = 12,
+    filter: ProductFilter = {},
   ): Observable<PageResponse<Product>> {
     let params = new HttpParams()
       .set('keyword', keyword)
       .set('page', page)
       .set('size', size);
+    params = params.set('sort', PRODUCT_SORT[filter.sort ?? 'newest']);
+    if (filter.minPrice != null) {
+      params = params.set('minPrice', filter.minPrice);
+    }
+    if (filter.maxPrice != null) {
+      params = params.set('maxPrice', filter.maxPrice);
+    }
     if (categoryId) {
       params = params.set('categoryId', categoryId);
     }
@@ -64,6 +88,22 @@ export class CatalogService {
   }
   createProduct(value: ProductPayload): Observable<Product> {
     return this.http.post<Product>(`${this.api}/products`, value);
+  }
+
+  updateInventory(
+    id: number,
+    payload: ProductInventoryPayload,
+  ): Observable<Product> {
+    return this.http.put<Product>(
+      `${this.api}/products/${id}/inventory`,
+      payload,
+    );
+  }
+
+  uploadImage(file: File): Observable<ImageUploadResponse> {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.post<ImageUploadResponse>(`${this.api}/admin/media`, body);
   }
   updateProduct(id: number, value: ProductPayload): Observable<Product> {
     return this.http.put<Product>(`${this.api}/products/${id}`, value);

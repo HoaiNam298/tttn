@@ -1,4 +1,5 @@
 import { Category } from './category.model';
+import { ProductVariant } from './product-variant.model';
 
 export interface Product {
   id: number;
@@ -8,6 +9,8 @@ export interface Product {
   description: string;
   stock?: number;
   images?: string[];
+  variants?: ProductVariant[];
+  version?: number;
   category: Category;
   createdAt: string;
   updatedAt: string;

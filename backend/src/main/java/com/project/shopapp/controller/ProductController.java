@@ -1,10 +1,12 @@
 package com.project.shopapp.controller;
 
+import com.project.shopapp.dtos.ProductInventoryRequest;
 import com.project.shopapp.dtos.ProductRequest;
 import com.project.shopapp.responses.ProductDetailResponse;
 import com.project.shopapp.responses.ProductResponse;
 import com.project.shopapp.services.ProductService;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.net.URI;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,9 +36,11 @@ public class ProductController {
     public Page<ProductResponse> findAll(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
             @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC)
                     Pageable pageable) {
-        return service.findAll(keyword, categoryId, pageable);
+        return service.findAll(keyword, categoryId, minPrice, maxPrice, pageable);
     }
 
     @GetMapping("/{id}")
@@ -60,5 +64,11 @@ public class ProductController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/inventory")
+    public ProductDetailResponse updateInventory(
+            @PathVariable Long id, @Valid @RequestBody ProductInventoryRequest request) {
+        return service.updateInventory(id, request);
     }
 }

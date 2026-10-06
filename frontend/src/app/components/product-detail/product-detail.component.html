@@ -1,20 +1,38 @@
 <main class="container">
-  <a class="back" routerLink="/products">← Quay lại sản phẩm</a>
+  <nav class="breadcrumb" aria-label="Đường dẫn">
+    <a routerLink="/">Trang chủ</a><span>/</span
+    ><a routerLink="/products">Sản phẩm</a>
+    @if (product; as value) {
+      <span>/</span
+      ><a
+        routerLink="/products"
+        [queryParams]="{ categoryId: value.category.id }"
+        >{{ value.category.name }}</a
+      ><span>/</span><span>{{ value.name }}</span>
+    }
+  </nav>
   @if (error) {
     <p class="state error">{{ error }}</p>
   }
   @if (product; as value) {
     <article class="product-detail-card panel">
       <section class="gallery">
-        <div class="detail-image">
+        <button
+          type="button"
+          class="detail-image gallery-open"
+          (click)="openImage()"
+          [disabled]="!selectedImage"
+          aria-label="Phóng to ảnh sản phẩm"
+        >
           @if (selectedImage) {
             <img [src]="selectedImage" [alt]="value.name" />
           } @else {
             <span>ShopApp</span>
           }
-        </div>
+        </button>
+        <small>Bấm vào ảnh để phóng to</small>
         <div class="thumbnail-list">
-          @for (image of value.images || [value.thumbnail]; track image) {
+          @for (image of images; track image) {
             @if (image) {
               <button
                 type="button"
@@ -22,7 +40,12 @@
                 [class.selected]="image === selectedImage"
                 (click)="selectedImage = image"
               >
-                <img [src]="image" [alt]="value.name" />
+                <img
+                  [src]="image"
+                  [alt]="value.name"
+                  loading="lazy"
+                  decoding="async"
+                />
               </button>
             }
           }
@@ -37,9 +60,43 @@
           ><span>{{ totalReviews }} đánh giá</span>
         </div>
         <p class="price">
-          {{ value.price | currency: "VND" : "symbol" : "1.0-0" }}
+          @if (value.variants?.length && !selectedVariant) {
+            Từ
+          }
+          {{ purchasePrice | currency: "VND" : "symbol" : "1.0-0" }}
         </p>
-        <p class="stock">Còn {{ value.stock }} sản phẩm</p>
+        @if (value.variants?.length) {
+          <div class="variant-options" aria-label="Chọn phân loại">
+            <strong>Phân loại</strong>
+            <div class="actions">
+              @for (variant of availableVariants; track variant.id) {
+                <button
+                  type="button"
+                  class="secondary"
+                  [class.variant-selected]="selectedVariantId === variant.id"
+                  [attr.aria-pressed]="selectedVariantId === variant.id"
+                  (click)="selectVariant(variant)"
+                >
+                  {{ variant.name }}
+                  @if (!variant.stock) {
+                    · Hết hàng
+                  }
+                </button>
+              }
+            </div>
+            @if (!selectedVariant) {
+              <small>Vui lòng chọn phân loại để xem giá và tồn kho.</small>
+            } @else {
+              <small>SKU: {{ selectedVariant.sku }}</small>
+            }
+          </div>
+        }
+        <p class="stock">
+          Còn {{ purchaseStock }} sản phẩm
+          @if (selectedVariant) {
+            · {{ selectedVariant.name }}
+          }
+        </p>
         <div class="quantity-control">
           <span>Số lượng</span
           ><button
@@ -51,7 +108,7 @@
           ><strong>{{ quantity }}</strong
           ><button
             type="button"
-            [disabled]="quantity >= (value.stock || 0)"
+            [disabled]="quantity >= purchaseStock"
             (click)="quantity = quantity + 1"
           >
             +
@@ -61,11 +118,15 @@
           <button
             type="button"
             class="secondary"
-            [disabled]="!value.stock"
+            [disabled]="purchaseStock < quantity"
             (click)="addToCart()"
           >
             Thêm vào giỏ hàng</button
-          ><button type="button" [disabled]="!value.stock" (click)="buyNow()">
+          ><button
+            type="button"
+            [disabled]="purchaseStock < quantity"
+            (click)="buyNow()"
+          >
             Mua ngay
           </button>
         </div>
@@ -90,6 +151,9 @@
     </section>
     <section id="reviews" class="panel reviews-section">
       <h2>Đánh giá sản phẩm</h2>
+      @if (reviewLoadError) {
+        <p class="error" role="alert">{{ reviewLoadError }}</p>
+      }
       <div class="review-overview">
         <strong>{{ averageRating | number: "1.1-1" }}/5</strong
         ><span class="stars">{{ starText(averageRating) }}</span
@@ -138,7 +202,9 @@
             <p>{{ review.comment }}</p>
           </article>
         } @empty {
-          <p class="state">Sản phẩm chưa có đánh giá.</p>
+          @if (!reviewLoadError) {
+            <p class="state">Sản phẩm chưa có đánh giá.</p>
+          }
         }
       </div>
       @if (reviewTotalPages > 1) {
@@ -160,5 +226,49 @@
         </div>
       }
     </section>
+    <section class="related-products">
+      <div class="section-heading">
+        <h2>Có thể bạn cũng thích</h2>
+        <a
+          routerLink="/products"
+          [queryParams]="{ categoryId: value.category.id }"
+          >Xem cùng danh mục →</a
+        >
+      </div>
+      @if (relatedError) {
+        <p class="error">{{ relatedError }}</p>
+      }
+      <div class="product-grid">
+        @for (item of relatedProducts; track item.id) {
+          <app-product-card [product]="item" />
+        }
+      </div>
+    </section>
+    <dialog
+      #imagePreview
+      class="image-preview"
+      aria-label="Ảnh sản phẩm phóng to"
+    >
+      <div class="preview-heading">
+        <strong>{{ value.name }}</strong
+        ><button
+          type="button"
+          class="secondary"
+          (click)="closeImage()"
+          aria-label="Đóng ảnh"
+        >
+          Đóng ×
+        </button>
+      </div>
+      <img [src]="selectedImage" [alt]="value.name" />
+      @if (images.length > 1) {
+        <div class="pagination">
+          <button (click)="moveImage(-1)">Ảnh trước</button
+          ><span
+            >{{ images.indexOf(selectedImage) + 1 }} / {{ images.length }}</span
+          ><button (click)="moveImage(1)">Ảnh sau</button>
+        </div>
+      }
+    </dialog>
   }
 </main>
