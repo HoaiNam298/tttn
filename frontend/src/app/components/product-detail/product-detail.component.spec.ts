@@ -5,6 +5,8 @@ import { CatalogService } from '../../services/catalog.service';
 import { CartService } from '../../services/cart.service';
 import { ProductDetailComponent } from './product-detail.component';
 import { Product } from '../../models/product.model';
+import { AuthService } from '../../services/auth.service';
+import { FavoriteService } from '../../services/favorite.service';
 
 describe('Product detail navigation and gallery', () => {
   it('reloads on product-id changes and excludes the current product from related cards', () => {
@@ -23,6 +25,14 @@ describe('Product detail navigation and gallery', () => {
     });
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: AuthService,
+          useValue: { userId: () => null, token: () => null },
+        },
+        {
+          provide: FavoriteService,
+          useValue: { state: () => of({ favorite: false }) },
+        },
         {
           provide: ActivatedRoute,
           useValue: {

@@ -763,3 +763,28 @@ input.cart-checkbox {
     margin-top: 4px;
   }
 }
+.review-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block: 1rem;
+  img {
+    object-fit: cover;
+    border-radius: 8px;
+  }
+}
+.shop-reply {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-left: 3px solid #0f766e;
+  background: #f0fdfa;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.review-filters {
+  flex-wrap: wrap;
+  margin-block: 1rem;
+  [aria-pressed="true"] {
+    outline: 2px solid #0f766e;
+  }
+}

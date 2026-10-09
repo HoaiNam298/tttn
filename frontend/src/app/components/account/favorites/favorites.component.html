@@ -1,0 +1,43 @@
+<section class="panel">
+  <div class="section-heading">
+    <h1>Sản phẩm yêu thích</h1>
+    <button class="secondary" [disabled]="loading" (click)="load(page)">
+      Làm mới
+    </button>
+  </div>
+  @if (error) {
+    <p class="error" role="alert">{{ error }}</p>
+  }
+  @if (loading) {
+    <p class="state">Đang tải sản phẩm...</p>
+  } @else {
+    <div class="product-grid">
+      @for (product of products; track product.id) {
+        <div>
+          <app-product-card [product]="product" /><button
+            class="secondary"
+            [disabled]="removingId !== undefined"
+            (click)="remove(product.id)"
+          >
+            Bỏ yêu thích
+          </button>
+        </div>
+      } @empty {
+        <p class="state">Bạn chưa có sản phẩm yêu thích.</p>
+      }
+    </div>
+  }
+  @if (totalPages > 1) {
+    <div class="pagination">
+      <button [disabled]="loading || page === 0" (click)="load(page - 1)">
+        Trước</button
+      ><span>{{ page + 1 }} / {{ totalPages }}</span
+      ><button
+        [disabled]="loading || page + 1 >= totalPages"
+        (click)="load(page + 1)"
+      >
+        Sau
+      </button>
+    </div>
+  }
+</section>

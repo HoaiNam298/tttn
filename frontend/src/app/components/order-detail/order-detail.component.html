@@ -5,6 +5,9 @@
   @if (error) {
     <p class="panel state error">{{ error }}</p>
   } @else if (order; as value) {
+    @if (reviewStatusError) {
+      <p class="error" role="alert">{{ reviewStatusError }}</p>
+    }
     <div class="page-heading">
       <div>
         <p class="eyebrow">Chi tiết đơn hàng</p>
@@ -55,7 +58,7 @@
                         variantId: item.variantId,
                       }"
                       fragment="reviews"
-                      >Đánh giá</a
+                      >{{ isReviewed(item) ? "Đã đánh giá" : "Đánh giá" }}</a
                     >
                   </td>
                 }

@@ -7,31 +7,122 @@
     Làm mới
   </button>
 </div>
+<form class="panel actions" [formGroup]="range" (ngSubmit)="load()">
+  <label>Từ ngày<input type="date" formControlName="from" /></label
+  ><label>Đến ngày<input type="date" formControlName="to" /></label
+  ><button type="submit" [disabled]="loading || range.invalid">
+    Xem báo cáo
+  </button>
+</form>
 @if (error) {
   <p class="error" role="alert">{{ error }}</p>
-} @else if (loading) {
+}
+@if (loading) {
   <p class="state">Đang tải số liệu...</p>
-} @else {
+} @else if (data; as report) {
+  <p>
+    Doanh thu theo ngày hoàn thành đơn (giờ Việt Nam), đã trừ voucher, không
+    tính phí vận chuyển. Khoảng {{ report.from | date: "dd/MM/yyyy" }} –
+    {{ report.to | date: "dd/MM/yyyy" }}.
+  </p>
+  @if (report.estimatedCompletionCount) {
+    <p class="state">
+      Có {{ report.estimatedCompletionCount }} đơn cũ dùng thời điểm hoàn thành
+      ước tính từ dữ liệu trước migration.
+    </p>
+  }
   <section class="dashboard-stats">
+    <div class="panel stat-card">
+      <span>Doanh thu tiền hàng</span
+      ><strong>{{
+        report.revenue | currency: "VND" : "symbol" : "1.0-0"
+      }}</strong
+      ><small
+        >{{ report.completedOrders }} đơn hoàn thành trong khoảng ngày</small
+      >
+    </div>
     <a class="panel stat-card" routerLink="/admin/products"
-      ><span>Sản phẩm</span><strong>{{ productCount | number }}</strong
-      ><small>Quản lý sản phẩm →</small></a
+      ><span>Sản phẩm</span><strong>{{ report.productCount | number }}</strong
+      ><small>{{ report.categoryCount }} danh mục</small></a
+    ><a class="panel stat-card" routerLink="/admin/orders"
+      ><span>Tổng đơn hàng</span
+      ><strong>{{ report.orderCount | number }}</strong
+      ><small>Tất cả thời gian</small></a
     >
-    <a class="panel stat-card" routerLink="/admin/categories"
-      ><span>Danh mục</span><strong>{{ categoryCount | number }}</strong
-      ><small>Quản lý danh mục →</small></a
-    >
-    <a class="panel stat-card" routerLink="/admin/orders"
-      ><span>Tổng đơn hàng</span><strong>{{ orderCount | number }}</strong
-      ><small>Xem đơn hàng →</small></a
-    >
-    <a
-      class="panel stat-card"
-      routerLink="/admin/orders"
-      [queryParams]="{ status: 'PENDING' }"
-      ><span>Chờ xác nhận</span><strong>{{ pendingCount | number }}</strong
-      ><small>Xử lý đơn mới →</small></a
-    >
+  </section>
+  <section class="dashboard-stats">
+    @for (status of processingStates; track status) {
+      <a
+        class="panel stat-card"
+        routerLink="/admin/orders"
+        [queryParams]="{ status }"
+        ><span>{{ labels[status] }}</span
+        ><strong>{{ report.statusCounts[status] || 0 }}</strong
+        ><small>Xem đơn cần xử lý →</small></a
+      >
+    }
+  </section>
+  <section class="panel table-panel">
+    <h2>Sản phẩm bán chạy</h2>
+    <p>
+      Chỉ đơn hoàn thành trong khoảng ngày; giá trị sản phẩm trước voucher,
+      không tính phí giao hàng.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Sản phẩm</th>
+            <th>Số lượng</th>
+            <th>Giá trị tiền hàng</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of report.topProducts; track product.productId) {
+            <tr>
+              <td>
+                <a [routerLink]="['/products', product.productId]">{{
+                  product.productName
+                }}</a>
+              </td>
+              <td>{{ product.quantity }}</td>
+              <td>
+                {{ product.grossSales | currency: "VND" : "symbol" : "1.0-0" }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="state">
+                Chưa có sản phẩm bán trong khoảng ngày.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="panel table-panel">
+    <h2>Doanh thu theo ngày</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ngày</th>
+            <th>Đơn hoàn thành</th>
+            <th>Doanh thu</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (day of report.dailyRevenue; track day.date) {
+            <tr>
+              <td>{{ day.date | date: "dd/MM/yyyy" }}</td>
+              <td>{{ day.completedOrders }}</td>
+              <td>{{ day.revenue | currency: "VND" : "symbol" : "1.0-0" }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </section>
   <section class="panel table-panel">
     <div class="page-heading">
@@ -50,7 +141,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (order of recentOrders; track order.id) {
+          @for (order of report.recentOrders; track order.id) {
             <tr>
               <td>
                 <a [routerLink]="['/admin/orders', order.id]">{{
@@ -61,7 +152,7 @@
               <td>{{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
               <td>{{ order.total | currency: "VND" : "symbol" : "1.0-0" }}</td>
               <td>
-                <span class="badge">{{ order.status }}</span>
+                <span class="badge">{{ labels[order.status] }}</span>
               </td>
             </tr>
           } @empty {

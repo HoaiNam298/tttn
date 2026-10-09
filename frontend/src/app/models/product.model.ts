@@ -22,6 +22,12 @@ export interface ProductReview {
   rating: number;
   comment: string;
   createdAt: string;
+  images?: string[];
+  shopReply?: string | null;
+  repliedAt?: string | null;
+  version?: number;
+  productId?: number;
+  productName?: string;
 }
 
 export interface ProductReviewOverview {

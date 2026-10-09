@@ -18,6 +18,8 @@ import { EMPTY, catchError, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { ProductVariant } from '../../models/product-variant.model';
+import { AuthService } from '../../services/auth.service';
+import { FavoriteService } from '../../services/favorite.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -31,6 +33,11 @@ import { ProductVariant } from '../../models/product-variant.model';
   templateUrl: './product-detail.component.html',
 })
 export class ProductDetailComponent implements OnInit {
+  private readonly auth = inject(AuthService);
+  private readonly favorites = inject(FavoriteService);
+  favorite = false;
+  favoriteBusy = false;
+  favoriteError = '';
   private readonly route = inject(ActivatedRoute);
   private readonly catalog = inject(CatalogService);
   private readonly cart = inject(CartService);
@@ -38,6 +45,15 @@ export class ProductDetailComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private currentProductId = 0;
+  private reviewRequest = 0;
+  private eligibilityRequest = 0;
+  reviewRating?: number;
+  readonly ratingFilters = [5, 4, 3, 2, 1];
+  reviewFiles: File[] = [];
+  reviewSaving = false;
+  eligibilityLoading = false;
+  canReview = false;
+  alreadyReviewed = false;
   @ViewChild('imagePreview')
   private imagePreview?: ElementRef<HTMLDialogElement>;
   relatedProducts: Product[] = [];
@@ -133,6 +149,9 @@ export class ProductDetailComponent implements OnInit {
         const orderId = Number(params.get('orderId'));
         this.orderId =
           Number.isInteger(orderId) && orderId > 0 ? orderId : undefined;
+        if (this.product) {
+          this.checkEligibility();
+        }
       });
     this.route.paramMap
       .pipe(
@@ -152,6 +171,12 @@ export class ProductDetailComponent implements OnInit {
           this.reviewTotalPages = 0;
           this.reviewMessage = '';
           this.reviewError = '';
+          this.reviewRating = undefined;
+          this.reviewFiles = [];
+          this.canReview = false;
+          this.alreadyReviewed = false;
+          this.reviewSaving = false;
+          this.reviewForm.reset({ rating: 5, comment: '' });
           this.closeImage();
           this.loadReviews(id);
           return this.catalog.product(id).pipe(
@@ -165,6 +190,30 @@ export class ProductDetailComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => {
         this.product = value;
+        this.checkEligibility();
+        this.favorite = false;
+        this.favoriteBusy = false;
+        this.favoriteError = '';
+        if (this.auth.userId() !== null && this.auth.token()) {
+          this.favoriteBusy = true;
+          this.favorites
+            .state(value.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (state) => {
+                if (this.currentProductId === value.id) {
+                  this.favorite = state.favorite;
+                  this.favoriteBusy = false;
+                }
+              },
+              error: () => {
+                if (this.currentProductId === value.id) {
+                  this.favoriteBusy = false;
+                  this.favoriteError = 'Không tải được trạng thái yêu thích.';
+                }
+              },
+            });
+        }
         this.selectedImage = value.thumbnail || value.images?.[0] || '';
         this.catalog
           .products('', value.category.id, 0, 7)
@@ -194,6 +243,40 @@ export class ProductDetailComponent implements OnInit {
     this.added = true;
   }
 
+  toggleFavorite(): void {
+    if (!this.product || this.favoriteBusy) {
+      return;
+    }
+    if (this.auth.userId() === null || !this.auth.token()) {
+      void this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/products/${this.product.id}` },
+      });
+      return;
+    }
+    const productId = this.product.id;
+    const desired = !this.favorite;
+    this.favoriteBusy = true;
+    this.favoriteError = '';
+    this.favorites
+      .set(productId, desired)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          if (this.currentProductId === productId) {
+            this.favorite = desired;
+            this.favoriteBusy = false;
+          }
+        },
+        error: () => {
+          if (this.currentProductId === productId) {
+            this.favoriteBusy = false;
+            this.favoriteError =
+              'Không cập nhật được yêu thích. Vui lòng thử lại.';
+          }
+        },
+      });
+  }
+
   buyNow(): void {
     if (!this.product || this.purchaseStock < this.quantity) {
       return;
@@ -208,13 +291,17 @@ export class ProductDetailComponent implements OnInit {
   }
 
   loadReviews(productId: number, page = 0): void {
+    const request = ++this.reviewRequest;
     this.reviewLoadError = '';
     this.catalog
-      .reviews(productId, page)
+      .reviews(productId, page, this.reviewRating)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (overview) => {
-          if (this.currentProductId !== productId) {
+          if (
+            this.currentProductId !== productId ||
+            request !== this.reviewRequest
+          ) {
             return;
           }
           this.reviews = overview.reviews.content;
@@ -224,7 +311,10 @@ export class ProductDetailComponent implements OnInit {
           this.reviewTotalPages = overview.reviews.totalPages;
         },
         error: () => {
-          if (this.currentProductId === productId) {
+          if (
+            this.currentProductId === productId &&
+            request === this.reviewRequest
+          ) {
             this.reviewLoadError = 'Chưa tải được đánh giá. Vui lòng thử lại.';
           }
         },
@@ -232,29 +322,114 @@ export class ProductDetailComponent implements OnInit {
   }
 
   submitReview(): void {
-    if (!this.product || !this.orderId || this.reviewForm.invalid) {
+    if (
+      !this.product ||
+      !this.orderId ||
+      this.reviewForm.invalid ||
+      !this.canReview ||
+      this.reviewSaving
+    ) {
       this.reviewForm.markAllAsTouched();
       return;
     }
     const value = this.reviewForm.getRawValue();
+    const productId = this.product.id;
+    this.reviewSaving = true;
+    this.reviewError = '';
     this.catalog
       .createReview(
         this.product.id,
         this.orderId,
-        value.rating,
+        Number(value.rating),
         value.comment,
         this.reviewVariantId,
+        this.reviewFiles,
       )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          if (this.currentProductId !== productId) {
+            return;
+          }
+          this.reviewSaving = false;
+          this.canReview = false;
+          this.alreadyReviewed = true;
+          this.reviewFiles = [];
           this.reviewMessage = 'Cảm ơn bạn đã đánh giá sản phẩm.';
           this.reviewError = '';
           this.orderId = undefined;
           this.loadReviews(this.product!.id);
         },
-        error: () =>
-          (this.reviewError =
-            'Không thể gửi đánh giá. Bạn phải xác nhận đã nhận hàng và chưa đánh giá sản phẩm này.'),
+        error: () => {
+          if (this.currentProductId === productId) {
+            this.reviewSaving = false;
+            this.reviewError =
+              'Không thể gửi đánh giá. Vui lòng kiểm tra ảnh hoặc tải lại trạng thái đánh giá.';
+            this.checkEligibility();
+          }
+        },
+      });
+  }
+
+  filterReviews(rating?: number): void {
+    this.reviewRating = rating;
+    if (this.product) {
+      this.loadReviews(this.product.id);
+    }
+  }
+
+  selectReviewFiles(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (
+      files.length + this.reviewFiles.length > 5 ||
+      files.some(
+        (file) =>
+          !['image/jpeg', 'image/png'].includes(file.type) ||
+          file.size > 5 * 1024 * 1024,
+      )
+    ) {
+      this.reviewError = 'Chọn tối đa 5 ảnh JPEG/PNG, mỗi ảnh không quá 5 MB.';
+      return;
+    }
+    this.reviewError = '';
+    this.reviewFiles = [...this.reviewFiles, ...files];
+  }
+
+  removeReviewFile(index: number): void {
+    this.reviewFiles = this.reviewFiles.filter(
+      (_, position) => position !== index,
+    );
+  }
+
+  private checkEligibility(): void {
+    const request = ++this.eligibilityRequest;
+    this.canReview = false;
+    this.alreadyReviewed = false;
+    this.eligibilityLoading = false;
+    if (!this.product || !this.orderId) {
+      return;
+    }
+    this.eligibilityLoading = true;
+    this.catalog
+      .reviewEligibility(this.product.id, this.orderId, this.reviewVariantId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (reviewed) => {
+          if (request === this.eligibilityRequest) {
+            this.alreadyReviewed = reviewed;
+            this.canReview = !reviewed;
+            this.eligibilityLoading = false;
+          }
+        },
+        error: () => {
+          if (request === this.eligibilityRequest) {
+            this.eligibilityLoading = false;
+            this.reviewError =
+              'Chỉ có thể đánh giá đơn của bạn sau khi xác nhận đã nhận hàng.';
+          }
+        },
       });
   }
 

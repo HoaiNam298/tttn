@@ -59,7 +59,8 @@ class ProductReviewServiceImplTest {
                                 21L, 8L, "0900000000", OrderStatus.COMPLETED))
                 .thenReturn(Optional.of(orderItem));
         when(reviewRepository.existsByOrderItemId(11L)).thenReturn(false);
-        when(reviewRepository.save(any(ProductReview.class)))
+        when(orderItemRepository.lockById(11L)).thenReturn(Optional.of(orderItem));
+        when(reviewRepository.saveAndFlush(any(ProductReview.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         ProductReviewResponse response =
@@ -93,11 +94,57 @@ class ProductReviewServiceImplTest {
                                 21L, 8L, "0900000000", OrderStatus.COMPLETED))
                 .thenReturn(Optional.of(orderItem));
         when(reviewRepository.existsByOrderItemId(11L)).thenReturn(true);
+        when(orderItemRepository.lockById(11L)).thenReturn(Optional.of(orderItem));
 
         assertThrows(
                 DuplicateResourceException.class,
                 () ->
                         service.create(
                                 8L, "0900000000", new CreateProductReviewRequest(21L, 5, "Again")));
+    }
+
+    @Test
+    void filteredPagePreservesGlobalCountAndAverage() {
+        when(reviewRepository.findByProductIdAndRating(
+                        org.mockito.ArgumentMatchers.eq(8L),
+                        org.mockito.ArgumentMatchers.eq(4),
+                        any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        when(reviewRepository.averageRating(8L)).thenReturn(4.2);
+        when(reviewRepository.countByProductId(8L)).thenReturn(10L);
+        var response =
+                service.findByProduct(
+                        8L, 4, org.springframework.data.domain.PageRequest.of(0, 500));
+        assertEquals(10, response.totalReviews());
+        assertEquals(4.2, response.averageRating());
+    }
+
+    @Test
+    void rejectsInvalidRatingFilter() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        service.findByProduct(
+                                8L, 6, org.springframework.data.domain.PageRequest.of(0, 10)));
+    }
+
+    @Test
+    void staleReplyDoesNotOverwriteCurrentResponse() {
+        ProductReview review =
+                new ProductReview(
+                        orderItem.getProduct(),
+                        orderItem.getOrder().getUser(),
+                        orderItem,
+                        5,
+                        "Great");
+        ReflectionTestUtils.setField(review, "version", 2L);
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        service.reply(
+                                1L,
+                                new com.project.shopapp.dtos.ReviewReplyRequest("Thank you", 1L)));
+        assertEquals(null, review.getShopReply());
     }
 }

@@ -9,6 +9,7 @@ import { CartService } from './services/cart.service';
 import { AuthService } from './services/auth.service';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { inject } from '@angular/core';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -18,6 +19,7 @@ import { inject } from '@angular/core';
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
+  readonly notifications = inject(NotificationService);
   readonly auth = inject(AuthService);
   readonly cart = inject(CartService);
   readonly router = inject(Router);

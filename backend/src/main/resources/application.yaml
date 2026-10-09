@@ -4,7 +4,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 5MB
-      max-request-size: 6MB
+      max-request-size: 26MB
   datasource:
     url: ${SHOPAPP_DB_URL:jdbc:postgresql://127.0.0.1:5433/shopapp}
     username: ${SHOPAPP_DB_USERNAME:shopapp}

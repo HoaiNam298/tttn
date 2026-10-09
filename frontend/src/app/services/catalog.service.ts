@@ -13,9 +13,15 @@ import { PageResponse } from '../responses/page.response';
 import { ProductFilter, PRODUCT_SORT } from '../models/product-filter.model';
 import { ProductInventoryPayload } from '../dtos/product-inventory.dto';
 import { ImageUploadResponse } from '../responses/image-upload.response';
+import { OrderReviewStatus } from '../responses/order-review-status.response';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
+  orderReviewStatuses(orderId: number): Observable<OrderReviewStatus[]> {
+    return this.http.get<OrderReviewStatus[]>(
+      `${this.api}/orders/${orderId}/review-statuses`,
+    );
+  }
   private readonly http = inject(HttpClient);
   private readonly api = environment.apiUrl;
 
@@ -36,11 +42,15 @@ export class CatalogService {
   product(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.api}/products/${id}`);
   }
-  reviews(id: number, page = 0): Observable<ProductReviewOverview> {
+  reviews(
+    id: number,
+    page = 0,
+    rating?: number,
+  ): Observable<ProductReviewOverview> {
     return this.http.get<ProductReviewOverview>(
       `${this.api}/products/${id}/reviews`,
       {
-        params: { page, size: 10 },
+        params: { page, size: 10, ...(rating ? { rating } : {}) },
       },
     );
   }
@@ -50,7 +60,24 @@ export class CatalogService {
     rating: number,
     comment: string,
     variantId?: number,
+    images: File[] = [],
   ): Observable<ProductReview> {
+    if (images.length) {
+      const body = new FormData();
+      body.append(
+        'review',
+        new Blob([JSON.stringify({ orderId, rating, comment, variantId })], {
+          type: 'application/json',
+        }),
+      );
+      for (const file of images) {
+        body.append('images', file);
+      }
+      return this.http.post<ProductReview>(
+        `${this.api}/products/${productId}/reviews`,
+        body,
+      );
+    }
     return this.http.post<ProductReview>(
       `${this.api}/products/${productId}/reviews`,
       {
@@ -59,6 +86,33 @@ export class CatalogService {
         comment,
         ...(variantId != null ? { variantId } : {}),
       },
+    );
+  }
+  reviewEligibility(
+    productId: number,
+    orderId: number,
+    variantId?: number,
+  ): Observable<boolean> {
+    return this.http.get<boolean>(`${this.api}/review-eligibility`, {
+      params: { productId, orderId, ...(variantId ? { variantId } : {}) },
+    });
+  }
+
+  adminReviews(page = 0): Observable<PageResponse<ProductReview>> {
+    return this.http.get<PageResponse<ProductReview>>(
+      `${this.api}/admin/reviews`,
+      { params: { page, size: 10 } },
+    );
+  }
+
+  replyToReview(
+    id: number,
+    reply: string,
+    version: number,
+  ): Observable<ProductReview> {
+    return this.http.put<ProductReview>(
+      `${this.api}/admin/reviews/${id}/reply`,
+      { reply, version },
     );
   }
   products(

@@ -27,6 +27,20 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'profile' },
       {
+        path: 'favorites',
+        loadComponent: () =>
+          import('./components/account/favorites/favorites.component').then(
+            (m) => m.FavoritesComponent,
+          ),
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import(
+            './components/account/notifications/notifications.component'
+          ).then((m) => m.NotificationsComponent),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./components/account/profile/profile.component').then(
@@ -110,6 +124,13 @@ export const routes: Routes = [
       ),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./components/admin/reviews/admin-reviews.component').then(
+            (m) => m.AdminReviewsComponent,
+          ),
+      },
       {
         path: 'vouchers',
         loadComponent: () =>

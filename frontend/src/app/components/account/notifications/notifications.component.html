@@ -1,0 +1,57 @@
+<section class="panel">
+  <div class="section-heading">
+    <h1>Thông báo</h1>
+    <div class="actions">
+      <button class="secondary" [disabled]="loading" (click)="load(page)">
+        Làm mới</button
+      ><button [disabled]="updating || !service.unread()" (click)="markAll()">
+        Đọc tất cả
+      </button>
+    </div>
+  </div>
+  @if (error) {
+    <p class="error" role="alert">{{ error }}</p>
+  }
+  @if (loading) {
+    <p class="state">Đang tải thông báo...</p>
+  } @else {
+    @for (notification of notifications; track notification.id) {
+      <article class="review-item">
+        <h3>
+          {{ notification.title }}
+          @if (!notification.read) {
+            <span class="badge">Mới</span>
+          }
+        </h3>
+        <p>{{ notification.body }}</p>
+        <small>{{ notification.createdAt | date: "dd/MM/yyyy HH:mm" }}</small>
+        <div class="actions">
+          <button
+            class="secondary"
+            [disabled]="updating"
+            (click)="open(notification)"
+          >
+            Xem chi tiết
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <p class="state">
+        Bạn chưa có thông báo. Các cập nhật đơn hàng mới sẽ xuất hiện tại đây.
+      </p>
+    }
+  }
+  @if (totalPages > 1) {
+    <div class="pagination">
+      <button [disabled]="loading || page === 0" (click)="load(page - 1)">
+        Trước</button
+      ><span>{{ page + 1 }} / {{ totalPages }}</span
+      ><button
+        [disabled]="loading || page + 1 >= totalPages"
+        (click)="load(page + 1)"
+      >
+        Sau
+      </button>
+    </div>
+  }
+</section>

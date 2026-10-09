@@ -80,4 +80,17 @@ public class MediaServiceImpl implements MediaService {
         }
         return new FileSystemResource(file);
     }
+
+    @Override
+    public void deleteUpload(String url) throws IOException {
+        String prefix = "/api/v1/media/";
+        if (url == null || !url.startsWith(prefix)) {
+            throw new IllegalArgumentException("Invalid upload URL");
+        }
+        String filename = url.substring(prefix.length());
+        if (!filename.matches("^[a-f0-9-]{36}\\.(jpg|png)$")) {
+            throw new IllegalArgumentException("Invalid upload filename");
+        }
+        Files.deleteIfExists(directory.resolve(filename));
+    }
 }

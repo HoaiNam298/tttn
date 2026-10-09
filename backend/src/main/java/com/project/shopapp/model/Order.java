@@ -63,6 +63,12 @@ public class Order extends BaseEntity {
     @Column(nullable = false, length = 30)
     private OrderStatus status;
 
+    @Column(name = "completed_at")
+    private java.time.Instant completedAt;
+
+    @Column(name = "completion_time_estimated", nullable = false)
+    private boolean completionTimeEstimated;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
     private PaymentMethod paymentMethod;
@@ -141,6 +147,10 @@ public class Order extends BaseEntity {
                     "Cannot change order status from " + status + " to " + nextStatus);
         }
         status = nextStatus;
+        if (status == OrderStatus.COMPLETED) {
+            completedAt = java.time.Instant.now();
+            completionTimeEstimated = false;
+        }
         history.add(new OrderStatusHistory(this, status, actor));
     }
 

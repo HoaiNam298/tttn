@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
 import { AuthService } from './services/auth.service';
 import { signal } from '@angular/core';
+import { NotificationService } from './services/notification.service';
 
 describe('AppComponent', () => {
   const auth = {
@@ -16,7 +17,11 @@ describe('AppComponent', () => {
     auth.isAdmin.mockReturnValue(false);
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter([]), { provide: AuthService, useValue: auth }],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: auth },
+        { provide: NotificationService, useValue: { unread: signal(0) } },
+      ],
     }).compileComponents();
   });
 

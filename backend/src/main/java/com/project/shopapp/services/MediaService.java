@@ -8,4 +8,6 @@ public interface MediaService {
     String upload(MultipartFile file) throws IOException;
 
     Resource read(String filename);
+
+    void deleteUpload(String url) throws IOException;
 }

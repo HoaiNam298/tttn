@@ -30,37 +30,47 @@ public class ProductReviewServiceImpl implements ProductReviewService {
 
     @Override
     public ProductReviewOverviewResponse findByProduct(Long productId, Pageable pageable) {
+        return findByProduct(productId, null, pageable);
+    }
+
+    @Override
+    public ProductReviewOverviewResponse findByProduct(
+            Long productId, Integer rating, Pageable pageable) {
+        if (rating != null && (rating < 1 || rating > 5)) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5");
+        }
+        pageable = bounded(pageable);
         Page<ProductReviewResponse> reviews =
-                reviewRepository
-                        .findByProductId(productId, pageable)
+                (rating == null
+                                ? reviewRepository.findByProductId(productId, pageable)
+                                : reviewRepository.findByProductIdAndRating(
+                                        productId, rating, pageable))
                         .map(ProductReviewResponse::from);
         return new ProductReviewOverviewResponse(
-                reviewRepository.averageRating(productId), reviews.getTotalElements(), reviews);
+                reviewRepository.averageRating(productId),
+                reviewRepository.countByProductId(productId),
+                reviews);
     }
 
     @Override
     @Transactional
     public ProductReviewResponse create(
             Long productId, String phoneNumber, CreateProductReviewRequest request) {
+        return createWithImages(productId, phoneNumber, request, java.util.List.of());
+    }
+
+    @Override
+    @Transactional
+    public ProductReviewResponse createWithImages(
+            Long productId,
+            String phoneNumber,
+            CreateProductReviewRequest request,
+            java.util.List<String> images) {
         OrderItem orderItem =
-                (request.variantId() == null
-                                ? orderItemRepository
-                                        .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
-                                                request.orderId(),
-                                                productId,
-                                                phoneNumber,
-                                                OrderStatus.COMPLETED)
-                                : orderItemRepository
-                                        .findByOrder_IdAndProduct_IdAndVariant_IdAndOrder_User_PhoneNumberAndOrder_Status(
-                                                request.orderId(),
-                                                productId,
-                                                request.variantId(),
-                                                phoneNumber,
-                                                OrderStatus.COMPLETED))
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "Completed order item not found for this product"));
+                eligible(productId, phoneNumber, request.orderId(), request.variantId());
+        orderItemRepository
+                .lockById(orderItem.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order item not found"));
         if (reviewRepository.existsByOrderItemId(orderItem.getId())) {
             throw new DuplicateResourceException("This order item has already been reviewed");
         }
@@ -71,6 +81,78 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                         orderItem,
                         request.rating(),
                         request.comment().trim());
-        return ProductReviewResponse.from(reviewRepository.save(review));
+        review.attachImages(images);
+        return ProductReviewResponse.from(reviewRepository.saveAndFlush(review));
+    }
+
+    @Override
+    public boolean reviewed(Long productId, String phoneNumber, Long orderId, Long variantId) {
+        return reviewRepository.existsByOrderItemId(
+                eligible(productId, phoneNumber, orderId, variantId).getId());
+    }
+
+    @Override
+    public Page<ProductReviewResponse> findAll(Pageable pageable) {
+        return reviewRepository.findAll(bounded(pageable)).map(ProductReviewResponse::from);
+    }
+
+    @Override
+    public java.util.List<com.project.shopapp.responses.OrderReviewStatusResponse>
+            orderReviewStatuses(String phoneNumber, Long orderId) {
+        var items =
+                orderItemRepository.findByOrderIdAndOrderUserPhoneNumberAndOrderStatus(
+                        orderId, phoneNumber, OrderStatus.COMPLETED);
+        var reviewedIds = reviewRepository.reviewedItemIds(orderId, phoneNumber);
+        return items.stream()
+                .map(
+                        item ->
+                                new com.project.shopapp.responses.OrderReviewStatusResponse(
+                                        item.getProductId(),
+                                        item.getVariantId(),
+                                        reviewedIds.contains(item.getId())))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public ProductReviewResponse reply(
+            Long reviewId, com.project.shopapp.dtos.ReviewReplyRequest request) {
+        ProductReview review =
+                reviewRepository
+                        .findById(reviewId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+        review.reply(request.reply(), request.version());
+        return ProductReviewResponse.from(reviewRepository.saveAndFlush(review));
+    }
+
+    private Pageable bounded(Pageable pageable) {
+        return org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                Math.min(50, pageable.getPageSize()),
+                org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id"));
+    }
+
+    private OrderItem eligible(Long productId, String phoneNumber, Long orderId, Long variantId) {
+        OrderItem orderItem =
+                (variantId == null
+                                ? orderItemRepository
+                                        .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
+                                                orderId,
+                                                productId,
+                                                phoneNumber,
+                                                OrderStatus.COMPLETED)
+                                : orderItemRepository
+                                        .findByOrder_IdAndProduct_IdAndVariant_IdAndOrder_User_PhoneNumberAndOrder_Status(
+                                                orderId,
+                                                productId,
+                                                variantId,
+                                                phoneNumber,
+                                                OrderStatus.COMPLETED))
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Completed order item not found for this product"));
+        return orderItem;
     }
 }

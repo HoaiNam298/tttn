@@ -1,0 +1,91 @@
+<div class="page-heading">
+  <h1>Đánh giá sản phẩm</h1>
+  <button class="secondary" [disabled]="loading" (click)="load(page)">
+    Làm mới
+  </button>
+</div>
+@if (error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+@if (loading) {
+  <p class="state">Đang tải đánh giá...</p>
+} @else {
+  <section class="panel">
+    @for (review of reviews; track review.id) {
+      <article class="review-item">
+        <h3>
+          <a [routerLink]="['/products', review.productId]">{{
+            review.productName
+          }}</a>
+        </h3>
+        <p>
+          <strong>{{ review.reviewerName }}</strong> · {{ review.rating }}/5 ·
+          {{ review.createdAt | date: "dd/MM/yyyy HH:mm" }}
+        </p>
+        <p>{{ review.comment }}</p>
+        <div class="review-photos">
+          @for (image of review.images; track image) {
+            <a [href]="image" target="_blank" rel="noopener"
+              ><img
+                [src]="image"
+                alt="Ảnh đánh giá"
+                width="100"
+                height="100"
+                loading="lazy"
+            /></a>
+          }
+        </div>
+        @if (review.shopReply) {
+          <blockquote class="shop-reply">{{ review.shopReply }}</blockquote>
+        }
+        <button class="secondary" (click)="open(review)">
+          {{ review.shopReply ? "Sửa phản hồi" : "Phản hồi" }}
+        </button>
+      </article>
+    } @empty {
+      <p class="state">Chưa có đánh giá.</p>
+    }
+    @if (totalPages > 1) {
+      <div class="pagination">
+        <button [disabled]="page === 0" (click)="load(page - 1)">Trước</button
+        ><span>{{ page + 1 }} / {{ totalPages }}</span
+        ><button [disabled]="page + 1 >= totalPages" (click)="load(page + 1)">
+          Sau
+        </button>
+      </div>
+    }
+  </section>
+}
+<dialog
+  #replyDialog
+  class="admin-editor"
+  aria-labelledby="review-reply-title"
+  (cancel)="saving ? $event.preventDefault() : close()"
+>
+  <form class="panel form" [formGroup]="form" (ngSubmit)="save()">
+    <h2 id="review-reply-title">Phản hồi đánh giá</h2>
+    <p>{{ selected?.comment }}</p>
+    <label
+      >Phản hồi cửa hàng<textarea
+        rows="5"
+        formControlName="reply"
+        maxlength="1000"
+      ></textarea>
+    </label>
+    @if (replyError) {
+      <p class="error" role="alert">{{ replyError }}</p>
+    }
+    <div class="actions">
+      <button
+        type="button"
+        class="secondary"
+        [disabled]="saving"
+        (click)="close()"
+      >
+        Hủy</button
+      ><button type="submit" [disabled]="saving || form.invalid">
+        {{ saving ? "Đang lưu..." : "Lưu phản hồi" }}
+      </button>
+    </div>
+  </form>
+</dialog>

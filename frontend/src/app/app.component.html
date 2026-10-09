@@ -21,6 +21,9 @@
       >
       @if (auth.userId() !== null && auth.token()) {
         <a routerLink="/orders" routerLinkActive="active">Đơn hàng</a>
+        <a routerLink="/account/notifications" routerLinkActive="active"
+          >Thông báo ({{ notifications.unread() }})</a
+        >
         <a routerLink="/account" routerLinkActive="active">Tài khoản</a>
         @if (auth.isAdmin()) {
           <a routerLink="/admin" routerLinkActive="active">Quản trị</a>
