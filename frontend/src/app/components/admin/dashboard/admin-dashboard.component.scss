@@ -9,6 +9,9 @@
 }
 .filter-card,
 .report-table {
+  background: var(--mat-sys-surface);
+  border-color: var(--mat-sys-outline-variant);
+  border-radius: 16px;
   margin-bottom: 24px;
   padding: 20px;
 }
@@ -19,8 +22,9 @@
   gap: 16px;
 }
 .range-form mat-form-field {
-  flex: 1;
-  min-width: 180px;
+  flex: 0 1 240px;
+  width: 240px;
+  min-width: 0;
 }
 .report-note {
   color: #52627b;
@@ -49,10 +53,18 @@
 }
 .daily-table th {
   background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
 }
 .daily-table td,
 .daily-table th {
   white-space: nowrap;
+}
+.daily-table .mat-column-product,
+.daily-table .mat-column-recipient {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 150px;
 }
 mat-paginator {
   border-top: 1px solid #e2e8f0;
@@ -68,5 +80,9 @@ mat-paginator {
   .range-form {
     align-items: stretch;
     flex-direction: column;
+  }
+  .range-form mat-form-field {
+    flex: none;
+    width: 100%;
   }
 }

@@ -93,6 +93,34 @@ describe('Dashboard daily revenue pagination', () => {
     expect(report.dailyRevenue).toHaveLength(30);
   });
 
+  it('keeps full order numbers accessible and distinguishes cancelled order badges', () => {
+    setup();
+    const fixture = TestBed.createComponent(AdminDashboardComponent);
+    fixture.detectChanges();
+    const number = 'ee317126-9cc7-4b4a-b469-123456789012';
+    fixture.componentInstance.data = {
+      ...report,
+      recentOrders: [
+        {
+          id: 1,
+          orderNumber: number,
+          recipientName: 'Khách hàng',
+          phoneNumber: '0901234567',
+          createdAt: '2026-10-01T00:00:00Z',
+          total: 100,
+          status: 'CANCELLED',
+        },
+      ],
+    };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.order-number');
+    expect(link.textContent.trim()).toBe(number);
+    expect(link.getAttribute('aria-label')).toContain(number);
+    expect(
+      fixture.nativeElement.querySelector('.status-CANCELLED').textContent,
+    ).toContain('Đã hủy');
+  });
+
   it('renders paginated rows while passing all thirty days to the charts', () => {
     setup();
     const fixture = TestBed.createComponent(AdminDashboardComponent);

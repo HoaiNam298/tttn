@@ -11,9 +11,9 @@ export class VoucherService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/admin/vouchers`;
 
-  findAll(page = 0): Observable<PageResponse<Voucher>> {
+  findAll(page = 0, size = 10): Observable<PageResponse<Voucher>> {
     return this.http.get<PageResponse<Voucher>>(this.url, {
-      params: { page, size: 10 },
+      params: { page, size },
     });
   }
 

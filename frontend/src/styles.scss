@@ -4,8 +4,22 @@ html {
   @include mat.theme(
     (
       color: mat.$cyan-palette,
-      typography: Inter,
+      typography: (
+        plain-family:
+          'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      ),
       density: 0,
+    )
+  );
+  @include mat.theme-overrides(
+    (
+      primary: #0f766e,
+      on-primary: #ffffff,
+      surface: #ffffff,
+      surface-container: #f8fafc,
+      surface-container-low: #ffffff,
+      on-surface: #172033,
+      outline-variant: #e2e8f0,
     )
   );
 }
@@ -160,6 +174,56 @@ textarea:not([matInput]):focus {
   color: #047857;
   font-size: 0.75rem;
   font-weight: 700;
+}
+.status-badge {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status-PENDING {
+  background: #fffbeb;
+  color: #92400e;
+}
+.status-CONFIRMED {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.status-SHIPPING {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+.status-DELIVERED {
+  background: #ecfeff;
+  color: #0e7490;
+}
+.status-COMPLETED,
+.voucher-active {
+  background: #ecfdf5;
+  color: #047857;
+}
+.status-CANCELLED {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.voucher-inactive {
+  background: #f1f5f9;
+  color: #475569;
+}
+.order-number {
+  display: block;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #0f766e;
+  font-weight: 600;
+  text-decoration: none;
+}
+.order-number:hover {
+  text-decoration: underline;
 }
 .pagination,
 .actions,

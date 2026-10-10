@@ -3,133 +3,120 @@
     <p class="eyebrow">Quản trị</p>
     <h1>Quản lý danh mục</h1>
   </div>
-  <button (click)="openCreate()">Thêm danh mục</button>
+  <button mat-flat-button (click)="openCreate()" [disabled]="saving">
+    Thêm danh mục
+  </button>
 </div>
 @if (message) {
   <p class="success" role="status">{{ message }}</p>
 }
-<dialog
-  #editor
-  class="admin-editor category-editor"
-  aria-labelledby="category-editor-title"
-  (cancel)="onDialogCancel($event)"
->
-  <section class="panel table-panel">
-    <div class="editor-heading">
-      <h2 id="category-editor-title">
-        {{ editingId ? "Cập nhật danh mục" : "Thêm danh mục" }}
-      </h2>
+<ng-template #editor>
+  <h2 mat-dialog-title>
+    {{ editingId ? "Cập nhật danh mục" : "Thêm danh mục" }}
+  </h2>
+  <form [formGroup]="form" (ngSubmit)="create()">
+    <mat-dialog-content>
+      @if (formError) {
+        <p class="error" role="alert">{{ formError }}</p>
+      }
+      <mat-form-field appearance="outline" class="full-field">
+        <mat-label>Tên danh mục</mat-label>
+        <input
+          matInput
+          formControlName="name"
+          [readOnly]="saving"
+          maxlength="100"
+        />
+        <mat-error>Tên danh mục bắt buộc, tối đa 100 ký tự.</mat-error>
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
       <button
+        mat-button
         type="button"
-        class="secondary"
-        aria-label="Đóng popup"
-        [disabled]="saving"
-        (click)="cancelEdit()"
-      >
-        ×
-      </button>
-    </div>
-    @if (formError) {
-      <p class="error" role="alert">{{ formError }}</p>
-    }
-    <form class="inline-form" [formGroup]="form" (ngSubmit)="create()">
-      <input
-        placeholder="Tên danh mục"
-        aria-label="Tên danh mục"
-        formControlName="name"
-        [readOnly]="saving"
-      />
-      <button type="submit" [disabled]="saving">
-        {{ saving ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Thêm" }}
-      </button>
-      <button
-        type="button"
-        class="secondary"
         [disabled]="saving"
         (click)="cancelEdit()"
       >
         Hủy
       </button>
-    </form>
-    @if (form.controls.name.touched && form.controls.name.invalid) {
-      <p class="error">Tên danh mục bắt buộc, tối đa 100 ký tự.</p>
-    }
-  </section>
-</dialog>
-<form class="panel admin-filter-bar" (ngSubmit)="load(0)">
-  <input
-    name="keyword"
-    [(ngModel)]="keyword"
-    placeholder="Tìm danh mục"
-    aria-label="Tìm danh mục"
-  />
-  <label class="page-size-control"
-    >Hiển thị
-    <select
-      name="pageSize"
-      [(ngModel)]="pageSize"
-      aria-label="Số danh mục mỗi trang"
-    >
-      <option [ngValue]="10">10 / trang</option>
-      <option [ngValue]="20">20 / trang</option>
-      <option [ngValue]="50">50 / trang</option>
-    </select>
-  </label>
-  <button type="submit" [disabled]="loading">Tìm kiếm</button>
-</form>
+      <button mat-flat-button type="submit" [disabled]="saving">
+        {{ saving ? "Đang lưu..." : "Lưu danh mục" }}
+      </button>
+    </mat-dialog-actions>
+  </form>
+</ng-template>
+<mat-card appearance="outlined" class="management-card">
+  <form class="material-filters" (ngSubmit)="load(0)">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Tìm danh mục</mat-label>
+      <input matInput name="keyword" [(ngModel)]="keyword" />
+    </mat-form-field>
+    <button mat-flat-button type="submit" [disabled]="loading">Tìm kiếm</button>
+  </form>
+</mat-card>
 @if (error) {
   <p class="error" role="alert">{{ error }}</p>
 }
 @if (loading) {
-  <p class="state">Đang tải danh mục...</p>
-} @else {
-  <section class="panel table-panel">
-    <h2>Danh mục ({{ totalElements }})</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Tên danh mục</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (category of categories; track category.id) {
-            <tr>
-              <td>{{ category.id }}</td>
-              <td>{{ category.name }}</td>
-              <td>
-                <button class="link" type="button" (click)="edit(category)">
-                  Sửa</button
-                ><button
-                  class="link danger"
-                  type="button"
-                  (click)="delete(category)"
-                >
-                  Xóa
-                </button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="3" class="state">Không có danh mục phù hợp.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
-  <div class="pagination">
-    <button class="secondary" [disabled]="page === 0" (click)="load(page - 1)">
-      Trước</button
-    ><span>Trang {{ page + 1 }} / {{ totalPages || 1 }}</span
-    ><button
-      class="secondary"
-      [disabled]="page + 1 >= totalPages"
-      (click)="load(page + 1)"
-    >
-      Sau
-    </button>
-  </div>
+  <mat-progress-bar mode="indeterminate" aria-label="Đang tải danh mục" />
 }
+<mat-card
+  appearance="outlined"
+  class="management-card"
+  [attr.aria-busy]="loading"
+>
+  <h2>Danh mục ({{ totalElements }})</h2>
+  <div class="table-wrap">
+    <table mat-table [dataSource]="categories">
+      <ng-container matColumnDef="id"
+        ><th mat-header-cell *matHeaderCellDef>ID</th>
+        <td mat-cell *matCellDef="let category">
+          {{ category.id }}
+        </td></ng-container
+      >
+      <ng-container matColumnDef="name"
+        ><th mat-header-cell *matHeaderCellDef>Tên danh mục</th>
+        <td mat-cell *matCellDef="let category">
+          {{ category.name }}
+        </td></ng-container
+      >
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        <td mat-cell *matCellDef="let category" class="row-actions">
+          <button
+            mat-button
+            [disabled]="loading || saving"
+            (click)="edit(category)"
+          >
+            Sửa
+          </button>
+          <button
+            mat-button
+            class="delete-action"
+            [disabled]="loading || saving"
+            (click)="delete(category)"
+          >
+            Xóa
+          </button>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr *matNoDataRow>
+        <td colspan="3" class="state">
+          {{ loading ? "Đang tải danh mục..." : "Không có danh mục phù hợp." }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator
+    [length]="totalElements"
+    [pageIndex]="page"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[10, 20, 50]"
+    [disabled]="loading"
+    [showFirstLastButtons]="true"
+    (page)="changePage($event)"
+    aria-label="Phân trang danh mục"
+  />
+</mat-card>

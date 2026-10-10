@@ -20,6 +20,7 @@ import {
 } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { DailyRevenue } from '../../../models/daily-revenue.model';
 import { DashboardService } from '../../../services/dashboard.service';
 import { DashboardReport } from '../../../responses/dashboard.response';
@@ -34,7 +35,9 @@ function createPaginatorIntl(): MatPaginatorIntl {
   intl.firstPageLabel = 'Trang đầu';
   intl.lastPageLabel = 'Trang cuối';
   intl.getRangeLabel = (page, size, length): string => {
-    if (!length) return '0 / 0 ngày';
+    if (!length) {
+      return '0 / 0 ngày';
+    }
     return `${page * size + 1}–${Math.min((page + 1) * size, length)} / ${length} ngày`;
   };
   return intl;
@@ -54,6 +57,7 @@ function createPaginatorIntl(): MatPaginatorIntl {
     MatPaginatorModule,
     MatProgressBarModule,
     MatTableModule,
+    MatTooltipModule,
   ],
   providers: [{ provide: MatPaginatorIntl, useFactory: createPaginatorIntl }],
   templateUrl: './admin-dashboard.component.html',

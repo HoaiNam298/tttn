@@ -98,10 +98,10 @@ export class CatalogService {
     });
   }
 
-  adminReviews(page = 0): Observable<PageResponse<ProductReview>> {
+  adminReviews(page = 0, size = 10): Observable<PageResponse<ProductReview>> {
     return this.http.get<PageResponse<ProductReview>>(
       `${this.api}/admin/reviews`,
-      { params: { page, size: 10 } },
+      { params: { page, size } },
     );
   }
 

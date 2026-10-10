@@ -1,8 +1,29 @@
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+  PageEvent,
+} from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { createMaterialPaginatorIntl } from '../../shared/material-paginator-intl';
+import { MatTableModule } from '@angular/material/table';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
+  DestroyRef,
+  TemplateRef,
   OnInit,
   ViewChild,
   inject,
@@ -14,17 +35,74 @@ import { PageResponse } from '../../../responses/page.response';
 
 @Component({
   selector: 'app-admin-vouchers',
-  imports: [CommonModule, ReactiveFormsModule],
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: createMaterialPaginatorIntl },
+  ],
+  styleUrl: './admin-vouchers.component.scss',
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+    MatTableModule,
+    MatDialogModule,
+    MatCheckboxModule,
+  ],
   templateUrl: './admin-vouchers.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AdminVouchersComponent implements OnInit {
   private readonly service = inject(VoucherService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
-  @ViewChild('editor') private editor!: ElementRef<HTMLDialogElement>;
+
+  @ViewChild('editor') private editor!: TemplateRef<unknown>;
+  private readonly dialogs = inject(MatDialog);
+  private editorRef?: MatDialogRef<unknown>;
+  constructor() {
+    this.destroyRef.onDestroy(() => this.editorRef?.close());
+  }
+  private showEditor(): void {
+    const ref = this.dialogs.open(this.editor, {
+      width: '800px',
+      maxWidth: 'calc(100vw - 32px)',
+      disableClose: true,
+    });
+    this.editorRef = ref;
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.editorRef === ref) {
+          this.editorRef = undefined;
+        }
+      });
+  }
+
+  readonly columns = [
+    'code',
+    'discount',
+    'minimum',
+    'usage',
+    'expiry',
+    'active',
+    'actions',
+  ];
   result?: PageResponse<Voucher>;
   editing?: Voucher;
   page = 0;
+  pageSize = 10;
+
+  changePage(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.load(event.pageIndex);
+  }
+
   loading = false;
   saving = false;
   error = '';
@@ -81,20 +159,31 @@ export class AdminVouchersComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
-    this.service.findAll(page).subscribe({
-      next: (result) => {
-        this.result = result;
-        this.page = page;
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Không tải được voucher.';
-        this.loading = false;
-      },
-    });
+    this.service
+      .findAll(page, this.pageSize)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          if (page > 0 && page >= result.totalPages) {
+            this.loading = false;
+            this.load(Math.max(0, result.totalPages - 1));
+            return;
+          }
+          this.result = result;
+          this.page = result.number;
+          this.loading = false;
+        },
+        error: () => {
+          this.error = 'Không tải được voucher.';
+          this.loading = false;
+        },
+      });
   }
 
   open(voucher?: Voucher): void {
+    if (this.saving || this.editorRef) {
+      return;
+    }
     this.editing = voucher;
     this.editorError = '';
     this.form.reset({
@@ -112,13 +201,13 @@ export class AdminVouchersComponent implements OnInit {
       targetUserId: voucher?.targetUserId ?? null,
       active: voucher?.active ?? true,
     });
-    this.editor.nativeElement.showModal();
+    this.showEditor();
   }
 
-  close(event?: Event): void {
-    event?.preventDefault();
+  close(): void {
     if (!this.saving) {
-      this.editor.nativeElement.close();
+      this.editorRef?.close();
+      this.editorRef = undefined;
     }
   }
 
@@ -141,6 +230,7 @@ export class AdminVouchersComponent implements OnInit {
       return;
     }
     this.saving = true;
+    this.form.disable({ emitEvent: false });
     this.editorError = '';
     this.service
       .save(
@@ -153,14 +243,17 @@ export class AdminVouchersComponent implements OnInit {
         },
         this.editing?.id,
       )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.saving = false;
+          this.form.enable({ emitEvent: false });
           this.close();
           this.load();
         },
         error: (response) => {
           this.saving = false;
+          this.form.enable({ emitEvent: false });
           this.editorError =
             response.error?.message ??
             'Không lưu được voucher. Nếu dữ liệu thay đổi, tải lại trước khi sửa.';

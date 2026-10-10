@@ -1,104 +1,123 @@
-<main class="container admin">
-  <div class="page-heading">
-    <div>
-      <p class="eyebrow">Quản trị</p>
-      <h1>Quản lý đơn hàng</h1>
-    </div>
-    <a class="button-link secondary-link" routerLink="/admin">Tổng quan</a>
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">Quản trị</p>
+    <h1>Quản lý đơn hàng</h1>
   </div>
-  <section class="panel admin-filter-bar">
-    <span class="filter-total">Tổng cộng {{ totalElements }} đơn hàng</span>
-    <label class="page-size-control"
-      >Hiển thị
-      <select
-        [(ngModel)]="pageSize"
-        (ngModelChange)="load(0)"
-        aria-label="Số đơn mỗi trang"
-      >
-        <option [ngValue]="10">10 / trang</option>
-        <option [ngValue]="20">20 / trang</option>
-        <option [ngValue]="50">50 / trang</option>
-      </select>
-    </label>
-    <select
-      class="status-filter"
-      aria-label="Trạng thái đơn hàng"
-      [(ngModel)]="selectedStatus"
-      (ngModelChange)="load(0)"
-    >
-      @for (status of statuses; track status) {
-        <option [ngValue]="status">{{ status || "Tất cả trạng thái" }}</option>
-      }
-    </select>
-  </section>
-  @if (error) {
-    <p class="error">{{ error }}</p>
-  }
-  @if (loading) {
-    <p class="state">Đang tải đơn hàng...</p>
-  } @else {
-    <section class="panel table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Mã đơn</th>
-            <th>Khách hàng</th>
-            <th>Ngày đặt</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (order of items; track order.id) {
-            <tr>
-              <td>
-                <a [routerLink]="['/admin/orders', order.id]">{{
-                  order.orderNumber
-                }}</a>
-              </td>
-              <td>{{ order.recipientName }}<br />{{ order.phoneNumber }}</td>
-              <td>{{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
-              <td>{{ order.total | currency: "VND" : "symbol" : "1.0-0" }}</td>
-              <td>
-                <span class="badge">{{ order.status }}</span>
-              </td>
-              <td class="order-actions">
-                @for (status of nextStatuses(order.status); track status) {
-                  <button
-                    class="link"
-                    [class.danger]="status === 'CANCELLED'"
-                    (click)="update(order, status)"
-                  >
-                    {{ status }}
-                  </button>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="6" class="state">Không có đơn hàng phù hợp.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </section>
-    <div class="pagination">
-      <button
-        class="secondary"
-        [disabled]="page === 0"
-        (click)="load(page - 1)"
-      >
-        Trước
-      </button>
-      <span>Trang {{ page + 1 }} / {{ totalPages || 1 }}</span>
-      <button
-        class="secondary"
-        [disabled]="page + 1 >= totalPages"
-        (click)="load(page + 1)"
-      >
-        Sau
-      </button>
+  <a mat-stroked-button routerLink="/admin/dashboard">Tổng quan</a>
+</div>
+<mat-card appearance="outlined" class="management-card filter-card">
+  <div class="material-filters">
+    <div class="filter-summary">
+      <strong>{{ totalElements | number }}</strong
+      ><span>đơn hàng trong danh sách</span>
     </div>
-  }
-</main>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><mat-label>Trạng thái đơn hàng</mat-label>
+      <mat-select
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="load(0)"
+        panelClass="order-status-panel"
+      >
+        @for (status of statuses; track status) {
+          <mat-option [value]="status">{{
+            status ? statusLabel(status) : "Tất cả trạng thái"
+          }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button [disabled]="loading" (click)="load(page)">
+      Làm mới
+    </button>
+  </div>
+</mat-card>
+@if (error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+@if (loading) {
+  <mat-progress-bar mode="indeterminate" aria-label="Đang tải đơn hàng" />
+}
+<mat-card
+  appearance="outlined"
+  class="management-card"
+  [attr.aria-busy]="loading"
+>
+  <div class="table-wrap">
+    <table mat-table [dataSource]="items">
+      <ng-container matColumnDef="number"
+        ><th mat-header-cell *matHeaderCellDef>Mã đơn</th>
+        <td mat-cell *matCellDef="let row">
+          <a
+            class="order-number"
+            [routerLink]="['/admin/orders', row.id]"
+            [matTooltip]="row.orderNumber"
+            [attr.aria-label]="'Xem đơn hàng ' + row.orderNumber"
+            >{{ row.orderNumber }}</a
+          >
+        </td></ng-container
+      >
+      <ng-container matColumnDef="customer"
+        ><th mat-header-cell *matHeaderCellDef>Khách hàng</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.recipientName }}<small>{{ row.phoneNumber }}</small>
+        </td></ng-container
+      >
+      <ng-container matColumnDef="created"
+        ><th mat-header-cell *matHeaderCellDef>Ngày đặt</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.createdAt | date: "dd/MM/yyyy HH:mm" }}
+        </td></ng-container
+      >
+      <ng-container matColumnDef="total"
+        ><th mat-header-cell *matHeaderCellDef>Tổng tiền</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.total | currency: "VND" : "symbol" : "1.0-0" }}
+        </td></ng-container
+      >
+      <ng-container matColumnDef="status"
+        ><th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-badge" [ngClass]="'status-' + row.status">{{
+            statusLabel(row.status)
+          }}</span>
+        </td></ng-container
+      >
+      <ng-container matColumnDef="actions"
+        ><th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        <td mat-cell *matCellDef="let row">
+          <div class="row-actions">
+            @for (status of nextStatuses(row.status); track status) {
+              <button
+                mat-button
+                [class.delete-action]="status === 'CANCELLED'"
+                [disabled]="loading || updating.has(row.id)"
+                (click)="update(row, status)"
+              >
+                {{ statusLabel(status) }}
+              </button>
+            }
+            @if (updating.has(row.id)) {
+              <small role="status">Đang cập nhật...</small>
+            }
+          </div>
+        </td></ng-container
+      >
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr *matNoDataRow>
+        <td colspan="6" class="state">
+          {{ loading ? "Đang tải đơn hàng..." : "Không có đơn hàng phù hợp." }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator
+    [length]="totalElements"
+    [pageIndex]="page"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[10, 20, 50]"
+    [showFirstLastButtons]="true"
+    [disabled]="loading"
+    (page)="changePage($event)"
+    aria-label="Phân trang đơn hàng"
+  />
+</mat-card>

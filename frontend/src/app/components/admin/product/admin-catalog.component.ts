@@ -1,14 +1,34 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  DestroyRef,
   OnInit,
   inject,
   ChangeDetectionStrategy,
-  ElementRef,
+  TemplateRef,
   ViewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+  PageEvent,
+} from '@angular/material/paginator';
+import { createMaterialPaginatorIntl } from '../../shared/material-paginator-intl';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ProductPayload } from '../../../dtos/product-payload.dto';
 import { Category } from '../../../models/category.model';
 import { Product } from '../../../models/product.model';
@@ -17,11 +37,24 @@ import { ProductInventoryEditorComponent } from './product-inventory-editor.comp
 
 @Component({
   selector: 'app-admin-catalog',
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: createMaterialPaginatorIntl },
+  ],
+  styleUrl: './admin-catalog.component.scss',
   imports: [
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
     ProductInventoryEditorComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './admin-catalog.component.html',
@@ -29,7 +62,42 @@ import { ProductInventoryEditorComponent } from './product-inventory-editor.comp
 export class AdminCatalogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly catalog = inject(CatalogService);
-  @ViewChild('editor') private editor!: ElementRef<HTMLDialogElement>;
+  @ViewChild('editor') private editor!: TemplateRef<unknown>;
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+  private loadRevision = 0;
+  private editorRef?: MatDialogRef<unknown>;
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.editorRef?.close();
+    });
+  }
+  readonly columns = ['name', 'category', 'price', 'actions'];
+
+  changePage(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.load(event.pageIndex);
+  }
+
+  private showEditor(): void {
+    if (this.saving || this.editorRef) {
+      return;
+    }
+    const ref = this.dialog.open(this.editor, {
+      width: '760px',
+      maxWidth: 'calc(100vw - 32px)',
+      disableClose: true,
+    });
+    this.editorRef = ref;
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.editorRef === ref) {
+          this.editorRef = undefined;
+        }
+      });
+  }
 
   products: Product[] = [];
   categories: Category[] = [];
@@ -47,14 +115,13 @@ export class AdminCatalogComponent implements OnInit {
   formError = '';
 
   openCreate(): void {
+    if (this.saving) {
+      return;
+    }
     this.cancelEdit();
-    this.editor.nativeElement.showModal();
+    this.showEditor();
   }
 
-  onDialogCancel(event: Event): void {
-    event.preventDefault();
-    this.cancelEdit();
-  }
   productForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(350)]],
     price: [0, [Validators.required, Validators.min(0)]],
@@ -78,12 +145,17 @@ export class AdminCatalogComponent implements OnInit {
   }
 
   load(page = 0): void {
+    const revision = ++this.loadRevision;
     this.loading = true;
     this.error = '';
     this.catalog
       .products(this.keyword.trim(), this.categoryId, page, this.pageSize)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (value) => {
+          if (revision !== this.loadRevision) {
+            return;
+          }
           if (value.totalPages > 0 && page >= value.totalPages) {
             this.load(value.totalPages - 1);
             return;
@@ -95,6 +167,9 @@ export class AdminCatalogComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
+          if (revision !== this.loadRevision) {
+            return;
+          }
           this.error = 'Không thể tải sản phẩm.';
           this.loading = false;
         },
@@ -110,13 +185,15 @@ export class AdminCatalogComponent implements OnInit {
     }
     const payload = this.productForm.getRawValue() as ProductPayload;
     this.saving = true;
+    this.productForm.disable({ emitEvent: false });
     this.formError = '';
     const request = this.editingId
       ? this.catalog.updateProduct(this.editingId, payload)
       : this.catalog.createProduct(payload);
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.saving = false;
+        this.productForm.enable({ emitEvent: false });
         this.message = this.editingId
           ? 'Đã cập nhật sản phẩm.'
           : 'Đã tạo sản phẩm.';
@@ -125,12 +202,16 @@ export class AdminCatalogComponent implements OnInit {
       },
       error: () => {
         this.saving = false;
+        this.productForm.enable({ emitEvent: false });
         this.formError =
           'Không thể lưu sản phẩm. Vui lòng kiểm tra dữ liệu và thử lại.';
       },
     });
   }
   editProduct(product: Product): void {
+    if (this.saving) {
+      return;
+    }
     this.formError = '';
     this.editingId = product.id;
     this.productForm.setValue({
@@ -140,13 +221,14 @@ export class AdminCatalogComponent implements OnInit {
       description: product.description,
       categoryId: product.category.id,
     });
-    this.editor.nativeElement.showModal();
+    this.showEditor();
   }
   cancelEdit(): void {
     if (this.saving) {
       return;
     }
-    this.editor.nativeElement.close();
+    this.editorRef?.close();
+    this.editorRef = undefined;
     this.formError = '';
     this.editingId = undefined;
     this.productForm.reset({

@@ -3,9 +3,11 @@
     <p class="eyebrow">Khuyến mãi</p>
     <h1>Voucher</h1>
   </div>
-  <button type="button" (click)="open()">Tạo voucher</button>
+  <button mat-flat-button [disabled]="saving" (click)="open()">
+    Tạo voucher
+  </button>
 </div>
-<p>
+<p class="report-note">
   Đơn hủy được hoàn lượt sử dụng. Giảm giá áp dụng trên tiền hàng, không giảm
   phí giao hàng.
 </p>
@@ -13,168 +15,234 @@
   <p class="error" role="alert">{{ error }}</p>
 }
 @if (loading) {
-  <p class="state">Đang tải...</p>
+  <mat-progress-bar mode="indeterminate" aria-label="Đang tải voucher" />
 }
-@if (result; as data) {
-  <section class="panel table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Mã</th>
-          <th>Giảm</th>
-          <th>Đơn tối thiểu</th>
-          <th>Lượt</th>
-          <th>Hết hạn</th>
-          <th>Trạng thái</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (voucher of data.content; track voucher.id) {
-          <tr>
-            <td>
-              {{ voucher.code
-              }}<small>{{
-                voucher.targetUserId
-                  ? "Dành cho user #" + voucher.targetUserId
-                  : "Mọi khách hàng"
-              }}</small>
-            </td>
-            <td>
-              {{ voucher.amount }} {{ voucher.type === "PERCENT" ? "%" : "đ" }}
-            </td>
-            <td>
-              {{
-                voucher.minimumSubtotal | currency: "VND" : "symbol" : "1.0-0"
-              }}
-            </td>
-            <td>
-              {{ voucher.usedCount }}/{{ voucher.usageLimit }} ·
-              {{ voucher.perUserLimit }}/khách
-            </td>
-            <td>{{ voucher.endsAt | date: "dd/MM/yyyy HH:mm" }}</td>
-            <td>{{ voucher.active ? "Bật" : "Tắt" }}</td>
-            <td>
-              <button type="button" class="secondary" (click)="open(voucher)">
-                Sửa
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="7">Chưa có voucher.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </section>
-  <div class="pagination">
-    <button
-      type="button"
-      class="secondary"
-      [disabled]="loading || page === 0"
-      (click)="load(page - 1)"
-    >
-      Trước
-    </button>
-    <span
-      >Trang {{ page + 1 }}/{{ data.totalPages || 1 }} ·
-      {{ data.totalElements }} voucher</span
-    >
-    <button
-      type="button"
-      class="secondary"
-      [disabled]="loading || page + 1 >= data.totalPages"
-      (click)="load(page + 1)"
-    >
-      Sau
+<mat-card
+  appearance="outlined"
+  class="management-card"
+  [attr.aria-busy]="loading"
+>
+  <div class="page-heading">
+    <h2>Voucher ({{ result?.totalElements || 0 }})</h2>
+    <button mat-stroked-button [disabled]="loading" (click)="load()">
+      Làm mới
     </button>
   </div>
-}
-<dialog
-  #editor
-  class="admin-editor"
-  (cancel)="close($event)"
-  aria-labelledby="voucher-title"
->
-  <form class="panel form" [formGroup]="form" (ngSubmit)="save()">
-    <div class="editor-heading">
-      <h2 id="voucher-title">{{ editing ? "Sửa voucher" : "Tạo voucher" }}</h2>
-      <button
-        type="button"
-        class="secondary"
-        [disabled]="saving"
-        (click)="close()"
+  <div class="table-wrap">
+    <table mat-table [dataSource]="result?.content || []">
+      <ng-container matColumnDef="code"
+        ><th mat-header-cell *matHeaderCellDef>Mã</th>
+        <td mat-cell *matCellDef="let row">
+          <strong>{{ row.code }}</strong
+          ><small>{{
+            row.targetUserId
+              ? "Dành cho user #" + row.targetUserId
+              : "Mọi khách hàng"
+          }}</small>
+        </td></ng-container
       >
-        Đóng ×
-      </button>
-    </div>
-    @if (editorError) {
-      <p class="error" role="alert">{{ editorError }}</p>
-    }
-    <fieldset class="editor-fields" [disabled]="saving">
-      <label
-        >Mã (không đổi sau khi tạo)<input
-          formControlName="code"
-          [readOnly]="!!editing"
-      /></label>
-      <label
-        >Loại giảm<select formControlName="type">
-          <option value="FIXED">Số tiền cố định</option>
-          <option value="PERCENT">Phần trăm</option>
-        </select></label
+      <ng-container matColumnDef="discount"
+        ><th mat-header-cell *matHeaderCellDef>Giảm</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.amount | number }} {{ row.type === "PERCENT" ? "%" : "đ" }}
+        </td></ng-container
       >
-      <label
-        >Giá trị giảm<input
-          type="number"
-          min="0.01"
-          step="0.01"
-          formControlName="amount"
-      /></label>
-      <label
-        >Đơn tối thiểu (đ)<input
-          type="number"
-          min="0"
-          step="0.01"
-          formControlName="minimumSubtotal"
-      /></label>
-      <label
-        >Giảm tối đa (đ)<input
-          type="number"
-          min="0.01"
-          step="0.01"
-          formControlName="maximumDiscount"
-      /></label>
-      <label
-        >Bắt đầu<input type="datetime-local" formControlName="startsAt"
-      /></label>
-      <label
-        >Kết thúc<input type="datetime-local" formControlName="endsAt"
-      /></label>
-      <label
-        >Tổng lượt<input type="number" min="1" formControlName="usageLimit"
-      /></label>
-      <label
-        >Lượt mỗi khách<input
-          type="number"
-          min="1"
-          formControlName="perUserLimit"
-      /></label>
-      <label
-        >User ID được dùng (để trống: mọi khách)<input
-          type="number"
-          min="1"
-          formControlName="targetUserId"
-      /></label>
-      <label class="checkbox-label"
-        ><input type="checkbox" formControlName="active" />Đang hoạt động</label
+      <ng-container matColumnDef="minimum"
+        ><th mat-header-cell *matHeaderCellDef>Đơn tối thiểu</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.minimumSubtotal | currency: "VND" : "symbol" : "1.0-0" }}
+        </td></ng-container
       >
-    </fieldset>
-    @if (form.touched && form.invalid) {
-      <p class="error">Kiểm tra mã, thời hạn, giá trị và số lượt.</p>
-    }
-    <button [disabled]="saving || form.invalid">
-      {{ saving ? "Đang lưu..." : "Lưu voucher" }}
-    </button>
+      <ng-container matColumnDef="usage"
+        ><th mat-header-cell *matHeaderCellDef>Lượt</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.usedCount }}/{{ row.usageLimit
+          }}<small>{{ row.perUserLimit }}/khách</small>
+        </td></ng-container
+      >
+      <ng-container matColumnDef="expiry"
+        ><th mat-header-cell *matHeaderCellDef>Hết hạn</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.endsAt | date: "dd/MM/yyyy HH:mm" }}
+        </td></ng-container
+      >
+      <ng-container matColumnDef="active"
+        ><th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+        <td mat-cell *matCellDef="let row">
+          <span
+            class="status-badge"
+            [class.voucher-active]="row.active"
+            [class.voucher-inactive]="!row.active"
+            >{{ row.active ? "Đang bật" : "Đã tắt" }}</span
+          >
+        </td></ng-container
+      >
+      <ng-container matColumnDef="actions"
+        ><th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-button [disabled]="saving || loading" (click)="open(row)">
+            Sửa
+          </button>
+        </td></ng-container
+      >
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr *matNoDataRow>
+        <td colspan="7" class="state">
+          {{ loading ? "Đang tải voucher..." : "Chưa có voucher." }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator
+    [length]="result?.totalElements || 0"
+    [pageIndex]="page"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[10, 20, 50]"
+    [showFirstLastButtons]="true"
+    [disabled]="loading"
+    (page)="changePage($event)"
+    aria-label="Phân trang voucher"
+  />
+</mat-card>
+<ng-template #editor>
+  <h2 mat-dialog-title>{{ editing ? "Sửa voucher" : "Tạo voucher" }}</h2>
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <mat-dialog-content>
+      @if (editorError) {
+        <p class="error" role="alert">{{ editorError }}</p>
+      }
+      <div class="editor-grid">
+        <mat-form-field appearance="outline"
+          ><mat-label>Mã (không đổi sau khi tạo)</mat-label
+          ><input
+            matInput
+            type="text"
+            formControlName="code"
+            maxlength="40"
+            [readOnly]="saving || !!editing"
+          /><mat-error
+            >Vui lòng nhập mã (không đổi sau khi tạo) hợp lệ.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Loại giảm</mat-label
+          ><mat-select formControlName="type"
+            ><mat-option value="FIXED">Số tiền cố định</mat-option
+            ><mat-option value="PERCENT">Phần trăm</mat-option></mat-select
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Giá trị giảm</mat-label
+          ><input
+            matInput
+            type="number"
+            formControlName="amount"
+            min="0.01"
+            step="0.01"
+            [readOnly]="saving"
+          /><mat-error
+            >Vui lòng nhập giá trị giảm hợp lệ.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Đơn tối thiểu (đ)</mat-label
+          ><input
+            matInput
+            type="number"
+            formControlName="minimumSubtotal"
+            min="0"
+            step="0.01"
+            [readOnly]="saving"
+          /><mat-error
+            >Vui lòng nhập đơn tối thiểu (đ) hợp lệ.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Giảm tối đa (đ)</mat-label
+          ><input
+            matInput
+            type="number"
+            formControlName="maximumDiscount"
+            min="0.01"
+            step="0.01"
+            [readOnly]="saving"
+          /><mat-error
+            >Vui lòng nhập giảm tối đa (đ) hợp lệ.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Bắt đầu</mat-label
+          ><input
+            matInput
+            type="datetime-local"
+            formControlName="startsAt"
+            [readOnly]="saving"
+          /><mat-error>Vui lòng nhập bắt đầu hợp lệ.</mat-error></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Kết thúc</mat-label
+          ><input
+            matInput
+            type="datetime-local"
+            formControlName="endsAt"
+            [readOnly]="saving"
+          /><mat-error
+            >Vui lòng nhập kết thúc hợp lệ.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Tổng lượt</mat-label
+          ><input
+            matInput
+            type="number"
+            formControlName="usageLimit"
+            min="1"
+            step="1"
+            [readOnly]="saving"
+          /><mat-error
+            >Vui lòng nhập tổng lượt hợp lệ.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>Lượt mỗi khách</mat-label
+          ><input
+            matInput
+            type="number"
+            formControlName="perUserLimit"
+            min="1"
+            step="1"
+            [readOnly]="saving"
+          /><mat-error
+            >Vui lòng nhập lượt mỗi khách hợp lệ.</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field appearance="outline"
+          ><mat-label>User ID (trống: mọi khách)</mat-label
+          ><input
+            matInput
+            type="number"
+            formControlName="targetUserId"
+            min="1"
+            step="1"
+            [readOnly]="saving"
+          /><mat-error
+            >Vui lòng nhập user id (trống: mọi khách) hợp lệ.</mat-error
+          ></mat-form-field
+        >
+      </div>
+      <mat-checkbox formControlName="active">Đang hoạt động</mat-checkbox>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end"
+      ><button mat-button type="button" [disabled]="saving" (click)="close()">
+        Hủy</button
+      ><button
+        mat-flat-button
+        type="submit"
+        [disabled]="saving || form.invalid"
+      >
+        {{ saving ? "Đang lưu..." : "Lưu voucher" }}
+      </button></mat-dialog-actions
+    >
   </form>
-</dialog>
+</ng-template>
