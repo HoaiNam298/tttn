@@ -1,0 +1,226 @@
+<div class="dashboard-charts">
+  <mat-card
+    appearance="outlined"
+    class="chart-card revenue-chart"
+    aria-labelledby="revenue-chart-title"
+  >
+    <h2 id="revenue-chart-title">Xu hướng doanh thu</h2>
+    <p class="chart-caption">
+      {{ report.from | date: "dd/MM/yyyy" }} –
+      {{ report.to | date: "dd/MM/yyyy" }} · Tiền hàng sau voucher, không gồm
+      phí vận chuyển.
+    </p>
+    @if (hasRevenueData) {
+      <div class="chart-viewport">
+        <svg
+          class="plot"
+          viewBox="0 0 640 290"
+          role="img"
+          aria-label="Biểu đồ đường doanh thu theo ngày hoàn thành đơn, đơn vị đồng"
+        >
+          <text x="80" y="22" class="axis-label">VND</text>
+          @for (tick of revenueTicks; track tick.position) {
+            <line
+              x1="80"
+              x2="600"
+              [attr.y1]="tick.position"
+              [attr.y2]="tick.position"
+              class="grid-line"
+            />
+            <text
+              x="68"
+              [attr.y]="tick.position + 4"
+              text-anchor="end"
+              class="axis-label"
+            >
+              {{ tick.label }}
+            </text>
+          }
+          @for (tick of dateTicks; track tick.position) {
+            <text
+              [attr.x]="tick.position"
+              y="268"
+              text-anchor="middle"
+              class="axis-label"
+            >
+              {{ tick.label }}
+            </text>
+          }
+          <polyline [attr.points]="linePoints" class="revenue-line" />
+          @for (point of points; track point.date) {
+            <circle
+              [attr.cx]="point.x"
+              [attr.cy]="point.y"
+              r="4"
+              class="revenue-point"
+              tabindex="0"
+              role="img"
+              [attr.aria-label]="point.label"
+            >
+              <title>{{ point.label }}</title>
+            </circle>
+          }
+        </svg>
+      </div>
+      <small class="chart-hint"
+        >Di chuột hoặc dùng Tab vào điểm để xem số liệu. Bảng doanh thu chi tiết
+        ở bên dưới.</small
+      >
+    } @else {
+      <p class="chart-empty">
+        Chưa có đơn hoàn thành trong khoảng ngày đã chọn.
+      </p>
+    }
+  </mat-card>
+  <mat-card
+    appearance="outlined"
+    class="chart-card"
+    aria-labelledby="products-chart-title"
+  >
+    <h2 id="products-chart-title">Top 5 sản phẩm bán chạy</h2>
+    <p class="chart-caption">
+      Theo số lượng trong đơn hoàn thành · Khoảng ngày đã chọn.
+    </p>
+    @if (bars.length) {
+      <div class="chart-viewport">
+        <svg
+          class="plot"
+          viewBox="0 0 640 290"
+          role="img"
+          aria-label="Biểu đồ cột số lượng sản phẩm bán chạy"
+        >
+          <text x="80" y="24" class="axis-label">Số lượng</text>
+          @for (tick of quantityTicks; track tick.position) {
+            <line
+              x1="80"
+              x2="600"
+              [attr.y1]="tick.position"
+              [attr.y2]="tick.position"
+              class="grid-line"
+            />
+            <text
+              x="68"
+              [attr.y]="tick.position + 4"
+              text-anchor="end"
+              class="axis-label"
+            >
+              {{ tick.label }}
+            </text>
+          }
+          @for (bar of bars; track bar.productId) {
+            <rect
+              [attr.x]="bar.x"
+              [attr.y]="bar.y"
+              [attr.width]="bar.width"
+              [attr.height]="bar.height"
+              rx="5"
+              class="product-bar"
+              tabindex="0"
+              role="img"
+              [attr.aria-label]="bar.label"
+            >
+              <title>{{ bar.label }}</title>
+            </rect>
+            <text
+              [attr.x]="bar.x + bar.width / 2"
+              [attr.y]="bar.y - 10"
+              text-anchor="middle"
+              class="bar-value"
+            >
+              {{ bar.quantity }}
+            </text>
+            <text
+              [attr.x]="bar.x + bar.width / 2"
+              y="268"
+              text-anchor="middle"
+              class="axis-label"
+            >
+              #{{ $index + 1 }}
+            </text>
+          }
+        </svg>
+      </div>
+      <ol class="product-legend">
+        @for (bar of bars; track bar.productId) {
+          <li>
+            <a [routerLink]="['/products', bar.productId]">{{ bar.name }}</a
+            ><strong>{{ bar.quantity | number }}</strong>
+          </li>
+        }
+      </ol>
+    } @else {
+      <p class="chart-empty">Chưa có sản phẩm bán trong khoảng ngày đã chọn.</p>
+    }
+  </mat-card>
+  <mat-card
+    appearance="outlined"
+    class="chart-card"
+    aria-labelledby="status-chart-title"
+  >
+    <h2 id="status-chart-title">Trạng thái đơn hàng</h2>
+    <p class="chart-caption">
+      Tất cả thời gian · Không áp dụng khoảng ngày doanh thu.
+    </p>
+    @if (totalOrders) {
+      <svg
+        class="donut"
+        viewBox="0 0 200 200"
+        role="img"
+        [attr.aria-label]="
+          'Phân bố trạng thái của ' + totalOrders + ' đơn hàng'
+        "
+      >
+        <circle cx="100" cy="100" r="72" class="donut-track" />
+        @for (segment of segments; track segment.status) {
+          @if (segment.count) {
+            <circle
+              cx="100"
+              cy="100"
+              r="72"
+              fill="none"
+              stroke-width="24"
+              [attr.stroke]="segment.color"
+              [attr.stroke-dasharray]="segment.dashArray"
+              [attr.stroke-dashoffset]="segment.dashOffset"
+              transform="rotate(-90 100 100)"
+            >
+              <title>
+                {{ segment.label }}: {{ segment.count }} đơn ({{
+                  segment.percentage | number: "1.1-1"
+                }}%)
+              </title>
+            </circle>
+          }
+        }
+        <text x="100" y="100" text-anchor="middle" class="donut-total">
+          {{ totalOrders | number }}
+        </text>
+        <text x="100" y="122" text-anchor="middle" class="donut-caption">
+          đơn hàng
+        </text>
+      </svg>
+      <ul class="status-legend">
+        @for (segment of segments; track segment.status) {
+          <li>
+            <span
+              ><svg width="12" height="12" aria-hidden="true">
+                <circle cx="6" cy="6" r="5" [attr.fill]="segment.color" /></svg
+              ><a
+                routerLink="/admin/orders"
+                [queryParams]="{ status: segment.status }"
+                >{{ segment.label }}</a
+              ></span
+            ><strong
+              >{{ segment.count | number }}
+              <small
+                >({{ segment.percentage | number: "1.1-1" }}%)</small
+              ></strong
+            >
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="chart-empty">Chưa có đơn hàng để thống kê trạng thái.</p>
+    }
+  </mat-card>
+</div>

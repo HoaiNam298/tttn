@@ -1,0 +1,149 @@
+:host {
+  display: block;
+  margin-bottom: 28px;
+}
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.chart-card {
+  padding: 20px;
+  margin: 0;
+  min-width: 0;
+}
+.revenue-chart {
+  grid-column: 1 / -1;
+}
+h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+.chart-caption,
+.chart-hint {
+  color: #52627b;
+  line-height: 1.6;
+}
+.chart-caption {
+  margin: 0 0 16px;
+}
+.chart-viewport {
+  overflow-x: auto;
+}
+.plot {
+  max-height: 300px;
+  display: block;
+  width: 100%;
+  min-width: 380px;
+}
+.axis-label {
+  fill: #52627b;
+  font-size: 13px;
+}
+.grid-line {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+.revenue-line {
+  fill: none;
+  stroke: #0f766e;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.revenue-point {
+  fill: #0f766e;
+  stroke: white;
+  stroke-width: 1.5;
+}
+.revenue-point:hover,
+.revenue-point:focus {
+  r: 6;
+  fill: #115e59;
+}
+.product-bar {
+  fill: #0f766e;
+}
+.product-bar:hover,
+.product-bar:focus {
+  fill: #115e59;
+}
+.bar-value {
+  fill: #18243c;
+  font-size: 16px;
+  font-weight: 700;
+}
+.product-legend {
+  padding-left: 24px;
+  margin-bottom: 0;
+}
+.product-legend li {
+  padding: 6px 0;
+  overflow-wrap: anywhere;
+}
+.product-legend strong {
+  margin-left: 12px;
+  color: #0f766e;
+}
+.donut {
+  display: block;
+  width: min(100%, 240px);
+  margin: 0 auto 20px;
+}
+.donut-track {
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 24;
+}
+.donut-total {
+  fill: #18243c;
+  font-size: 28px;
+  font-weight: 700;
+}
+.donut-caption {
+  fill: #52627b;
+  font-size: 13px;
+}
+.status-legend {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.status-legend li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+.status-legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-legend svg {
+  flex-shrink: 0;
+}
+.status-legend strong {
+  white-space: nowrap;
+}
+.status-legend small {
+  color: #52627b;
+  font-weight: 400;
+}
+.chart-empty {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  padding: 20px;
+  text-align: center;
+  color: #52627b;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+@media (max-width: 900px) {
+  .dashboard-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

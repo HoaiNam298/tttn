@@ -1,3 +1,15 @@
+@use "@angular/material" as mat;
+
+html {
+  @include mat.theme(
+    (
+      color: mat.$cyan-palette,
+      typography: Inter,
+      density: 0,
+    )
+  );
+}
+
 :root {
   color: #172033;
   background: #f5f7fb;
@@ -22,7 +34,7 @@ select,
 textarea {
   font: inherit;
 }
-button {
+button:not([class*="mat-"]) {
   border: 0;
   border-radius: 0.7rem;
   padding: 0.72rem 1rem;
@@ -31,7 +43,7 @@ button {
   font-weight: 700;
   cursor: pointer;
 }
-button:disabled {
+button:not([class*="mat-"]):disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -79,18 +91,18 @@ button.secondary {
   gap: 0.75rem;
   margin-bottom: 2rem;
 }
-input,
-select,
-textarea {
+input:not([matInput]),
+select:not([class*="mat-"]),
+textarea:not([matInput]) {
   width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 0.65rem;
   padding: 0.72rem 0.8rem;
   background: white;
 }
-input:focus,
-select:focus,
-textarea:focus {
+input:not([matInput]):focus,
+select:not([class*="mat-"]):focus,
+textarea:not([matInput]):focus {
   border-color: #0f766e;
   outline: 3px solid rgba(15, 118, 110, 0.12);
 }

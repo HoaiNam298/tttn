@@ -3,22 +3,33 @@
     <p class="eyebrow">Dashboard</p>
     <h1>Tổng quan cửa hàng</h1>
   </div>
-  <button class="secondary" [disabled]="loading" (click)="load()">
+  <button mat-stroked-button [disabled]="loading" (click)="load()">
     Làm mới
   </button>
 </div>
-<form class="panel actions" [formGroup]="range" (ngSubmit)="load()">
-  <label>Từ ngày<input type="date" formControlName="from" /></label
-  ><label>Đến ngày<input type="date" formControlName="to" /></label
-  ><button type="submit" [disabled]="loading || range.invalid">
-    Xem báo cáo
-  </button>
-</form>
+<mat-card appearance="outlined" class="filter-card">
+  <form class="range-form" [formGroup]="range" (ngSubmit)="load()">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Từ ngày</mat-label>
+      <input matInput type="date" formControlName="from" />
+      <mat-error>Vui lòng chọn ngày bắt đầu.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Đến ngày</mat-label>
+      <input matInput type="date" formControlName="to" />
+      <mat-error>Vui lòng chọn ngày kết thúc.</mat-error>
+    </mat-form-field>
+    <button mat-flat-button type="submit" [disabled]="loading || range.invalid">
+      Xem báo cáo
+    </button>
+  </form>
+</mat-card>
 @if (error) {
   <p class="error" role="alert">{{ error }}</p>
 }
 @if (loading) {
-  <p class="state">Đang tải số liệu...</p>
+  <mat-progress-bar mode="indeterminate" aria-label="Đang tải báo cáo" />
+  <p class="state" role="status">Đang tải số liệu...</p>
 } @else if (data; as report) {
   <p>
     Doanh thu theo ngày hoàn thành đơn (giờ Việt Nam), đã trừ voucher, không
@@ -31,8 +42,8 @@
       ước tính từ dữ liệu trước migration.
     </p>
   }
-  <section class="dashboard-stats">
-    <div class="panel stat-card">
+  <section class="dashboard-stats metrics">
+    <mat-card appearance="outlined" class="stat-card">
       <span>Doanh thu tiền hàng</span
       ><strong>{{
         report.revenue | currency: "VND" : "symbol" : "1.0-0"
@@ -40,128 +51,152 @@
       ><small
         >{{ report.completedOrders }} đơn hoàn thành trong khoảng ngày</small
       >
-    </div>
-    <a class="panel stat-card" routerLink="/admin/products"
+    </mat-card>
+    <mat-card appearance="outlined" class="stat-card"
       ><span>Sản phẩm</span><strong>{{ report.productCount | number }}</strong
-      ><small>{{ report.categoryCount }} danh mục</small></a
-    ><a class="panel stat-card" routerLink="/admin/orders"
+      ><small>{{ report.categoryCount }} danh mục</small
+      ><a mat-button routerLink="/admin/products"
+        >Quản lý sản phẩm →</a
+      ></mat-card
+    ><mat-card appearance="outlined" class="stat-card"
       ><span>Tổng đơn hàng</span
       ><strong>{{ report.orderCount | number }}</strong
-      ><small>Tất cả thời gian</small></a
+      ><small>Tất cả thời gian</small
+      ><a mat-button routerLink="/admin/orders">Xem đơn hàng →</a></mat-card
     >
   </section>
   <section class="dashboard-stats">
     @for (status of processingStates; track status) {
-      <a
-        class="panel stat-card"
-        routerLink="/admin/orders"
-        [queryParams]="{ status }"
+      <mat-card appearance="outlined" class="stat-card"
         ><span>{{ labels[status] }}</span
         ><strong>{{ report.statusCounts[status] || 0 }}</strong
-        ><small>Xem đơn cần xử lý →</small></a
+        ><a mat-button routerLink="/admin/orders" [queryParams]="{ status }"
+          >Xem đơn cần xử lý →</a
+        ></mat-card
       >
     }
   </section>
-  <section class="panel table-panel">
+  <app-dashboard-charts [report]="report" />
+  <mat-card appearance="outlined" class="report-table">
     <h2>Sản phẩm bán chạy</h2>
     <p>
       Chỉ đơn hoàn thành trong khoảng ngày; giá trị sản phẩm trước voucher,
       không tính phí giao hàng.
     </p>
     <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Sản phẩm</th>
-            <th>Số lượng</th>
-            <th>Giá trị tiền hàng</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (product of report.topProducts; track product.productId) {
-            <tr>
-              <td>
-                <a [routerLink]="['/products', product.productId]">{{
-                  product.productName
-                }}</a>
-              </td>
-              <td>{{ product.quantity }}</td>
-              <td>
-                {{ product.grossSales | currency: "VND" : "symbol" : "1.0-0" }}
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="3" class="state">
-                Chưa có sản phẩm bán trong khoảng ngày.
-              </td>
-            </tr>
-          }
-        </tbody>
+      <table mat-table [dataSource]="report.topProducts" class="daily-table">
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef>Sản phẩm</th>
+          <td mat-cell *matCellDef="let row">
+            <a [routerLink]="['/products', row.productId]">{{
+              row.productName
+            }}</a>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="quantity">
+          <th mat-header-cell *matHeaderCellDef>Số lượng</th>
+          <td mat-cell *matCellDef="let row">{{ row.quantity }}</td>
+        </ng-container>
+        <ng-container matColumnDef="grossSales">
+          <th mat-header-cell *matHeaderCellDef>Giá trị tiền hàng</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.grossSales | currency: "VND" : "symbol" : "1.0-0" }}
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="productColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: productColumns"></tr>
+        <tr *matNoDataRow>
+          <td colspan="3" class="state">
+            Chưa có sản phẩm bán trong khoảng ngày.
+          </td>
+        </tr>
       </table>
     </div>
-  </section>
-  <section class="panel table-panel">
+  </mat-card>
+  <mat-card appearance="outlined" class="report-table">
     <h2>Doanh thu theo ngày</h2>
+    <p class="report-note">
+      Phân trang bảng dữ liệu; biểu đồ phía trên vẫn hiển thị toàn bộ khoảng
+      ngày.
+    </p>
     <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Ngày</th>
-            <th>Đơn hoàn thành</th>
-            <th>Doanh thu</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (day of report.dailyRevenue; track day.date) {
-            <tr>
-              <td>{{ day.date | date: "dd/MM/yyyy" }}</td>
-              <td>{{ day.completedOrders }}</td>
-              <td>{{ day.revenue | currency: "VND" : "symbol" : "1.0-0" }}</td>
-            </tr>
-          }
-        </tbody>
+      <table mat-table [dataSource]="dailyRows" class="daily-table">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Ngày</th>
+          <td mat-cell *matCellDef="let day">
+            {{ day.date | date: "dd/MM/yyyy" }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="orders">
+          <th mat-header-cell *matHeaderCellDef>Đơn hoàn thành</th>
+          <td mat-cell *matCellDef="let day">{{ day.completedOrders }}</td>
+        </ng-container>
+        <ng-container matColumnDef="revenue">
+          <th mat-header-cell *matHeaderCellDef>Doanh thu</th>
+          <td mat-cell *matCellDef="let day">
+            {{ day.revenue | currency: "VND" : "symbol" : "1.0-0" }}
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="dailyColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: dailyColumns"></tr>
+        <tr *matNoDataRow>
+          <td colspan="3" class="state">Chưa có dữ liệu doanh thu.</td>
+        </tr>
       </table>
     </div>
-  </section>
-  <section class="panel table-panel">
+    <mat-paginator
+      [length]="report.dailyRevenue.length"
+      [pageIndex]="dailyPageIndex"
+      [pageSize]="dailyPageSize"
+      [pageSizeOptions]="[7, 14, 30]"
+      [showFirstLastButtons]="true"
+      (page)="changeDailyPage($event)"
+      aria-label="Phân trang doanh thu theo ngày"
+    />
+  </mat-card>
+  <mat-card appearance="outlined" class="report-table">
     <div class="page-heading">
       <h2>Đơn hàng gần đây</h2>
       <a routerLink="/admin/orders">Xem tất cả →</a>
     </div>
     <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Mã đơn</th>
-            <th>Khách hàng</th>
-            <th>Ngày đặt</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (order of report.recentOrders; track order.id) {
-            <tr>
-              <td>
-                <a [routerLink]="['/admin/orders', order.id]">{{
-                  order.orderNumber
-                }}</a>
-              </td>
-              <td>{{ order.recipientName }}</td>
-              <td>{{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
-              <td>{{ order.total | currency: "VND" : "symbol" : "1.0-0" }}</td>
-              <td>
-                <span class="badge">{{ labels[order.status] }}</span>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="5" class="state">Chưa có đơn hàng.</td>
-            </tr>
-          }
-        </tbody>
+      <table mat-table [dataSource]="report.recentOrders" class="daily-table">
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef>Mã đơn</th>
+          <td mat-cell *matCellDef="let row">
+            <a [routerLink]="['/admin/orders', row.id]">{{
+              row.orderNumber
+            }}</a>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="recipient">
+          <th mat-header-cell *matHeaderCellDef>Khách hàng</th>
+          <td mat-cell *matCellDef="let row">{{ row.recipientName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef>Ngày đặt</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.createdAt | date: "dd/MM/yyyy HH:mm" }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef>Tổng tiền</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.total | currency: "VND" : "symbol" : "1.0-0" }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="badge">{{ statusLabel(row.status) }}</span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="recentColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: recentColumns"></tr>
+        <tr *matNoDataRow>
+          <td colspan="5" class="state">Chưa có đơn hàng.</td>
+        </tr>
       </table>
     </div>
-  </section>
+  </mat-card>
 }

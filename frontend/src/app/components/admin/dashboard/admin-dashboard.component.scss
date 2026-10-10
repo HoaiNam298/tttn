@@ -1,0 +1,72 @@
+:host {
+  display: block;
+}
+.metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.page-heading h1 {
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+}
+.filter-card,
+.report-table {
+  margin-bottom: 24px;
+  padding: 20px;
+}
+.range-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.range-form mat-form-field {
+  flex: 1;
+  min-width: 180px;
+}
+.report-note {
+  color: #52627b;
+  line-height: 1.6;
+}
+.dashboard-stats {
+  gap: 16px;
+}
+.stat-card {
+  padding: 20px;
+  box-shadow: none;
+}
+.stat-card strong {
+  font-size: clamp(1.5rem, 2vw, 2rem);
+}
+.stat-card a {
+  margin-top: 12px;
+  align-self: flex-start;
+}
+.report-table h2 {
+  font-size: 20px;
+  margin-top: 0;
+}
+.daily-table {
+  width: 100%;
+}
+.daily-table th {
+  background: #f1f5f9;
+}
+.daily-table td,
+.daily-table th {
+  white-space: nowrap;
+}
+mat-paginator {
+  border-top: 1px solid #e2e8f0;
+}
+@media (max-width: 600px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  .filter-card,
+  .report-table {
+    padding: 16px;
+  }
+  .range-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
