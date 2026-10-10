@@ -1,3 +1,9 @@
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -13,8 +19,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OrderService } from '../../services/order.service';
 
 @Component({
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: createMaterialPaginatorIntl },
+  ],
   selector: 'app-order-history',
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatProgressBarModule,
+    MatPaginatorModule,
+  ],
   templateUrl: './order-history.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './order-history.component.scss',
@@ -44,6 +60,7 @@ export class OrderHistoryComponent implements OnInit {
   items: OrderSummary[] = [];
   page = 0;
   totalPages = 0;
+  totalElements = 0;
   loading = false;
   error = '';
 
@@ -68,6 +85,7 @@ export class OrderHistoryComponent implements OnInit {
         this.items = response.content;
         this.page = response.number;
         this.totalPages = response.totalPages;
+        this.totalElements = response.totalElements;
         this.loading = false;
       });
     this.load();

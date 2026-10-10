@@ -1,3 +1,5 @@
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -11,7 +13,7 @@ import { OrderService } from '../../services/order.service';
 
 @Component({
   selector: 'app-order-success',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatCardModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './order-success.component.html',
 })

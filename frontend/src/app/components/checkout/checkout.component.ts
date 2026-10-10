@@ -20,12 +20,31 @@ import { CheckoutAttempt } from '../../models/checkout-attempt.model';
 import { CreateOrderPayload } from '../../dtos/create-order.dto';
 import { CheckoutQuote } from '../../responses/checkout-quote.response';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-checkout',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressBarModule,
+    MatDividerModule,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './checkout.component.html',
+  styleUrl: './checkout.component.scss',
 })
 export class CheckoutComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -48,8 +67,10 @@ export class CheckoutComponent implements OnInit {
   private source = '';
   private readonly attemptKey = `shopapp_checkout_attempt_${this.auth.session()?.user.id}`;
 
-  selectAddress(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
+  selectAddress(id: number): void {
+    if (this.submitting || this.pending) {
+      return;
+    }
     const address = this.addresses.find((item) => item.id === id);
     if (address) {
       this.form.patchValue({
@@ -106,6 +127,7 @@ export class CheckoutComponent implements OnInit {
         productId <= 0 ||
         !Number.isInteger(quantity) ||
         quantity < 1 ||
+        quantity > 100 ||
         (variantId != null && (!Number.isInteger(variantId) || variantId < 1)))
     ) {
       this.error = 'Thông tin mua ngay không hợp lệ.';
@@ -137,23 +159,36 @@ export class CheckoutComponent implements OnInit {
     if (this.pending) {
       this.form.patchValue(this.pending.payload);
     }
-    this.addressService.findMine().subscribe({
-      next: (addresses) => {
-        this.addresses = addresses;
-        const defaultAddress = addresses.find((item) => item.defaultAddress);
-        if (defaultAddress && !this.pending && !this.form.dirty) {
-          this.form.patchValue({
-            recipientName: defaultAddress.recipientName,
-            phoneNumber: defaultAddress.phoneNumber,
-            shippingAddress: defaultAddress.shippingAddress,
-          });
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (!this.pending) {
+          this.invalidateQuote();
         }
-      },
-      error: () => {
-        this.addressError =
-          'Không thể tải sổ địa chỉ. Bạn vẫn có thể nhập địa chỉ trực tiếp.';
-      },
-    });
+      });
+    if (this.pending) {
+      this.form.disable({ emitEvent: false });
+    }
+    this.addressService
+      .findMine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (addresses) => {
+          this.addresses = addresses;
+          const defaultAddress = addresses.find((item) => item.defaultAddress);
+          if (defaultAddress && !this.pending && !this.form.dirty) {
+            this.form.patchValue({
+              recipientName: defaultAddress.recipientName,
+              phoneNumber: defaultAddress.phoneNumber,
+              shippingAddress: defaultAddress.shippingAddress,
+            });
+          }
+        },
+        error: () => {
+          this.addressError =
+            'Không thể tải sổ địa chỉ. Bạn vẫn có thể nhập địa chỉ trực tiếp.';
+        },
+      });
     const request = this.pending
       ? forkJoin(
           this.pending.payload.items.map((item) =>
@@ -171,7 +206,7 @@ export class CheckoutComponent implements OnInit {
             .product(productId)
             .pipe(map((product) => [toCartLine(product, quantity, variantId)]))
         : this.cart.lines(true);
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (lines) => {
         this.lines = lines;
         this.loading = false;
@@ -196,6 +231,7 @@ export class CheckoutComponent implements OnInit {
   submit(): void {
     if (
       this.form.invalid ||
+      this.loading ||
       (!this.pending && this.lines.length === 0) ||
       this.submitting
     ) {
@@ -225,30 +261,35 @@ export class CheckoutComponent implements OnInit {
       sessionStorage.setItem(this.attemptKey, JSON.stringify(this.pending));
     }
     this.submitting = true;
+    this.form.disable({ emitEvent: false });
     this.error = '';
-    this.orders.create(this.pending.payload).subscribe({
-      next: (order) => {
-        if (!this.buyNow) {
-          this.cart.removePurchased(this.pending!.payload.items);
-        }
-        sessionStorage.removeItem(this.attemptKey);
-        void this.router.navigate(['/orders', order.id, 'success']);
-      },
-      error: (response) => {
-        this.error =
-          response.error?.message ?? 'Đặt hàng thất bại. Vui lòng thử lại.';
-        this.submitting = false;
-        if (
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 408
-        ) {
-          this.pending = undefined;
-          this.invalidateQuote();
+    this.orders
+      .create(this.pending.payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (order) => {
+          if (!this.buyNow) {
+            this.cart.removePurchased(this.pending!.payload.items);
+          }
           sessionStorage.removeItem(this.attemptKey);
-        }
-      },
-    });
+          void this.router.navigate(['/orders', order.id, 'success']);
+        },
+        error: (response) => {
+          this.error =
+            response.error?.message ?? 'Đặt hàng thất bại. Vui lòng thử lại.';
+          this.submitting = false;
+          if (
+            response.status >= 400 &&
+            response.status < 500 &&
+            response.status !== 408
+          ) {
+            this.pending = undefined;
+            this.form.enable({ emitEvent: false });
+            this.invalidateQuote();
+            sessionStorage.removeItem(this.attemptKey);
+          }
+        },
+      });
   }
 
   invalidateQuote(): void {

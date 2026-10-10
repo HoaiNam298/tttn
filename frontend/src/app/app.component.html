@@ -1,57 +1,65 @@
 @if (!router.url.startsWith("/admin")) {
   <header class="site-header">
-    <a class="brand" routerLink="/">ShopApp</a>
-    <form
-      class="header-search"
-      [formGroup]="searchForm"
-      (ngSubmit)="search()"
-      role="search"
-    >
-      <input
-        formControlName="keyword"
-        aria-label="Tìm sản phẩm"
-        placeholder="Bạn đang tìm sản phẩm gì?"
-      />
-      <button type="submit">Tìm kiếm</button>
-    </form>
-    <nav>
-      <a routerLink="/products" routerLinkActive="active">Sản phẩm</a
-      ><a routerLink="/cart" routerLinkActive="active"
-        >Giỏ hàng ({{ cart.count() }})</a
-      >
-      @if (auth.userId() !== null && auth.token()) {
-        <a routerLink="/orders" routerLinkActive="active">Đơn hàng</a>
-        <a routerLink="/account/notifications" routerLinkActive="active"
-          >Thông báo ({{ notifications.unread() }})</a
-        >
-        <a routerLink="/account" routerLinkActive="active">Tài khoản</a>
-        @if (auth.isAdmin()) {
-          <a routerLink="/admin" routerLinkActive="active">Quản trị</a>
-        }
-      } @else {
-        <a routerLink="/login" routerLinkActive="active">Đăng nhập</a>
-        <a routerLink="/register" routerLinkActive="active">Đăng ký</a>
-      }
-    </nav>
+    @defer (on immediate) {
+      <app-store-header />
+    } @placeholder {
+      <div class="header-placeholder" aria-label="Đang tải điều hướng cửa hàng">
+        <a routerLink="/">ShopApp</a>
+      </div>
+    }
   </header>
 }
 <router-outlet />
 @if (!router.url.startsWith("/admin")) {
-  <footer class="site-footer">
-    <div>
-      <a class="footer-brand" routerLink="/">ShopApp</a>
-      <p>Khám phá sản phẩm công nghệ theo cách của bạn.</p>
+  <footer class="site-footer" aria-label="Thông tin ShopApp">
+    <div class="footer-grid">
+      <section class="footer-intro" aria-label="Về ShopApp">
+        <a class="footer-brand" routerLink="/">ShopApp<span> / </span></a>
+        <h2>Công nghệ gần hơn.<br />Trải nghiệm tốt hơn.</h2>
+        <p>
+          Một góc mua sắm công nghệ, được xây dựng bằng sự tận tâm với từng trải
+          nghiệm.
+        </p>
+        <span class="footer-tag">Thanh toán khi nhận hàng · COD</span>
+      </section>
+      <nav class="footer-links" aria-label="Liên kết cửa hàng">
+        <h2>Khám phá</h2>
+        <a routerLink="/products"
+          >Sản phẩm <span aria-hidden="true">↗</span></a
+        >
+        <a routerLink="/cart">Giỏ hàng <span aria-hidden="true">↗</span></a>
+        @if (auth.userId() !== null && auth.token()) {
+          <a routerLink="/account"
+            >Tài khoản của tôi <span aria-hidden="true">↗</span></a
+          >
+          <a routerLink="/orders"
+            >Đơn hàng <span aria-hidden="true">↗</span></a
+          >
+        } @else {
+          <a routerLink="/login"
+            >Đăng nhập <span aria-hidden="true">↗</span></a
+          >
+          <a routerLink="/register"
+            >Đăng ký <span aria-hidden="true">↗</span></a
+          >
+        }
+      </nav>
+      <section class="author-card" aria-labelledby="footer-author">
+        <span class="author-monogram" aria-hidden="true">NHN</span>
+        <p class="author-label">Thiết kế & phát triển</p>
+        <h2 id="footer-author">Nguyễn Hoài Nam</h2>
+        <p class="student-id">MSSV <strong>2431121074</strong></p>
+        <p class="author-note">
+          Từ ý tưởng đến trải nghiệm.<br />Mỗi dòng code, một bước tiến.
+        </p>
+      </section>
     </div>
-    <nav aria-label="Liên kết cửa hàng">
-      <a routerLink="/products">Khám phá sản phẩm</a
-      ><a routerLink="/cart">Giỏ hàng</a>
-      @if (auth.userId() !== null && auth.token()) {
-        <a routerLink="/account">Tài khoản của tôi</a>
-      } @else {
-        <a routerLink="/login">Đăng nhập</a
-        ><a routerLink="/register">Đăng ký</a>
-      }
-    </nav>
-    <small>ShopApp · Dự án học tập · Thanh toán khi nhận hàng (COD)</small>
+    <div class="footer-bottom">
+      <small>© ShopApp · Dự án học tập</small>
+      <small
+        >Được xây dựng bởi Nguyễn Hoài Nam
+        <span aria-hidden="true">✦</span></small
+      >
+    </div>
   </footer>
 }

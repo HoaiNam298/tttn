@@ -1,4 +1,10 @@
+import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatTableModule } from '@angular/material/table';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -19,11 +25,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-order-detail',
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatTableModule,
+    MatProgressBarModule,
+  ],
   templateUrl: './order-detail.component.html',
+  styleUrl: './order-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class OrderDetailComponent implements OnInit {
+  private readonly confirmations = inject(MatDialog);
+  private confirmationOpen = false;
+
   private readonly catalog = inject(CatalogService);
   reviewedItems = new Set<string>();
   reviewStatusError = '';
@@ -59,6 +76,11 @@ export class OrderDetailComponent implements OnInit {
       });
   }
   readonly statusLabels = ORDER_STATUS_LABELS;
+  get itemColumns(): string[] {
+    return !this.adminMode && this.order?.status === 'COMPLETED'
+      ? ['product', 'price', 'quantity', 'total', 'review']
+      : ['product', 'price', 'quantity', 'total'];
+  }
   private readonly route = inject(ActivatedRoute);
   private readonly orders = inject(OrderService);
   private readonly cart = inject(CartService);
@@ -68,18 +90,13 @@ export class OrderDetailComponent implements OnInit {
   reordering = false;
   actionError = '';
 
-  cancel(): void {
+  private cancelConfirmed(): void {
     if (
       this.adminMode ||
       !this.order ||
       this.order.status !== 'PENDING' ||
       this.cancelling ||
       this.confirming
-    ) {
-      return;
-    }
-    if (
-      !window.confirm('Hủy đơn hàng này? Tồn kho và lượt voucher sẽ được hoàn.')
     ) {
       return;
     }
@@ -179,5 +196,33 @@ export class OrderDetailComponent implements OnInit {
       },
       error: () => (this.error = 'Không tìm thấy đơn hàng.'),
     });
+  }
+
+  cancel(): void {
+    if (
+      this.confirmationOpen ||
+      this.adminMode ||
+      !this.order ||
+      this.order.status !== 'PENDING' ||
+      this.cancelling ||
+      this.confirming
+    ) {
+      return;
+    }
+    this.confirmationOpen = true;
+    this.confirmations
+      .open(ConfirmationDialogComponent, {
+        data: 'Hủy đơn hàng này? Tồn kho và lượt voucher sẽ được hoàn.',
+        width: '440px',
+        maxWidth: 'calc(100vw - 32px)',
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed: boolean | undefined) => {
+        this.confirmationOpen = false;
+        if (confirmed === true) {
+          this.cancelConfirmed();
+        }
+      });
   }
 }

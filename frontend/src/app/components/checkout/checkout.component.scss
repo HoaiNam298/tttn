@@ -1,0 +1,108 @@
+.page-heading h1 {
+  font-size: clamp(26px, 4vw, 36px);
+}
+.checkout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+mat-card {
+  border-radius: 16px;
+  min-width: 0;
+}
+mat-card-content {
+  padding: 24px;
+}
+mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+h2 {
+  font-size: 20px;
+  margin: 20px 0;
+}
+.recipient-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.notice {
+  padding: 16px;
+  border-radius: 12px;
+  background: #eff6ff;
+  line-height: 1.6;
+}
+.error-notice {
+  color: #b91c1c;
+}
+.voucher-row {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+}
+.voucher-row button {
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+.payment-note {
+  background: #f0fdfa;
+  padding: 16px;
+  border-radius: 12px;
+  color: #0f766e;
+}
+.checkout-line,
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 20px 0;
+  font-size: 14px;
+}
+.checkout-line div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.checkout-line span {
+  white-space: nowrap;
+}
+.checkout-line small {
+  display: block;
+  color: #64748b;
+  margin-top: 6px;
+}
+.total strong {
+  font-size: 22px;
+  color: #0f766e;
+}
+.summary-note {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.submit-order {
+  width: 100%;
+  min-height: 44px;
+}
+.empty-card {
+  text-align: center;
+}
+@media (max-width: 900px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 550px) {
+  .recipient-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .voucher-row {
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 20px;
+  }
+  mat-card-content {
+    padding: 20px 16px;
+  }
+}

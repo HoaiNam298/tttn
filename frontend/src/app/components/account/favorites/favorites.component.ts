@@ -1,3 +1,9 @@
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { createMaterialPaginatorIntl } from '../../shared/material-paginator-intl';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -12,8 +18,18 @@ import { Product } from '../../../models/product.model';
 import { ProductCardComponent } from '../../shared/product-card.component';
 
 @Component({
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: createMaterialPaginatorIntl },
+  ],
   selector: 'app-favorites',
-  imports: [CommonModule, ProductCardComponent],
+  imports: [
+    CommonModule,
+    ProductCardComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatProgressBarModule,
+    MatPaginatorModule,
+  ],
   templateUrl: './favorites.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
@@ -24,6 +40,7 @@ export class FavoritesComponent implements OnInit {
   products: Product[] = [];
   page = 0;
   totalPages = 0;
+  totalElements = 0;
   loading = false;
   removingId?: number;
   error = '';
@@ -47,6 +64,7 @@ export class FavoritesComponent implements OnInit {
           this.products = result.content;
           this.page = result.number;
           this.totalPages = result.totalPages;
+          this.totalElements = result.totalElements;
           this.loading = false;
           if (!result.content.length && page > 0) {
             this.load(page - 1);

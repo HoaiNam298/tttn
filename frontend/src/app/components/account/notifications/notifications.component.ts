@@ -1,3 +1,9 @@
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { createMaterialPaginatorIntl } from '../../shared/material-paginator-intl';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -13,8 +19,17 @@ import { NotificationService } from '../../../services/notification.service';
 import { ShopNotification } from '../../../models/notification.model';
 
 @Component({
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: createMaterialPaginatorIntl },
+  ],
   selector: 'app-notifications',
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatCardModule,
+    MatProgressBarModule,
+    MatPaginatorModule,
+  ],
   templateUrl: './notifications.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
@@ -26,6 +41,7 @@ export class NotificationsComponent implements OnInit {
   notifications: ShopNotification[] = [];
   page = 0;
   totalPages = 0;
+  totalElements = 0;
   loading = false;
   updating = false;
   error = '';
@@ -49,6 +65,7 @@ export class NotificationsComponent implements OnInit {
           this.notifications = result.content;
           this.page = result.number;
           this.totalPages = result.totalPages;
+          this.totalElements = result.totalElements;
           this.loading = false;
         },
         error: () => {

@@ -1,0 +1,73 @@
+<mat-toolbar class="store-toolbar">
+  <a class="brand" routerLink="/" aria-label="ShopApp — Trang chủ">
+    <svg
+      class="brand-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      aria-hidden="true"
+    >
+      <path d="M5 7h14l1 14H4L5 7Z" />
+      <path d="M8 9V6a4 4 0 0 1 8 0v3" />
+    </svg>
+    ShopApp
+  </a>
+  <form
+    class="header-search"
+    [formGroup]="searchForm"
+    (ngSubmit)="search()"
+    role="search"
+  >
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><input
+        matInput
+        formControlName="keyword"
+        placeholder="Bạn đang tìm sản phẩm gì?"
+        aria-label="Tìm sản phẩm"
+    /></mat-form-field>
+    <button mat-flat-button type="submit">Tìm kiếm</button>
+  </form>
+  <nav aria-label="Điều hướng cửa hàng">
+    <a mat-button routerLink="/products" routerLinkActive="active">Sản phẩm</a>
+    <a mat-button routerLink="/cart" routerLinkActive="active"
+      ><svg
+        class="nav-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        aria-hidden="true"
+      >
+        <path d="m3 3 2 2 3 12h11l2-10H6" />
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="18" cy="21" r="1" /></svg
+      >Giỏ hàng ({{ cart.count() }})</a
+    >
+    @if (auth.userId() !== null && auth.token()) {
+      <button
+        mat-stroked-button
+        [matMenuTriggerFor]="accountMenu"
+        aria-label="Mở menu tài khoản"
+      >
+        Tài khoản ▾
+      </button>
+      <mat-menu #accountMenu="matMenu">
+        <a mat-menu-item routerLink="/account">Thông tin cá nhân</a>
+        <a mat-menu-item routerLink="/orders">Đơn hàng</a>
+        <a mat-menu-item routerLink="/account/favorites">Yêu thích</a>
+        <a mat-menu-item routerLink="/account/notifications"
+          >Thông báo ({{ notifications.unread() }})</a
+        >
+        @if (auth.isAdmin()) {
+          <a mat-menu-item routerLink="/admin">Quản trị</a>
+        }
+      </mat-menu>
+    } @else {
+      <a mat-button routerLink="/login" routerLinkActive="active">Đăng nhập</a>
+      <a mat-stroked-button routerLink="/register" routerLinkActive="active"
+        >Đăng ký</a
+      >
+    }
+  </nav>
+</mat-toolbar>

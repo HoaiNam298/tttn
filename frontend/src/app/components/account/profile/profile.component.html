@@ -1,4 +1,4 @@
-<section class="panel">
+<mat-card appearance="outlined" class="panel">
   <p class="eyebrow">Tài khoản</p>
   <h1>Thông tin cá nhân</h1>
   @if (auth.session()?.user; as user) {
@@ -11,5 +11,7 @@
       <dd>{{ user.address || "Chưa cập nhật" }}</dd>
     </dl>
   }
-  <a routerLink="/account/addresses">Quản lý địa chỉ nhận hàng →</a>
-</section>
+  <a mat-stroked-button routerLink="/account/addresses"
+    >Quản lý địa chỉ nhận hàng →</a
+  >
+</mat-card>

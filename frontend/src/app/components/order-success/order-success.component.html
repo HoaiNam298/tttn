@@ -4,7 +4,7 @@
   } @else if (!order) {
     <p class="state">Đang tải kết quả đặt hàng...</p>
   } @else {
-    <section class="panel success-card">
+    <mat-card appearance="outlined" class="panel success-card">
       <div class="success-icon">✓</div>
       <p class="eyebrow">Đặt hàng thành công</p>
       <h1>Cảm ơn bạn!</h1>
@@ -18,7 +18,10 @@
         }}</strong>
       </p>
       <p>Phương thức: Thanh toán khi nhận hàng (COD)</p>
-      <a class="button-link" routerLink="/products">Tiếp tục mua sắm</a>
-    </section>
+      <a mat-stroked-button [routerLink]="['/orders', order.id]"
+        >Theo dõi đơn hàng</a
+      >
+      <a mat-flat-button routerLink="/products">Tiếp tục mua sắm</a>
+    </mat-card>
   }
 </main>

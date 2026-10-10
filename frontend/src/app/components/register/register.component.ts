@@ -2,15 +2,33 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressBarModule,
+  ],
   templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
+  showPassword = false;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -43,6 +61,7 @@ export class RegisterComponent {
       return;
     }
     this.loading = true;
+    this.form.disable({ emitEvent: false });
     this.error = '';
     this.auth
       .register({
@@ -51,6 +70,7 @@ export class RegisterComponent {
         address: value.address.trim(),
         password: value.password,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           const destination =
@@ -60,6 +80,7 @@ export class RegisterComponent {
           void this.router.navigateByUrl(destination);
         },
         error: (response) => {
+          this.form.enable({ emitEvent: false });
           this.loading = false;
           this.error =
             response.status === 409

@@ -1,3 +1,6 @@
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,7 +17,13 @@ import { ProductCardComponent } from '../shared/product-card.component';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, ProductCardComponent],
+  imports: [
+    RouterLink,
+    ProductCardComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatProgressBarModule,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',

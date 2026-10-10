@@ -1,112 +1,194 @@
-<main class="container">
+<main class="container cart-page">
   <div class="page-heading">
     <div>
       <p class="eyebrow">Giỏ hàng</p>
       <h1>Sản phẩm đã chọn</h1>
     </div>
-    <a class="back" routerLink="/products">Tiếp tục mua hàng</a>
+    <a mat-stroked-button routerLink="/products">Tiếp tục mua hàng</a>
   </div>
-
   @if (loading) {
-    <p class="state">Đang tải giỏ hàng...</p>
-  } @else if (error && lines.length === 0) {
-    <p class="state error">{{ error }}</p>
-  } @else if (lines.length === 0) {
-    <section class="panel empty-cart">
-      <p>Giỏ hàng của bạn đang trống.</p>
-      <a class="button-link" routerLink="/products">Xem sản phẩm</a>
-    </section>
-  } @else {
-    <section class="checkout-layout">
-      <div class="panel cart-lines">
-        <label class="checkbox-label"
-          ><input
-            type="checkbox"
-            [checked]="allSelected"
-            (change)="cart.selectAll($any($event.target).checked)"
-          />Chọn tất cả</label
+    <mat-progress-bar mode="indeterminate" aria-label="Đang tải giỏ hàng" />
+    <p class="state" aria-live="polite">Đang tải giỏ hàng...</p>
+  }
+  @if (error) {
+    <mat-card appearance="outlined" class="cart-error">
+      <mat-card-content>
+        <p role="alert">{{ error }}</p>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="loading"
+          (click)="load()"
         >
-        @if (error) {
-          <p class="error">{{ error }}</p>
-        }
+          Tải lại giỏ hàng
+        </button>
+      </mat-card-content>
+    </mat-card>
+  }
+  @if (!loading && !error && lines.length === 0) {
+    <mat-card appearance="outlined" class="empty-state">
+      <mat-card-content>
+        <h2>Giỏ hàng của bạn đang trống</h2>
+        <p>Khám phá cửa hàng và thêm những sản phẩm bạn yêu thích.</p>
+        <a mat-flat-button routerLink="/products">Khám phá sản phẩm</a>
+      </mat-card-content>
+    </mat-card>
+  } @else if (lines.length > 0) {
+    <section class="cart-layout" [attr.aria-busy]="loading">
+      <mat-card appearance="outlined" class="items-card">
+        <div class="selection-bar">
+          <mat-checkbox
+            [checked]="allSelected"
+            [indeterminate]="partiallySelected"
+            [disabled]="loading"
+            (change)="cart.selectAll($event.checked)"
+            >Chọn tất cả ({{ lines.length }})</mat-checkbox
+          >
+          <span>{{ selectedCount }} sản phẩm đã chọn</span>
+        </div>
+        <mat-divider />
         @for (
           line of lines;
           track line.product.id + ":" + (line.variantId ?? "")
         ) {
-          <article class="cart-line">
-            <input
-              class="cart-checkbox"
-              type="checkbox"
-              [attr.aria-label]="'Chọn ' + line.product.name"
+          <article class="cart-item">
+            <mat-checkbox
+              class="item-checkbox"
+              [aria-label]="'Chọn ' + line.product.name"
               [checked]="cart.isSelected(line.product.id, line.variantId)"
+              [disabled]="loading"
               (change)="
-                cart.select(
-                  line.product.id,
-                  $any($event.target).checked,
-                  line.variantId
-                )
+                cart.select(line.product.id, $event.checked, line.variantId)
               "
             />
-            <img
-              class="cart-thumbnail"
-              [src]="line.product.thumbnail"
-              [alt]="line.product.name"
-              loading="lazy"
-            />
-            <div>
-              <h2>{{ line.product.name }}</h2>
-              @if (line.variantName) {
-                <p>Phân loại: {{ line.variantName }}</p>
+            <a
+              class="item-image"
+              [routerLink]="['/products', line.product.id]"
+              [attr.aria-label]="'Xem ' + line.product.name"
+            >
+              @if (line.product.thumbnail) {
+                <img
+                  [src]="line.product.thumbnail"
+                  [alt]="line.product.name"
+                  loading="lazy"
+                  decoding="async"
+                />
+              } @else {
+                <span>ShopApp</span>
               }
-              <p>
+            </a>
+            <div class="item-details">
+              <a
+                class="item-name"
+                [routerLink]="['/products', line.product.id]"
+                >{{ line.product.name }}</a
+              >
+              @if (line.variantName) {
+                <p class="variant-name">Phân loại: {{ line.variantName }}</p>
+              }
+              <p class="unit-price">
                 {{ line.product.price | currency: "VND" : "symbol" : "1.0-0" }}
               </p>
-              @if ((line.product.stock || 0) < line.quantity) {
-                <p class="error">
-                  Không đủ tồn kho. Còn {{ line.product.stock || 0 }} sản phẩm.
+              @if ((line.product.stock ?? 0) < line.quantity) {
+                <p class="stock-error">
+                  Không đủ tồn kho. Còn {{ line.product.stock ?? 0 }} sản phẩm.
                 </p>
               }
+              @if (line.quantity > maxQuantity) {
+                <p class="stock-error">
+                  Giảm số lượng xuống tối đa {{ maxQuantity }} sản phẩm để đặt
+                  hàng.
+                </p>
+              }
+              <div class="item-bottom">
+                <div
+                  class="quantity-picker"
+                  role="group"
+                  [attr.aria-label]="'Số lượng ' + line.product.name"
+                >
+                  <button
+                    mat-button
+                    type="button"
+                    [disabled]="loading || line.quantity <= 1"
+                    [attr.aria-label]="'Giảm số lượng ' + line.product.name"
+                    (click)="update(line, line.quantity - 1)"
+                  >
+                    −
+                  </button>
+                  <span aria-live="polite">{{ line.quantity }}</span>
+                  <button
+                    mat-button
+                    type="button"
+                    [disabled]="
+                      loading ||
+                      line.quantity >= maxQuantity ||
+                      line.quantity >= (line.product.stock ?? 0)
+                    "
+                    [attr.aria-label]="'Tăng số lượng ' + line.product.name"
+                    (click)="update(line, line.quantity + 1)"
+                  >
+                    +
+                  </button>
+                </div>
+                <button
+                  mat-button
+                  class="remove-button"
+                  type="button"
+                  [disabled]="loading"
+                  [attr.aria-label]="
+                    'Xóa ' + line.product.name + ' khỏi giỏ hàng'
+                  "
+                  (click)="remove(line.product.id, line.variantId)"
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
-            <div class="quantity-control">
-              <button type="button" (click)="update(line, line.quantity - 1)">
-                −
-              </button>
-              <strong>{{ line.quantity }}</strong>
-              <button
-                type="button"
-                [disabled]="line.quantity >= (line.product.stock || 0)"
-                (click)="update(line, line.quantity + 1)"
-              >
-                +
-              </button>
-            </div>
-            <strong>{{
+            <strong class="line-total">{{
               line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
             }}</strong>
-            <button
-              class="link danger"
-              type="button"
-              (click)="remove(line.product.id, line.variantId)"
-            >
-              Xóa
-            </button>
           </article>
         }
-      </div>
-      <aside class="panel order-summary">
-        <h2>Tạm tính</h2>
-        <p class="summary-total">
-          {{ subtotal | currency: "VND" : "symbol" : "1.0-0" }}
-        </p>
-        <p>Phí giao hàng được xác nhận ở bước tiếp theo.</p>
-        @if (canCheckout) {
-          <a class="button-link" routerLink="/checkout"
-            >Đặt các sản phẩm đã chọn</a
-          >
-        } @else {
-          <button disabled>Chọn sản phẩm còn đủ hàng</button>
-        }
-      </aside>
+      </mat-card>
+      <mat-card appearance="outlined" class="summary-card">
+        <mat-card-content>
+          <h2>Tóm tắt giỏ hàng</h2>
+          <div class="cost-row">
+            <span>Sản phẩm đã chọn</span><strong>{{ selectedCount }}</strong>
+          </div>
+          <mat-divider />
+          <div class="cost-row total-row">
+            <span>Tạm tính</span
+            ><strong>{{
+              subtotal | currency: "VND" : "symbol" : "1.0-0"
+            }}</strong>
+          </div>
+          <p class="shipping-note">
+            Phí giao hàng và khuyến mãi được xác nhận ở bước thanh toán.
+          </p>
+          @if (canCheckout) {
+            <a mat-flat-button class="checkout-button" routerLink="/checkout"
+              >Tiến hành đặt hàng</a
+            >
+          } @else {
+            <button
+              mat-flat-button
+              class="checkout-button"
+              type="button"
+              disabled
+            >
+              Tiến hành đặt hàng
+            </button>
+            <p class="checkout-hint">
+              {{
+                loading
+                  ? "Đang kiểm tra giỏ hàng…"
+                  : "Chọn sản phẩm còn đủ hàng và tải lại nếu có lỗi."
+              }}
+            </p>
+          }
+        </mat-card-content>
+      </mat-card>
     </section>
   }
 </main>

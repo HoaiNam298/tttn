@@ -1,7 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
+  TemplateRef,
+  DestroyRef,
   ViewChild,
   inject,
   output,
@@ -13,13 +14,34 @@ import {
   Validators,
 } from '@angular/forms';
 import { CatalogService } from '../../../services/catalog.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Product } from '../../../models/product.model';
 import { ProductVariant } from '../../../models/product-variant.model';
 import { ProductVariantPayload } from '../../../dtos/product-inventory.dto';
 
 @Component({
   selector: 'app-product-inventory-editor',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    MatExpansionModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressBarModule,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './product-inventory-editor.component.html',
   styleUrl: './product-inventory-editor.component.scss',
@@ -27,7 +49,16 @@ import { ProductVariantPayload } from '../../../dtos/product-inventory.dto';
 export class ProductInventoryEditorComponent {
   private readonly fb = inject(FormBuilder);
   private readonly catalog = inject(CatalogService);
-  @ViewChild('dialog') private dialog!: ElementRef<HTMLDialogElement>;
+  @ViewChild('dialog') private editor!: TemplateRef<unknown>;
+  private readonly dialogs = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+  private dialogRef?: MatDialogRef<unknown>;
+  constructor() {
+    this.destroyRef.onDestroy(() => this.dialogRef?.close());
+  }
+  get busy(): boolean {
+    return this.loading || this.saving || this.uploading;
+  }
   readonly saved = output<void>();
   product?: Product;
   images: string[] = [];
@@ -92,49 +123,73 @@ export class ProductInventoryEditorComponent {
   }
 
   open(id: number): void {
+    if (this.dialogRef || this.busy) {
+      return;
+    }
     this.product = undefined;
     this.error = '';
     this.loading = true;
     this.variants.clear();
-    this.dialog.nativeElement.showModal();
-    this.catalog.product(id).subscribe({
-      next: (product) => {
-        this.product = product;
-        this.images = [
-          ...new Set(
-            [...(product.images ?? []), product.thumbnail].filter(
-              (url): url is string => !!url,
-            ),
-          ),
-        ];
-        this.form.controls.stock.setValue(product.stock ?? 0);
-        product.variants?.forEach((variant) =>
-          this.variants.push(this.variantGroup(variant)),
-        );
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Không tải được dữ liệu sản phẩm.';
-        this.loading = false;
-      },
+    this.images = [];
+    this.form.enable({ emitEvent: false });
+    const ref = this.dialogs.open(this.editor, {
+      width: '1000px',
+      maxWidth: 'calc(100vw - 32px)',
+      disableClose: true,
     });
+    this.dialogRef = ref;
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.dialogRef === ref) {
+          this.dialogRef = undefined;
+        }
+      });
+    this.catalog
+      .product(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (product) => {
+          this.product = product;
+          this.images = [
+            ...new Set(
+              [...(product.images ?? []), product.thumbnail].filter(
+                (url): url is string => !!url,
+              ),
+            ),
+          ];
+          this.form.controls.stock.setValue(product.stock ?? 0);
+          product.variants?.forEach((variant) =>
+            this.variants.push(this.variantGroup(variant)),
+          );
+          this.loading = false;
+        },
+        error: () => {
+          this.error = 'Không tải được dữ liệu sản phẩm.';
+          this.loading = false;
+        },
+      });
   }
 
-  close(event?: Event): void {
-    event?.preventDefault();
+  close(): void {
     if (this.saving || this.uploading || this.loading) {
       return;
     }
-    this.dialog.nativeElement.close();
+    this.dialogRef?.close();
+    this.dialogRef = undefined;
   }
 
   addVariant(): void {
-    if (this.variants.length < 50) {
+    if (!this.busy && this.variants.length < 50) {
       this.variants.push(this.variantGroup());
     }
   }
 
   removeVariant(index: number): void {
+    if (this.busy || index < 0 || index >= this.variants.length) {
+      return;
+    }
     if (this.variants.at(index).controls.id.value == null) {
       this.variants.removeAt(index);
     } else {
@@ -145,7 +200,17 @@ export class ProductInventoryEditorComponent {
   upload(event: Event, variantIndex?: number): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file || this.uploading || this.saving) {
+    if (
+      !file ||
+      this.busy ||
+      (variantIndex == null && this.images.length >= 10)
+    ) {
+      return;
+    }
+    if (
+      variantIndex != null &&
+      (variantIndex < 0 || variantIndex >= this.variants.length)
+    ) {
       return;
     }
     if (
@@ -157,28 +222,45 @@ export class ProductInventoryEditorComponent {
       return;
     }
     this.uploading = true;
+    this.form.disable({ emitEvent: false });
     this.error = '';
-    this.catalog.uploadImage(file).subscribe({
-      next: (result) => {
-        if (variantIndex != null) {
-          this.variants.at(variantIndex).controls.imageUrl.setValue(result.url);
-        } else if (this.images.length < 10) {
-          this.images.push(result.url);
-        }
-        this.uploading = false;
-        input.value = '';
-      },
-      error: () => {
-        this.error = 'Upload thất bại. Kiểm tra ảnh hoặc kết nối.';
-        this.uploading = false;
-        input.value = '';
-      },
-    });
+    this.catalog
+      .uploadImage(file)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          if (variantIndex != null) {
+            this.variants
+              .at(variantIndex)
+              .controls.imageUrl.setValue(result.url);
+          } else if (this.images.length < 10) {
+            this.images.push(result.url);
+          }
+          this.uploading = false;
+          this.form.enable({ emitEvent: false });
+          input.value = '';
+        },
+        error: () => {
+          this.error = 'Upload thất bại. Kiểm tra ảnh hoặc kết nối.';
+          this.uploading = false;
+          this.form.enable({ emitEvent: false });
+          input.value = '';
+        },
+      });
   }
 
   makePrimary(index: number): void {
+    if (this.busy || index < 0 || index >= this.images.length) {
+      return;
+    }
     const [image] = this.images.splice(index, 1);
     this.images.unshift(image);
+  }
+
+  removeImage(index: number): void {
+    if (!this.busy && index >= 0 && index < this.images.length) {
+      this.images.splice(index, 1);
+    }
   }
 
   save(): void {
@@ -194,23 +276,28 @@ export class ProductInventoryEditorComponent {
         name: value.name.trim(),
         sku: value.sku.trim(),
       }));
+    const stock = this.form.controls.stock.value;
     this.saving = true;
+    this.form.disable({ emitEvent: false });
     this.error = '';
     this.catalog
       .updateInventory(this.product.id, {
         version: this.product.version ?? 0,
-        stock: this.form.controls.stock.value,
+        stock,
         variants,
-        images: this.images,
+        images: [...this.images],
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.saving = false;
-          this.dialog.nativeElement.close();
+          this.form.enable({ emitEvent: false });
+          this.close();
           this.saved.emit();
         },
         error: (response) => {
           this.saving = false;
+          this.form.enable({ emitEvent: false });
           this.error =
             response.error?.message ??
             'Không lưu được ảnh/SKU. Hãy mở lại dữ liệu nếu tồn kho vừa thay đổi.';

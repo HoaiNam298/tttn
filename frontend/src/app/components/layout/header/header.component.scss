@@ -1,0 +1,149 @@
+@use "@angular/material" as mat;
+:host {
+  display: block;
+}
+.store-toolbar {
+  height: auto;
+  min-height: 80px;
+  padding: 14px max(16px, calc((100vw - 1180px) / 2));
+  gap: 24px;
+  background: #17243a;
+  color: #fff;
+  @include mat.button-overrides(
+    (
+      outlined-outline-color: #536176,
+      outlined-container-shape: 10px,
+    )
+  );
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 25px;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: -0.7px;
+}
+.brand-icon {
+  width: 30px;
+  height: 30px;
+  color: #5eead4;
+}
+.header-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px;
+  border-radius: 12px;
+  background: #fff;
+}
+.header-search mat-form-field {
+  flex: 1;
+  min-width: 0;
+  @include mat.form-field-overrides(
+    (
+      container-height: 40px,
+      container-vertical-padding: 8px,
+      outlined-container-shape: 8px,
+      outlined-outline-color: transparent,
+      outlined-hover-outline-color: transparent,
+      outlined-input-text-color: #172033,
+    )
+  );
+}
+.header-search button {
+  height: 40px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+nav a,
+nav button {
+  height: 40px;
+  font-size: 13px;
+  @include mat.button-overrides(
+    (
+      text-label-text-color: #f8fafc,
+      outlined-label-text-color: #f8fafc,
+      text-state-layer-color: #fff,
+      outlined-state-layer-color: #fff,
+    )
+  );
+}
+nav a[mat-button],
+nav a[mat-stroked-button],
+nav button[mat-stroked-button] {
+  color: #f8fafc;
+}
+nav a.active {
+  background: #ffffff14;
+}
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@media (max-width: 1100px) {
+  .store-toolbar {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+  }
+  nav {
+    margin-left: auto;
+  }
+  .header-search {
+    flex-basis: 300px;
+  }
+}
+@media (max-width: 760px) {
+  .store-toolbar {
+    padding: 12px 16px;
+  }
+  .brand {
+    font-size: 22px;
+  }
+  .brand-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .header-search {
+    order: 3;
+    flex-basis: 100%;
+  }
+  nav {
+    gap: 0;
+  }
+  nav a,
+  nav button {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .nav-icon {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  .store-toolbar {
+    gap: 8px;
+  }
+  nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex: 1;
+  }
+  nav a,
+  nav button {
+    padding: 0 7px;
+  }
+}

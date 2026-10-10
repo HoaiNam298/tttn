@@ -15,9 +15,10 @@
     <p class="state error">{{ error }}</p>
   }
   @if (product; as value) {
-    <article class="product-detail-card panel">
+    <mat-card appearance="outlined" class="product-detail-card panel">
       <section class="gallery">
         <button
+          mat-button
           type="button"
           class="detail-image gallery-open"
           (click)="openImage()"
@@ -35,6 +36,7 @@
           @for (image of images; track image) {
             @if (image) {
               <button
+                mat-button
                 type="button"
                 class="thumbnail"
                 [class.selected]="image === selectedImage"
@@ -56,7 +58,7 @@
         <h1>{{ value.name }}</h1>
         <div>
           <button
-            class="secondary"
+            mat-stroked-button
             [disabled]="favoriteBusy"
             [attr.aria-pressed]="favorite"
             (click)="toggleFavorite()"
@@ -84,8 +86,8 @@
             <div class="actions">
               @for (variant of availableVariants; track variant.id) {
                 <button
+                  mat-stroked-button
                   type="button"
-                  class="secondary"
                   [class.variant-selected]="selectedVariantId === variant.id"
                   [attr.aria-pressed]="selectedVariantId === variant.id"
                   (click)="selectVariant(variant)"
@@ -113,6 +115,7 @@
         <div class="quantity-control">
           <span>Số lượng</span
           ><button
+            mat-stroked-button
             type="button"
             [disabled]="quantity <= 1"
             (click)="quantity = quantity - 1"
@@ -120,6 +123,7 @@
             −</button
           ><strong>{{ quantity }}</strong
           ><button
+            mat-stroked-button
             type="button"
             [disabled]="quantity >= purchaseStock"
             (click)="quantity = quantity + 1"
@@ -129,13 +133,14 @@
         </div>
         <div class="actions">
           <button
+            mat-stroked-button
             type="button"
-            class="secondary"
             [disabled]="purchaseStock < quantity"
             (click)="addToCart()"
           >
             Thêm vào giỏ hàng</button
           ><button
+            mat-stroked-button
             type="button"
             [disabled]="purchaseStock < quantity"
             (click)="buyNow()"
@@ -147,8 +152,8 @@
           <p class="success">Đã thêm sản phẩm vào giỏ hàng.</p>
         }
       </section>
-    </article>
-    <section class="panel product-description">
+    </mat-card>
+    <mat-card appearance="outlined" class="panel product-description">
       <h2>Chi tiết sản phẩm</h2>
       <div class="spec-row">
         <span>Danh mục</span><strong>{{ value.category.name }}</strong>
@@ -161,8 +166,8 @@
       <p class="description">
         {{ value.description || "Sản phẩm chưa có mô tả." }}
       </p>
-    </section>
-    <section id="reviews" class="panel reviews-section">
+    </mat-card>
+    <mat-card appearance="outlined" id="reviews" class="panel reviews-section">
       <h2>Đánh giá sản phẩm</h2>
       @if (reviewLoadError) {
         <p class="error" role="alert">{{ reviewLoadError }}</p>
@@ -174,7 +179,7 @@
       </div>
       <div class="actions review-filters">
         <button
-          class="secondary"
+          mat-stroked-button
           [attr.aria-pressed]="reviewRating === undefined"
           (click)="filterReviews()"
         >
@@ -182,7 +187,7 @@
         </button>
         @for (rating of ratingFilters; track rating) {
           <button
-            class="secondary"
+            mat-stroked-button
             [attr.aria-pressed]="reviewRating === rating"
             (click)="filterReviews(rating)"
           >
@@ -203,36 +208,50 @@
           (ngSubmit)="submitReview()"
         >
           <h3>Đánh giá sản phẩm đã mua</h3>
-          <label
-            >Số sao<select formControlName="rating">
-              <option [value]="5">5 sao</option>
-              <option [value]="4">4 sao</option>
-              <option [value]="3">3 sao</option>
-              <option [value]="2">2 sao</option>
-              <option [value]="1">1 sao</option>
-            </select></label
+          <mat-form-field appearance="outline"
+            ><mat-label>Số sao</mat-label
+            ><mat-select formControlName="rating">
+              <mat-option [value]="5">5 sao</mat-option>
+              <mat-option [value]="4">4 sao</mat-option>
+              <mat-option [value]="3">3 sao</mat-option>
+              <mat-option [value]="2">2 sao</mat-option>
+              <mat-option [value]="1">1 sao</mat-option> </mat-select
+            ><mat-error>Vui lòng nhập số sao hợp lệ.</mat-error></mat-form-field
           >
-          <label
-            >Nhận xét<textarea
+          <mat-form-field appearance="outline"
+            ><mat-label>Nhận xét</mat-label
+            ><textarea
+              matInput
               rows="4"
               formControlName="comment"
               placeholder="Chia sẻ trải nghiệm của bạn"
             ></textarea>
-          </label>
-          <label
-            >Ảnh thực tế (tối đa 5 ảnh)<input
-              type="file"
-              accept="image/jpeg,image/png"
-              multiple
-              [disabled]="reviewSaving"
-              (change)="selectReviewFiles($event)"
-          /></label>
+            <mat-error
+              >Vui lòng nhập nhận xét hợp lệ.</mat-error
+            ></mat-form-field
+          >
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="reviewSaving"
+            (click)="reviewUpload.click()"
+          >
+            Thêm ảnh thực tế (tối đa 5 ảnh)</button
+          ><input
+            #reviewUpload
+            hidden
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            [disabled]="reviewSaving"
+            (change)="selectReviewFiles($event)"
+          />
           @for (file of reviewFiles; track $index) {
             <div class="actions">
               <span>{{ file.name }}</span
               ><button
+                mat-stroked-button
                 type="button"
-                class="secondary"
                 [disabled]="reviewSaving"
                 (click)="removeReviewFile($index)"
               >
@@ -240,7 +259,11 @@
               </button>
             </div>
           }
-          <button type="submit" [disabled]="reviewSaving || reviewForm.invalid">
+          <button
+            mat-stroked-button
+            type="submit"
+            [disabled]="reviewSaving || reviewForm.invalid"
+          >
             {{ reviewSaving ? "Đang gửi..." : "Gửi đánh giá" }}
           </button>
         </form>
@@ -288,24 +311,17 @@
         }
       </div>
       @if (reviewTotalPages > 1) {
-        <div class="pagination">
-          <button
-            class="secondary"
-            [disabled]="reviewPage === 0"
-            (click)="loadReviews(value.id, reviewPage - 1)"
-          >
-            Trước</button
-          ><span>Trang {{ reviewPage + 1 }} / {{ reviewTotalPages }}</span
-          ><button
-            class="secondary"
-            [disabled]="reviewPage + 1 >= reviewTotalPages"
-            (click)="loadReviews(value.id, reviewPage + 1)"
-          >
-            Sau
-          </button>
-        </div>
+        <mat-paginator
+          [length]="reviewTotalElements"
+          [pageIndex]="reviewPage"
+          [pageSize]="10"
+          [hidePageSize]="true"
+          [showFirstLastButtons]="true"
+          (page)="loadReviews(value.id, $event.pageIndex)"
+          aria-label="Phân trang đánh giá"
+        />
       }
-    </section>
+    </mat-card>
     <section class="related-products">
       <div class="section-heading">
         <h2>Có thể bạn cũng thích</h2>
@@ -324,31 +340,30 @@
         }
       </div>
     </section>
-    <dialog
-      #imagePreview
-      class="image-preview"
-      aria-label="Ảnh sản phẩm phóng to"
-    >
-      <div class="preview-heading">
-        <strong>{{ value.name }}</strong
-        ><button
-          type="button"
-          class="secondary"
-          (click)="closeImage()"
-          aria-label="Đóng ảnh"
-        >
-          Đóng ×
-        </button>
-      </div>
-      <img [src]="selectedImage" [alt]="value.name" />
-      @if (images.length > 1) {
-        <div class="pagination">
-          <button (click)="moveImage(-1)">Ảnh trước</button
-          ><span
-            >{{ images.indexOf(selectedImage) + 1 }} / {{ images.length }}</span
-          ><button (click)="moveImage(1)">Ảnh sau</button>
+    <ng-template #imagePreview
+      ><div class="material-image-preview" mat-dialog-content>
+        <div class="preview-heading">
+          <strong>{{ value.name }}</strong
+          ><button
+            mat-stroked-button
+            type="button"
+            (click)="closeImage()"
+            aria-label="Đóng ảnh"
+          >
+            Đóng ×
+          </button>
         </div>
-      }
-    </dialog>
+        <img [src]="selectedImage" [alt]="value.name" />
+        @if (images.length > 1) {
+          <div class="pagination">
+            <button mat-stroked-button (click)="moveImage(-1)">Ảnh trước</button
+            ><span
+              >{{ images.indexOf(selectedImage) + 1 }} /
+              {{ images.length }}</span
+            ><button mat-stroked-button (click)="moveImage(1)">Ảnh sau</button>
+          </div>
+        }
+      </div></ng-template
+    >
   }
 </main>

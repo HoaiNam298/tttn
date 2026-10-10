@@ -1,173 +1,214 @@
-<main class="container">
-  <a class="back" [routerLink]="adminMode ? '/admin/orders' : '/orders'"
+<main class="container order-detail">
+  <a
+    mat-button
+    class="back-link"
+    [routerLink]="adminMode ? '/admin/orders' : '/orders'"
     >← Danh sách đơn hàng</a
   >
   @if (error) {
-    <p class="panel state error">{{ error }}</p>
+    <mat-card appearance="outlined" class="detail-card"
+      ><p class="error" role="alert">{{ error }}</p></mat-card
+    >
   } @else if (order; as value) {
+    <div class="detail-heading">
+      <div>
+        <p class="eyebrow">Chi tiết đơn hàng</p>
+        <h1>Đơn hàng #{{ value.id }}</h1>
+        <p class="order-reference">{{ value.orderNumber }}</p>
+        <p class="muted">
+          Đặt lúc {{ value.createdAt | date: "dd/MM/yyyy HH:mm" }}
+        </p>
+      </div>
+      <span class="status-badge" [ngClass]="'status-' + value.status">{{
+        statusLabels[value.status]
+      }}</span>
+    </div>
     @if (reviewStatusError) {
       <p class="error" role="alert">{{ reviewStatusError }}</p>
     }
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">Chi tiết đơn hàng</p>
-        <h1>{{ value.orderNumber }}</h1>
-      </div>
-      <span class="badge">{{ statusLabels[value.status] }}</span>
-    </div>
-    <div class="checkout-layout">
-      <section class="panel table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Sản phẩm</th>
-              <th>Đơn giá</th>
-              <th>Số lượng</th>
-              <th>Thành tiền</th>
-              @if (!adminMode && value.status === "COMPLETED") {
-                <th>Đánh giá</th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (
-              item of value.items;
-              track item.productId + ":" + (item.variantId ?? "")
-            ) {
-              <tr>
-                <td>
-                  {{ item.productName }}
+    <div class="detail-layout">
+      <div class="detail-main">
+        <mat-card appearance="outlined" class="detail-card">
+          <h2>Sản phẩm trong đơn</h2>
+          <div class="table-wrap">
+            <table mat-table [dataSource]="value.items">
+              <ng-container matColumnDef="product"
+                ><th mat-header-cell *matHeaderCellDef>Sản phẩm</th>
+                <td mat-cell *matCellDef="let item">
+                  <strong>{{ item.productName }}</strong>
                   @if (item.variantName) {
-                    <p>{{ item.variantName }} · {{ item.sku }}</p>
+                    <small>{{ item.variantName }} · {{ item.sku }}</small>
                   }
-                </td>
-                <td>
+                </td></ng-container
+              >
+              <ng-container matColumnDef="price"
+                ><th mat-header-cell *matHeaderCellDef>Đơn giá</th>
+                <td mat-cell *matCellDef="let item">
                   {{ item.unitPrice | currency: "VND" : "symbol" : "1.0-0" }}
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>
+                </td></ng-container
+              >
+              <ng-container matColumnDef="quantity"
+                ><th mat-header-cell *matHeaderCellDef>Số lượng</th>
+                <td mat-cell *matCellDef="let item">
+                  {{ item.quantity }}
+                </td></ng-container
+              >
+              <ng-container matColumnDef="total"
+                ><th mat-header-cell *matHeaderCellDef>Thành tiền</th>
+                <td mat-cell *matCellDef="let item">
                   {{ item.lineTotal | currency: "VND" : "symbol" : "1.0-0" }}
-                </td>
-                @if (!adminMode && value.status === "COMPLETED") {
-                  <td>
-                    <a
-                      class="button-link"
-                      [routerLink]="['/products', item.productId]"
-                      [queryParams]="{
-                        orderId: value.id,
-                        variantId: item.variantId,
-                      }"
-                      fragment="reviews"
-                      >{{ isReviewed(item) ? "Đã đánh giá" : "Đánh giá" }}</a
-                    >
-                  </td>
-                }
-              </tr>
-            }
-          </tbody>
-        </table>
-      </section>
-      <aside class="panel order-summary">
-        @if (!adminMode && value.status === "PENDING") {
-          <button
-            type="button"
-            class="secondary"
-            [disabled]="cancelling"
-            (click)="cancel()"
-          >
-            {{ cancelling ? "Đang hủy..." : "Hủy đơn hàng" }}
-          </button>
-        }
-        @if (
-          !adminMode &&
-          (value.status === "COMPLETED" || value.status === "CANCELLED")
-        ) {
-          <button type="button" [disabled]="reordering" (click)="reorder()">
-            {{ reordering ? "Đang kiểm tra..." : "Mua lại theo giá hiện tại" }}
-          </button>
-        }
-        @if (actionError) {
-          <p class="error" role="alert">{{ actionError }}</p>
-        }
-        @if (!adminMode && value.status === "DELIVERED") {
-          <p>
-            Đơn đã được giao. Hãy xác nhận sau khi bạn thực sự nhận được hàng.
-          </p>
-          <button
-            type="button"
-            [disabled]="confirming"
-            (click)="confirmReceipt()"
-          >
-            {{ confirming ? "Đang xác nhận..." : "Đã nhận được hàng" }}
-          </button>
-        }
-        @if (confirmationError) {
-          <p class="error">{{ confirmationError }}</p>
-        }
-        <h2>Thông tin nhận hàng</h2>
-        <p>
-          <strong>{{ value.recipientName }}</strong>
-        </p>
-        <p>{{ value.phoneNumber }}</p>
-        <p>{{ value.shippingAddress }}</p>
-        <div class="summary-row">
-          <span>Tạm tính</span
-          ><strong>{{
-            value.subtotal | currency: "VND" : "symbol" : "1.0-0"
-          }}</strong>
-        </div>
-        <div class="summary-row">
-          <span>Phí vận chuyển</span
-          ><strong>{{
-            value.shippingFee | currency: "VND" : "symbol" : "1.0-0"
-          }}</strong>
-        </div>
-        <p>
-          Giao hàng:
-          {{ value.shippingMethod === "EXPRESS" ? "Nhanh" : "Tiêu chuẩn" }}
-        </p>
-        @if (value.voucherCode) {
-          <div class="summary-row">
-            <span>Giảm giá {{ value.voucherCode }}</span>
-            <strong
-              >−{{
-                value.discount | currency: "VND" : "symbol" : "1.0-0"
-              }}</strong
-            >
+                </td></ng-container
+              >
+              <ng-container matColumnDef="review"
+                ><th mat-header-cell *matHeaderCellDef>Đánh giá</th>
+                <td mat-cell *matCellDef="let item">
+                  <a
+                    mat-stroked-button
+                    [routerLink]="['/products', item.productId]"
+                    [queryParams]="{
+                      orderId: value.id,
+                      variantId: item.variantId,
+                    }"
+                    fragment="reviews"
+                    >{{ isReviewed(item) ? "Đã đánh giá" : "Đánh giá" }}</a
+                  >
+                </td></ng-container
+              >
+              <tr mat-header-row *matHeaderRowDef="itemColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: itemColumns"></tr>
+            </table>
           </div>
-        }
-        <p class="summary-total">
-          {{ value.total | currency: "VND" : "symbol" : "1.0-0" }}
-        </p>
+        </mat-card>
+        <mat-card appearance="outlined" class="detail-card">
+          <h2>Lịch sử đơn hàng</h2>
+          <ol class="timeline">
+            @for (event of value.history ?? []; track $index) {
+              <li>
+                <span class="timeline-dot" aria-hidden="true"></span>
+                <div>
+                  <strong>{{ statusLabels[event.status] }}</strong>
+                  <p class="muted">
+                    <time>{{
+                      event.occurredAt | date: "dd/MM/yyyy HH:mm"
+                    }}</time>
+                    ·
+                    {{
+                      event.actor === "CUSTOMER"
+                        ? "Khách hàng"
+                        : event.actor === "ADMIN"
+                          ? "Cửa hàng"
+                          : "Hệ thống"
+                    }}
+                  </p>
+                  @if (event.imported) {
+                    <small class="muted"
+                      >Trạng thái ghi nhận khi nâng cấp; lịch sử trước đó không
+                      có dữ liệu.</small
+                    >
+                  }
+                </div>
+              </li>
+            } @empty {
+              <li class="muted">Chưa có dữ liệu lịch sử.</li>
+            }
+          </ol>
+        </mat-card>
+      </div>
+      <aside class="detail-summary">
+        <mat-card appearance="outlined" class="detail-card">
+          <h2>Thông tin nhận hàng</h2>
+          <strong>{{ value.recipientName }}</strong>
+          <p>{{ value.phoneNumber }}</p>
+          <p class="address">{{ value.shippingAddress }}</p>
+          <p class="muted">
+            Giao hàng:
+            {{ value.shippingMethod === "EXPRESS" ? "Nhanh" : "Tiêu chuẩn" }}
+          </p>
+          <p class="muted">
+            Thanh toán:
+            {{
+              value.paymentMethod === "COD"
+                ? "Khi nhận hàng (COD)"
+                : value.paymentMethod
+            }}
+          </p>
+          @if (value.note) {
+            <p class="order-note">Ghi chú: {{ value.note }}</p>
+          }
+        </mat-card>
+        <mat-card appearance="outlined" class="detail-card">
+          <h2>Thanh toán</h2>
+          <div class="cost-row">
+            <span>Tiền hàng</span
+            ><strong>{{
+              value.subtotal | currency: "VND" : "symbol" : "1.0-0"
+            }}</strong>
+          </div>
+          <div class="cost-row">
+            <span>Phí vận chuyển</span
+            ><strong>{{
+              value.shippingFee | currency: "VND" : "symbol" : "1.0-0"
+            }}</strong>
+          </div>
+          @if (value.voucherCode) {
+            <div class="cost-row">
+              <span>Giảm giá {{ value.voucherCode }}</span
+              ><strong
+                >−{{
+                  value.discount | currency: "VND" : "symbol" : "1.0-0"
+                }}</strong
+              >
+            </div>
+          }
+          <div class="cost-row grand-total">
+            <span>Tổng cộng</span
+            ><strong>{{
+              value.total | currency: "VND" : "symbol" : "1.0-0"
+            }}</strong>
+          </div>
+          @if (!adminMode && value.status === "PENDING") {
+            <button
+              mat-stroked-button
+              class="cancel-button"
+              [disabled]="cancelling"
+              (click)="cancel()"
+            >
+              {{ cancelling ? "Đang hủy..." : "Hủy đơn hàng" }}
+            </button>
+          }
+          @if (
+            !adminMode &&
+            (value.status === "COMPLETED" || value.status === "CANCELLED")
+          ) {
+            <button mat-flat-button [disabled]="reordering" (click)="reorder()">
+              {{
+                reordering ? "Đang kiểm tra..." : "Mua lại theo giá hiện tại"
+              }}
+            </button>
+          }
+          @if (!adminMode && value.status === "DELIVERED") {
+            <p class="receipt-hint">
+              Hãy xác nhận sau khi bạn thực sự nhận được hàng.
+            </p>
+            <button
+              mat-flat-button
+              [disabled]="confirming"
+              (click)="confirmReceipt()"
+            >
+              {{ confirming ? "Đang xác nhận..." : "Đã nhận được hàng" }}
+            </button>
+          }
+          @if (actionError) {
+            <p class="error" role="alert">{{ actionError }}</p>
+          }
+          @if (confirmationError) {
+            <p class="error" role="alert">{{ confirmationError }}</p>
+          }
+        </mat-card>
       </aside>
     </div>
-    <section class="panel order-timeline">
-      <h2>Lịch sử đơn hàng</h2>
-      <ol>
-        @for (event of value.history ?? []; track $index) {
-          <li>
-            <strong>{{ statusLabels[event.status] }}</strong>
-            <time>{{ event.occurredAt | date: "dd/MM/yyyy HH:mm" }}</time>
-            <span>{{
-              event.actor === "CUSTOMER"
-                ? "Khách hàng"
-                : event.actor === "ADMIN"
-                  ? "Cửa hàng"
-                  : "Hệ thống"
-            }}</span>
-            @if (event.imported) {
-              <small
-                >Trạng thái được ghi nhận khi nâng cấp; lịch sử trước đó không
-                có dữ liệu.</small
-              >
-            }
-          </li>
-        } @empty {
-          <li>Chưa có dữ liệu lịch sử.</li>
-        }
-      </ol>
-    </section>
   } @else {
-    <p class="state">Đang tải đơn hàng...</p>
+    <mat-progress-bar mode="indeterminate" aria-label="Đang tải đơn hàng" />
+    <p class="state" role="status">Đang tải đơn hàng...</p>
   }
 </main>

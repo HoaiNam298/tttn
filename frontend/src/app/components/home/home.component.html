@@ -7,7 +7,7 @@
         Điện thoại, máy tính và phụ kiện — tìm sản phẩm phù hợp với nhu cầu của
         bạn.
       </p>
-      <a class="button-link" routerLink="/products">Khám phá cửa hàng →</a>
+      <a mat-flat-button routerLink="/products">Khám phá cửa hàng →</a>
     </div>
     <div class="banner-visual">
       <span class="banner-mark">SHOP<br />APP.</span>
@@ -27,7 +27,7 @@
       ><span>Cập nhật trạng thái trong tài khoản</span>
     </div>
   </section>
-  <section class="panel">
+  <mat-card appearance="outlined" class="panel">
     <div class="section-heading">
       <h2>Mua sắm theo danh mục</h2>
       <a routerLink="/products">Xem tất cả →</a>
@@ -46,7 +46,7 @@
         >
       }
     </div>
-  </section>
+  </mat-card>
   <section class="home-products">
     <div class="section-heading">
       <div>
@@ -56,6 +56,7 @@
       <a routerLink="/products">Xem thêm →</a>
     </div>
     @if (loading) {
+      <mat-progress-bar mode="indeterminate" aria-label="Đang tải dữ liệu" />
       <p class="state">Đang tải sản phẩm...</p>
     } @else if (error) {
       <p class="state error" role="alert">{{ error }}</p>

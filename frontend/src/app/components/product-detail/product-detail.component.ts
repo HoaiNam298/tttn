@@ -1,3 +1,13 @@
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -5,7 +15,7 @@ import {
   inject,
   ChangeDetectionStrategy,
   DestroyRef,
-  ElementRef,
+  TemplateRef,
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -22,15 +32,26 @@ import { AuthService } from '../../services/auth.service';
 import { FavoriteService } from '../../services/favorite.service';
 
 @Component({
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: createMaterialPaginatorIntl },
+  ],
   selector: 'app-product-detail',
   imports: [
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
     ProductCardComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatPaginatorModule,
+    MatDialogModule,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './product-detail.component.html',
+  styleUrl: './product-detail.component.scss',
 })
 export class ProductDetailComponent implements OnInit {
   private readonly auth = inject(AuthService);
@@ -55,7 +76,9 @@ export class ProductDetailComponent implements OnInit {
   canReview = false;
   alreadyReviewed = false;
   @ViewChild('imagePreview')
-  private imagePreview?: ElementRef<HTMLDialogElement>;
+  private imagePreview?: TemplateRef<unknown>;
+  private readonly dialog = inject(MatDialog);
+  private imageDialog?: MatDialogRef<unknown>;
   relatedProducts: Product[] = [];
   relatedError = '';
   reviewLoadError = '';
@@ -101,11 +124,24 @@ export class ProductDetailComponent implements OnInit {
   }
 
   openImage(): void {
-    this.imagePreview?.nativeElement.showModal();
+    if (this.imagePreview && !this.imageDialog) {
+      this.imageDialog = this.dialog.open(this.imagePreview, {
+        width: '900px',
+        maxWidth: 'calc(100vw - 32px)',
+        ariaLabel: 'Ảnh sản phẩm phóng to',
+      });
+      this.imageDialog
+        .afterClosed()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.imageDialog = undefined;
+        });
+    }
   }
 
   closeImage(): void {
-    this.imagePreview?.nativeElement.close();
+    this.imageDialog?.close();
+    this.imageDialog = undefined;
   }
 
   moveImage(offset: number): void {
@@ -129,6 +165,7 @@ export class ProductDetailComponent implements OnInit {
   totalReviews = 0;
   reviewPage = 0;
   reviewTotalPages = 0;
+  reviewTotalElements = 0;
   orderId?: number;
   reviewVariantId?: number;
   reviewMessage = '';
@@ -138,6 +175,7 @@ export class ProductDetailComponent implements OnInit {
     comment: ['', [Validators.required, Validators.maxLength(1000)]],
   });
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => this.imageDialog?.close());
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
@@ -309,6 +347,7 @@ export class ProductDetailComponent implements OnInit {
           this.totalReviews = overview.totalReviews;
           this.reviewPage = overview.reviews.number;
           this.reviewTotalPages = overview.reviews.totalPages;
+          this.reviewTotalElements = overview.reviews.totalElements;
         },
         error: () => {
           if (

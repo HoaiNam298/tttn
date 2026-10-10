@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
+import { CheckoutQuote } from '../../responses/checkout-quote.response';
 import { AddressService } from '../../services/address.service';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
@@ -215,5 +216,50 @@ describe('Checkout request recovery', () => {
     expect(component.quote).toBeUndefined();
     expect(component.error).toBe('Order total changed');
     expect(sessionStorage.getItem(key)).toBeNull();
+  });
+
+  it('invalidates an old quote when recipient details change', () => {
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    expect(component.quote).toBeDefined();
+    component.form.controls.shippingAddress.setValue('New delivery address');
+    expect(component.quote).toBeUndefined();
+    component.refreshQuote();
+    expect(component.quote).toBeDefined();
+  });
+
+  it('ignores a quote response for details that have since changed', () => {
+    const response = new Subject<CheckoutQuote>();
+    orders.quote.mockReturnValue(response);
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    component.form.controls.shippingAddress.setValue('Changed address');
+    response.next({
+      subtotal: 200,
+      shippingMethod: 'STANDARD',
+      shippingFee: 30000,
+      voucherCode: null,
+      discount: 0,
+      total: 30200,
+    });
+    expect(component.quote).toBeUndefined();
+    expect(component.quoting).toBe(false);
+  });
+
+  it('blocks duplicate submissions and freezes the pending request', () => {
+    orders.create.mockReturnValue(new Subject());
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    component.submit();
+    component.submit();
+    expect(orders.create).toHaveBeenCalledTimes(1);
+    expect(component.form.disabled).toBe(true);
+    expect(component.submitting).toBe(true);
   });
 });

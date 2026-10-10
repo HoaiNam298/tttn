@@ -1,3 +1,4 @@
+import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.component';
 import {
   Component,
   DestroyRef,
@@ -54,6 +55,9 @@ import { CatalogService } from '../../../services/catalog.service';
   templateUrl: './category-management.component.html',
 })
 export class CategoryManagementComponent implements OnInit {
+  private readonly confirmations = inject(MatDialog);
+  private confirmationOpen = false;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly catalog = inject(CatalogService);
   @ViewChild('editor') private editor!: TemplateRef<unknown>;
@@ -176,11 +180,7 @@ export class CategoryManagementComponent implements OnInit {
     this.form.reset();
   }
 
-  delete(category: Category): void {
-    if (!confirm(`Xóa danh mục "${category.name}"?`)) {
-      return;
-    }
-
+  private deleteConfirmed(category: Category): void {
     this.catalog.deleteCategory(category.id).subscribe({
       next: () => this.afterChange(),
       error: () => {
@@ -224,5 +224,26 @@ export class CategoryManagementComponent implements OnInit {
   private afterChange(): void {
     this.load(this.page);
     this.changed.emit();
+  }
+
+  delete(category: Category): void {
+    if (this.confirmationOpen) {
+      return;
+    }
+    this.confirmationOpen = true;
+    this.confirmations
+      .open(ConfirmationDialogComponent, {
+        data: `Xóa danh mục "${category.name}"?`,
+        width: '440px',
+        maxWidth: 'calc(100vw - 32px)',
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed: boolean | undefined) => {
+        this.confirmationOpen = false;
+        if (confirmed === true) {
+          this.deleteConfirmed(category);
+        }
+      });
   }
 }

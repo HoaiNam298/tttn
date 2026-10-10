@@ -1,3 +1,5 @@
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {
   Router,
@@ -9,7 +11,13 @@ import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-account',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    MatButtonModule,
+    MatCardModule,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './account.component.html',
   styleUrl: './account.component.scss',

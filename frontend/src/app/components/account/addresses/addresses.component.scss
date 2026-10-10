@@ -1,0 +1,23 @@
+.address-card {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.address-card > div:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+mat-form-field {
+  width: 100%;
+}
+.editor-fields {
+  gap: 8px;
+}
+.form {
+  border: 0;
+  padding: 8px 0;
+  box-shadow: none;
+}
+.actions {
+  flex-wrap: wrap;
+}

@@ -1,20 +1,28 @@
 <main class="container account-layout">
-  <aside class="panel account-menu">
+  <mat-card appearance="outlined" class="panel account-menu">
     <p class="eyebrow">Tài khoản của tôi</p>
     <h2>{{ auth.session()?.user?.fullName }}</h2>
     <nav aria-label="Thông tin cá nhân">
-      <a routerLink="profile" routerLinkActive="active">Thông tin cá nhân</a>
-      <a routerLink="addresses" routerLinkActive="active">Sổ địa chỉ</a>
-      <a routerLink="/orders">Đơn mua</a>
-      <a routerLink="favorites" routerLinkActive="active">Sản phẩm yêu thích</a>
-      <a routerLink="notifications" routerLinkActive="active">Thông báo</a>
+      <a mat-button routerLink="profile" routerLinkActive="active"
+        >Thông tin cá nhân</a
+      >
+      <a mat-button routerLink="addresses" routerLinkActive="active"
+        >Sổ địa chỉ</a
+      >
+      <a mat-button routerLink="/orders">Đơn mua</a>
+      <a mat-button routerLink="favorites" routerLinkActive="active"
+        >Sản phẩm yêu thích</a
+      >
+      <a mat-button routerLink="notifications" routerLinkActive="active"
+        >Thông báo</a
+      >
       @if (auth.isAdmin()) {
-        <a routerLink="/admin">Quản trị cửa hàng</a>
+        <a mat-button routerLink="/admin">Quản trị cửa hàng</a>
       }
-      <button class="secondary" [disabled]="loggingOut" (click)="logout()">
+      <button mat-stroked-button [disabled]="loggingOut" (click)="logout()">
         {{ loggingOut ? "Đang đăng xuất..." : "Đăng xuất" }}
       </button>
     </nav>
-  </aside>
+  </mat-card>
   <div class="account-content"><router-outlet /></div>
 </main>

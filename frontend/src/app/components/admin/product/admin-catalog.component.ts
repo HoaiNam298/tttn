@@ -1,3 +1,4 @@
+import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.component';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -60,6 +61,9 @@ import { ProductInventoryEditorComponent } from './product-inventory-editor.comp
   templateUrl: './admin-catalog.component.html',
 })
 export class AdminCatalogComponent implements OnInit {
+  private readonly confirmations = inject(MatDialog);
+  private confirmationOpen = false;
+
   private readonly fb = inject(FormBuilder);
   private readonly catalog = inject(CatalogService);
   @ViewChild('editor') private editor!: TemplateRef<unknown>;
@@ -239,14 +243,33 @@ export class AdminCatalogComponent implements OnInit {
       categoryId: 0,
     });
   }
+  private deleteProductConfirmed(product: Product): void {
+    this.catalog.deleteProduct(product.id).subscribe({
+      next: () => this.load(this.page),
+      error: () => {
+        this.error = 'Không thể xóa sản phẩm.';
+      },
+    });
+  }
+
   deleteProduct(product: Product): void {
-    if (confirm(`Xóa sản phẩm "${product.name}"?`)) {
-      this.catalog.deleteProduct(product.id).subscribe({
-        next: () => this.load(this.page),
-        error: () => {
-          this.error = 'Không thể xóa sản phẩm.';
-        },
-      });
+    if (this.confirmationOpen) {
+      return;
     }
+    this.confirmationOpen = true;
+    this.confirmations
+      .open(ConfirmationDialogComponent, {
+        data: `Xóa sản phẩm "${product.name}"?`,
+        width: '440px',
+        maxWidth: 'calc(100vw - 32px)',
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed: boolean | undefined) => {
+        this.confirmationOpen = false;
+        if (confirmed === true) {
+          this.deleteProductConfirmed(product);
+        }
+      });
   }
 }

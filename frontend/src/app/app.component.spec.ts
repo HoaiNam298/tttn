@@ -1,77 +1,58 @@
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { signal } from '@angular/core';
+import { DeferBlockState, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { AppComponent } from './app.component';
 import { AuthService } from './services/auth.service';
-import { signal } from '@angular/core';
 import { NotificationService } from './services/notification.service';
 
-describe('AppComponent', () => {
-  const auth = {
-    userId: signal<number | null>(null),
-    token: vi.fn(),
-    isAdmin: vi.fn(),
-  };
-  beforeEach(async () => {
-    auth.userId.set(null);
-    auth.token.mockReturnValue(null);
-    auth.isAdmin.mockReturnValue(false);
-    await TestBed.configureTestingModule({
+describe('Deferred storefront shell', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [AppComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: auth },
+        {
+          provide: AuthService,
+          useValue: {
+            userId: signal(null),
+            token: () => null,
+            isAdmin: () => false,
+          },
+        },
         { provide: NotificationService, useValue: { unread: signal(0) } },
       ],
-    }).compileComponents();
+    });
   });
-
-  it('shows login/register but no account, orders or admin links for guests', () => {
+  it('renders the header after its deferred dependency loads', async () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Đăng nhập');
-    expect(text).toContain('Đăng ký');
-    expect(text).not.toContain('Tài khoản');
-    expect(text).not.toContain('Đơn hàng');
-    expect(text).not.toContain('Quản trị');
-  });
-
-  it('shows account links for a customer without exposing the admin menu', () => {
-    auth.userId.set(12);
-    auth.token.mockReturnValue('valid-token');
-    const fixture = TestBed.createComponent(AppComponent);
+    const blocks = await fixture.getDeferBlocks();
+    await blocks[0].render(DeferBlockState.Complete);
     fixture.detectChanges();
-    const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Tài khoản');
-    expect(text).toContain('Đơn hàng');
-    expect(text).not.toContain('Quản trị');
-    expect(text).not.toContain('Đăng nhập');
     expect(
-      fixture.nativeElement.querySelector('a[href="/account/addresses"]'),
-    ).toBeNull();
-  });
-
-  it('shows admin menu only for authenticated administrators', () => {
-    auth.userId.set(1);
-    auth.token.mockReturnValue('valid-token');
-    auth.isAdmin.mockReturnValue(true);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Quản trị');
-    auth.token.mockReturnValue(null);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Quản trị');
+      fixture.nativeElement.querySelector('app-store-header'),
+    ).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Đăng nhập');
   });
-
-  it('should create the application shell', () => {
+  it('does not load the customer header on admin pages', () => {
+    vi.spyOn(TestBed.inject(Router), 'url', 'get').mockReturnValue(
+      '/admin/dashboard',
+    );
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.site-header')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.site-footer')).toBeNull();
+  });
 
-    expect(fixture.componentInstance).toBeTruthy();
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('.brand')
-        ?.textContent,
-    ).toContain('ShopApp');
+  it('shows author identity and guest links in the storefront footer', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const footer: HTMLElement =
+      fixture.nativeElement.querySelector('.site-footer');
+    expect(footer.textContent).toContain('Nguyễn Hoài Nam');
+    expect(footer.textContent).toContain('2431121074');
+    expect(footer.querySelector('a[href="/login"]')).not.toBeNull();
+    expect(footer.querySelector('a[href="/account"]')).toBeNull();
+    expect(footer.querySelector('a[href="/orders"]')).toBeNull();
   });
 });

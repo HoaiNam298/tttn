@@ -9,12 +9,30 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, catchError, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  Subject,
+  catchError,
+  combineLatest,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { CatalogService } from '../../services/catalog.service';
 import { Category } from '../../models/category.model';
 import { Product } from '../../models/product.model';
 import { ProductSort } from '../../models/product-filter.model';
 import { ProductCardComponent } from '../shared/product-card.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+} from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
 
 @Component({
   selector: 'app-product-list',
@@ -23,6 +41,16 @@ import { ProductCardComponent } from '../shared/product-card.component';
     ReactiveFormsModule,
     RouterLink,
     ProductCardComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+  ],
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: createMaterialPaginatorIntl },
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './product-list.component.html',
@@ -34,6 +62,7 @@ export class ProductListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+  private readonly refresh = new Subject<void>();
   readonly form = this.fb.group({
     keyword: [''],
     categoryId: [null as number | null],
@@ -46,6 +75,7 @@ export class ProductListComponent implements OnInit {
   page = 0;
   totalPages = 0;
   totalElements = 0;
+  readonly pageSize = 12;
   loading = true;
   error = '';
   categoryError = '';
@@ -63,9 +93,12 @@ export class ProductListComponent implements OnInit {
           this.categoryError = 'Không tải được danh mục.';
         },
       });
-    this.route.queryParamMap
+    combineLatest([
+      this.route.queryParamMap,
+      this.refresh.pipe(startWith(undefined)),
+    ])
       .pipe(
-        switchMap((params) => {
+        switchMap(([params]) => {
           const positive = (value: string | null): number | null => {
             const number = Number(value);
             return value !== null && Number.isFinite(number) && number >= 0
@@ -92,7 +125,7 @@ export class ProductListComponent implements OnInit {
               value.keyword ?? '',
               value.categoryId ?? undefined,
               Number.isInteger(page) ? page : 0,
-              12,
+              this.pageSize,
               {
                 minPrice: value.minPrice ?? undefined,
                 maxPrice: value.maxPrice ?? undefined,
@@ -105,6 +138,7 @@ export class ProductListComponent implements OnInit {
                   'Không thể tải sản phẩm. Kiểm tra bộ lọc hoặc thử lại.';
                 this.products = [];
                 this.totalPages = 0;
+                this.totalElements = 0;
                 this.loading = false;
                 return EMPTY;
               }),
@@ -122,6 +156,7 @@ export class ProductListComponent implements OnInit {
   }
 
   load(page = 0): void {
+    this.form.markAllAsTouched();
     const value = this.form.getRawValue();
     if (
       this.form.invalid ||
@@ -148,5 +183,9 @@ export class ProductListComponent implements OnInit {
   clear(): void {
     this.form.reset({ sort: 'newest', keyword: '' });
     this.load();
+  }
+
+  retry(): void {
+    this.refresh.next();
   }
 }

@@ -1,23 +1,25 @@
-<a class="product-card" [routerLink]="['/products', product().id]">
-  <div class="product-image">
-    @if (product().thumbnail && !imageFailed) {
-      <img
-        [src]="product().thumbnail"
-        [alt]="product().name"
-        loading="lazy"
-        decoding="async"
-        (error)="imageFailed = true"
-      />
-    } @else {
-      <span>ShopApp</span>
-    }
-  </div>
-  <div class="product-body">
-    <span class="badge">{{ product().category.name }}</span>
-    <h2>{{ product().name }}</h2>
-    <strong>{{
-      product().price | currency: "VND" : "symbol" : "1.0-0"
-    }}</strong>
-    <small>Xem chi tiết →</small>
-  </div>
+<a class="product-card-link" [routerLink]="['/products', product().id]">
+  <mat-card appearance="outlined" class="store-product-card">
+    <div class="product-image">
+      @if (product().thumbnail && !imageFailed) {
+        <img
+          [src]="product().thumbnail"
+          [alt]="product().name"
+          loading="lazy"
+          decoding="async"
+          (error)="imageFailed = true"
+        />
+      } @else {
+        <span>ShopApp</span>
+      }
+    </div>
+    <mat-card-content class="product-body">
+      <span class="badge">{{ product().category.name }}</span>
+      <h2>{{ product().name }}</h2>
+      <strong>{{
+        product().price | currency: "VND" : "symbol" : "1.0-0"
+      }}</strong>
+      <small>Xem chi tiết →</small>
+    </mat-card-content>
+  </mat-card>
 </a>

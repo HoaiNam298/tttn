@@ -1,0 +1,141 @@
+:host {
+  display: block;
+}
+.back-link {
+  margin-bottom: 20px;
+}
+.detail-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+h1 {
+  font-size: 28px;
+  margin: 8px 0;
+}
+.order-reference {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  color: #64748b;
+}
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+}
+.detail-main,
+.detail-summary {
+  min-width: 0;
+}
+.detail-card {
+  padding: 24px;
+  margin-bottom: 24px;
+  border-radius: 16px;
+  background: var(--mat-sys-surface);
+  border-color: var(--mat-sys-outline-variant);
+}
+h2 {
+  margin: 0 0 20px;
+  font-size: 20px;
+}
+table {
+  width: 100%;
+}
+th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+}
+td {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+td small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+}
+.mat-column-product {
+  min-width: 160px;
+  overflow-wrap: anywhere;
+}
+.mat-column-price,
+.mat-column-total {
+  white-space: nowrap;
+}
+.muted {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.address,
+.order-note {
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.order-note,
+.receipt-hint {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  font-size: 14px;
+}
+.cost-row strong {
+  white-space: nowrap;
+}
+.grand-total {
+  border-top: 1px solid #e2e8f0;
+  margin: 12px 0 16px;
+  padding-top: 20px;
+}
+.grand-total strong {
+  color: #0f766e;
+  font-size: 20px;
+}
+.cancel-button {
+  color: #b91c1c;
+}
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.timeline li {
+  display: flex;
+  gap: 14px;
+  padding: 0 0 24px;
+}
+.timeline-dot {
+  margin-top: 5px;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0f766e;
+}
+.timeline p {
+  margin: 6px 0 0;
+}
+@media (max-width: 1100px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .detail-card {
+    padding: 16px;
+  }
+  h1 {
+    font-size: 24px;
+  }
+}

@@ -1,30 +1,63 @@
-<main class="container narrow">
-  <form class="panel form" [formGroup]="form" (ngSubmit)="submit()">
-    <p class="eyebrow">Tài khoản ShopApp</p>
-    <h1>Đăng nhập</h1>
-
-    <label>
-      Số điện thoại
-      <input formControlName="phoneNumber" />
-    </label>
-
-    <label>
-      Mật khẩu
-      <input type="password" formControlName="password" />
-    </label>
-
-    @if (error) {
-      <p class="error">{{ error }}</p>
+<main class="auth-page">
+  <mat-card appearance="outlined" class="auth-card">
+    <div class="auth-heading">
+      <a class="auth-brand" routerLink="/">ShopApp</a>
+      <h1>Chào mừng trở lại</h1>
+      <p>Đăng nhập để quản lý đơn hàng và tiếp tục mua sắm.</p>
+    </div>
+    @if (loading) {
+      <mat-progress-bar mode="indeterminate" aria-label="Đang đăng nhập" />
     }
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+      <mat-form-field appearance="outline"
+        ><mat-label>Số điện thoại</mat-label
+        ><input
+          matInput
+          type="tel"
+          formControlName="phoneNumber"
+          autocomplete="username"
+        /><mat-error>Vui lòng nhập số điện thoại.</mat-error></mat-form-field
+      >
 
-    <button [disabled]="form.invalid || loading">
-      {{ loading ? "Đang đăng nhập..." : "Đăng nhập" }}
-    </button>
-    <p>
+      <mat-form-field appearance="outline"
+        ><mat-label>Mật khẩu</mat-label
+        ><input
+          matInput
+          [type]="showPassword ? 'text' : 'password'"
+          formControlName="password"
+          autocomplete="current-password"
+        /><button
+          mat-button
+          matSuffix
+          type="button"
+          [disabled]="loading"
+          (click)="showPassword = !showPassword"
+          [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+          [attr.aria-pressed]="showPassword"
+        >
+          {{ showPassword ? "Ẩn" : "Hiện" }}</button
+        ><mat-error>Vui lòng nhập mật khẩu.</mat-error></mat-form-field
+      >
+      @if (error) {
+        <p class="auth-error" role="alert">{{ error }}</p>
+      }
+      <button
+        mat-flat-button
+        type="submit"
+        class="submit-button"
+        [disabled]="loading"
+      >
+        {{ loading ? "Đang đăng nhập..." : "Đăng nhập" }}
+      </button>
+    </form>
+    <p class="auth-switch">
       Chưa có tài khoản?
-      <a routerLink="/register" [queryParams]="{ returnUrl: returnUrl }"
+      <a
+        mat-button
+        routerLink="/register"
+        [queryParams]="{ returnUrl: returnUrl }"
         >Đăng ký</a
       >
     </p>
-  </form>
+  </mat-card>
 </main>

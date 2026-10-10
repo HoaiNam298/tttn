@@ -1,158 +1,277 @@
-<dialog
-  #dialog
-  class="admin-editor inventory-editor"
-  aria-labelledby="inventory-title"
-  (cancel)="close($event)"
->
-  <form class="panel form" [formGroup]="form" (ngSubmit)="save()">
-    <div class="editor-heading">
-      <h2 id="inventory-title">Ảnh, phân loại và tồn kho</h2>
-      <button
-        type="button"
-        class="secondary"
-        [disabled]="saving || uploading || loading"
-        (click)="close()"
-      >
-        Đóng ×
-      </button>
-    </div>
-    @if (error) {
-      <p class="error" role="alert">{{ error }}</p>
-    }
-    @if (loading) {
-      <p>Đang tải...</p>
-    }
-    @if (product) {
-      <h3>{{ product.name }}</h3>
-      <fieldset class="editor-fields" [disabled]="saving || uploading">
-        <section>
-          <h3>Gallery (tối đa 10 ảnh)</h3>
-          <p>
+<ng-template #dialog>
+  <h2 mat-dialog-title>Ảnh, phân loại và tồn kho</h2>
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <mat-dialog-content>
+      @if (error) {
+        <p class="error" role="alert">{{ error }}</p>
+      }
+      @if (loading || uploading) {
+        <mat-progress-bar
+          mode="indeterminate"
+          [attr.aria-label]="loading ? 'Đang tải sản phẩm' : 'Đang upload ảnh'"
+        />
+        <p role="status">
+          {{ loading ? "Đang tải sản phẩm..." : "Đang upload ảnh..." }}
+        </p>
+      }
+      @if (product) {
+        <h3>{{ product.name }}</h3>
+        <section class="gallery-section" aria-label="Ảnh sản phẩm">
+          <div class="section-heading">
+            <h3>
+              Gallery <small>{{ images.length }}/10 ảnh</small>
+            </h3>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="busy || images.length >= 10"
+              (click)="galleryFile.click()"
+            >
+              Thêm ảnh
+            </button>
+            <input
+              #galleryFile
+              hidden
+              type="file"
+              accept="image/jpeg,image/png"
+              [disabled]="busy || images.length >= 10"
+              (change)="upload($event)"
+            />
+          </div>
+          <p class="helper-text">
             Ảnh đầu tiên là ảnh đại diện. JPEG/PNG, tối đa 5 MB và 16 megapixel.
           </p>
           <div class="inventory-images">
-            @for (image of images; track image; let i = $index) {
-              <div>
-                <img [src]="image" alt="Ảnh sản phẩm" /><small>{{
-                  i === 0 ? "Ảnh đại diện" : "Ảnh " + (i + 1)
-                }}</small>
-                <div class="actions">
-                  <button type="button" class="link" (click)="makePrimary(i)">
-                    Đại diện</button
-                  ><button
+            @for (image of images; track $index; let i = $index) {
+              <div class="image-card">
+                <img
+                  [src]="image"
+                  [alt]="
+                    i === 0
+                      ? 'Ảnh đại diện sản phẩm'
+                      : 'Ảnh sản phẩm ' + (i + 1)
+                  "
+                />
+                <small>{{ i === 0 ? "Ảnh đại diện" : "Ảnh " + (i + 1) }}</small>
+                <div class="image-actions">
+                  <button
+                    mat-button
                     type="button"
-                    class="link danger"
-                    (click)="images.splice(i, 1)"
+                    [disabled]="busy || i === 0"
+                    (click)="makePrimary(i)"
+                  >
+                    Đại diện
+                  </button>
+                  <button
+                    mat-button
+                    class="delete-action"
+                    type="button"
+                    [disabled]="busy"
+                    (click)="removeImage(i)"
                   >
                     Bỏ ảnh
                   </button>
                 </div>
               </div>
+            } @empty {
+              <p class="empty-gallery">
+                Chưa có ảnh. Thêm ảnh để hiển thị sản phẩm trong cửa hàng.
+              </p>
             }
           </div>
-          <label
-            >Thêm ảnh gallery<input
-              type="file"
-              accept="image/jpeg,image/png"
-              [disabled]="images.length >= 10"
-              (change)="upload($event)"
-          /></label>
         </section>
         @if (!variants.length) {
-          <label
-            >Tồn kho sản phẩm<input
+          <mat-form-field appearance="outline"
+            ><mat-label>Tồn kho sản phẩm</mat-label
+            ><input
+              matInput
               type="number"
+              formControlName="stock"
               min="0"
               max="1000000"
-              formControlName="stock"
-          /></label>
+              step="1"
+            /><mat-error
+              >Tồn kho sản phẩm không hợp lệ.</mat-error
+            ></mat-form-field
+          >
         }
         <section formArrayName="variants">
-          <div class="editor-heading">
-            <h3>Phân loại SKU</h3>
+          <div class="section-heading">
+            <h3>
+              Phân loại SKU <small>{{ variants.length }}/50</small>
+            </h3>
             <button
+              mat-stroked-button
               type="button"
-              class="secondary"
-              [disabled]="variants.length >= 50"
+              [disabled]="busy || variants.length >= 50"
               (click)="addVariant()"
             >
               Thêm SKU
             </button>
           </div>
-          <p>
-            SKU đã lưu không bị xóa; bỏ chọn “Đang bán” để ngừng bán và giữ lịch
-            sử đơn.
+          <p class="helper-text">
+            SKU đã lưu không bị xóa. Tắt “Đang bán” để ngừng bán và giữ lịch sử
+            đơn hàng.
           </p>
-          @for (variant of variants.controls; track variant; let i = $index) {
-            <article class="variant-editor" [formGroupName]="i">
-              <div class="variant-form-grid">
-                <label
-                  >Mã SKU<input
-                    formControlName="sku"
-                    placeholder="PHONE-BLACK-128"
-                /></label>
-                <label
-                  >Tên phân loại<input
-                    formControlName="name"
-                    placeholder="Đen / 128 GB"
-                /></label>
-                <label>Màu<input formControlName="color" /></label>
-                <label>Size<input formControlName="size" /></label>
-                <label>Dung lượng<input formControlName="capacity" /></label>
-                <label
-                  >Giá (đ)<input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    formControlName="price"
-                /></label>
-                <label
-                  >Tồn kho<input
-                    type="number"
-                    min="0"
-                    max="1000000"
-                    formControlName="stock"
-                /></label>
-                <label>Ảnh SKU (URL)<input formControlName="imageUrl" /></label>
-                <label
-                  >Upload ảnh SKU<input
+          <mat-accordion multi>
+            @for (variant of variants.controls; track variant; let i = $index) {
+              <mat-expansion-panel
+                [formGroupName]="i"
+                [expanded]="i === 0 || !variant.controls.id.value"
+              >
+                <mat-expansion-panel-header
+                  ><mat-panel-title>{{
+                    variant.controls.name.value || "SKU mới"
+                  }}</mat-panel-title
+                  ><mat-panel-description
+                    >{{
+                      variant.controls.active.value ? "Đang bán" : "Ngừng bán"
+                    }}
+                    · Kho
+                    {{ variant.controls.stock.value }}</mat-panel-description
+                  ></mat-expansion-panel-header
+                >
+                <div class="variant-form-grid">
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Mã SKU</mat-label
+                    ><input
+                      matInput
+                      type="text"
+                      formControlName="sku"
+                      maxlength="64"
+                    /><mat-error
+                      >Mã SKU không hợp lệ.</mat-error
+                    ></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Tên phân loại</mat-label
+                    ><input
+                      matInput
+                      type="text"
+                      formControlName="name"
+                      maxlength="150"
+                    /><mat-error
+                      >Tên phân loại không hợp lệ.</mat-error
+                    ></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Màu</mat-label
+                    ><input
+                      matInput
+                      type="text"
+                      formControlName="color"
+                      maxlength="60"
+                    /><mat-error>Màu không hợp lệ.</mat-error></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Size</mat-label
+                    ><input
+                      matInput
+                      type="text"
+                      formControlName="size"
+                      maxlength="60"
+                    /><mat-error>Size không hợp lệ.</mat-error></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Dung lượng</mat-label
+                    ><input
+                      matInput
+                      type="text"
+                      formControlName="capacity"
+                      maxlength="60"
+                    /><mat-error
+                      >Dung lượng không hợp lệ.</mat-error
+                    ></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Giá (đ)</mat-label
+                    ><input
+                      matInput
+                      type="number"
+                      formControlName="price"
+                      min="0"
+                      step="0.01"
+                    /><mat-error
+                      >Giá (đ) không hợp lệ.</mat-error
+                    ></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Tồn kho</mat-label
+                    ><input
+                      matInput
+                      type="number"
+                      formControlName="stock"
+                      min="0"
+                      max="1000000"
+                      step="1"
+                    /><mat-error
+                      >Tồn kho không hợp lệ.</mat-error
+                    ></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Ảnh SKU (URL)</mat-label
+                    ><input
+                      matInput
+                      type="text"
+                      formControlName="imageUrl"
+                      maxlength="500"
+                    /><mat-error
+                      >Ảnh SKU (URL) không hợp lệ.</mat-error
+                    ></mat-form-field
+                  >
+                </div>
+                <div class="variant-actions">
+                  @if (variant.controls.imageUrl.value) {
+                    <img
+                      class="variant-image"
+                      [src]="variant.controls.imageUrl.value"
+                      alt="Ảnh SKU"
+                    />
+                  }
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busy"
+                    (click)="skuFile.click()"
+                  >
+                    Upload ảnh SKU
+                  </button>
+                  <input
+                    #skuFile
+                    hidden
                     type="file"
                     accept="image/jpeg,image/png"
+                    [disabled]="busy"
                     (change)="upload($event, i)"
-                /></label>
-              </div>
-              @if (variant.controls.imageUrl.value) {
-                <img
-                  class="variant-image"
-                  [src]="variant.controls.imageUrl.value"
-                  alt="Ảnh SKU"
-                />
-              }
-              <div class="actions">
-                <label class="checkbox-label"
-                  ><input type="checkbox" formControlName="active" />Đang
-                  bán</label
-                ><button
-                  type="button"
-                  class="link danger"
-                  (click)="removeVariant(i)"
-                >
-                  {{ variant.controls.id.value ? "Ngừng bán" : "Bỏ SKU" }}
-                </button>
-              </div>
-            </article>
-          }
+                  />
+                  <mat-checkbox formControlName="active">Đang bán</mat-checkbox>
+                  <button
+                    mat-button
+                    class="delete-action"
+                    type="button"
+                    [disabled]="busy"
+                    (click)="removeVariant(i)"
+                  >
+                    {{ variant.controls.id.value ? "Ngừng bán" : "Bỏ SKU" }}
+                  </button>
+                </div>
+              </mat-expansion-panel>
+            }
+          </mat-accordion>
         </section>
-      </fieldset>
-      @if (uploading) {
-        <p>Đang upload ảnh...</p>
       }
-      @if (form.touched && form.invalid) {
-        <p class="error">Kiểm tra SKU, tên, giá và tồn kho nguyên không âm.</p>
-      }
-      <button type="submit" [disabled]="saving || uploading || form.invalid">
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" [disabled]="busy" (click)="close()">
+        Hủy
+      </button>
+      <button
+        mat-flat-button
+        type="submit"
+        [disabled]="busy || !product || form.invalid"
+      >
         {{ saving ? "Đang lưu..." : "Lưu ảnh và tồn kho" }}
       </button>
-    }
+    </mat-dialog-actions>
   </form>
-</dialog>
+</ng-template>

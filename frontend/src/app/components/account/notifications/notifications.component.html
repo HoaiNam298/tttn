@@ -1,10 +1,14 @@
-<section class="panel">
+<mat-card appearance="outlined" class="panel">
   <div class="section-heading">
     <h1>Thông báo</h1>
     <div class="actions">
-      <button class="secondary" [disabled]="loading" (click)="load(page)">
+      <button mat-stroked-button [disabled]="loading" (click)="load(page)">
         Làm mới</button
-      ><button [disabled]="updating || !service.unread()" (click)="markAll()">
+      ><button
+        mat-stroked-button
+        [disabled]="updating || !service.unread()"
+        (click)="markAll()"
+      >
         Đọc tất cả
       </button>
     </div>
@@ -13,6 +17,7 @@
     <p class="error" role="alert">{{ error }}</p>
   }
   @if (loading) {
+    <mat-progress-bar mode="indeterminate" aria-label="Đang tải dữ liệu" />
     <p class="state">Đang tải thông báo...</p>
   } @else {
     @for (notification of notifications; track notification.id) {
@@ -27,7 +32,7 @@
         <small>{{ notification.createdAt | date: "dd/MM/yyyy HH:mm" }}</small>
         <div class="actions">
           <button
-            class="secondary"
+            mat-stroked-button
             [disabled]="updating"
             (click)="open(notification)"
           >
@@ -42,16 +47,15 @@
     }
   }
   @if (totalPages > 1) {
-    <div class="pagination">
-      <button [disabled]="loading || page === 0" (click)="load(page - 1)">
-        Trước</button
-      ><span>{{ page + 1 }} / {{ totalPages }}</span
-      ><button
-        [disabled]="loading || page + 1 >= totalPages"
-        (click)="load(page + 1)"
-      >
-        Sau
-      </button>
-    </div>
+    <mat-paginator
+      [length]="totalElements"
+      [pageIndex]="page"
+      [pageSize]="10"
+      [hidePageSize]="true"
+      [showFirstLastButtons]="true"
+      [disabled]="loading"
+      (page)="load($event.pageIndex)"
+      aria-label="Phân trang"
+    />
   }
-</section>
+</mat-card>

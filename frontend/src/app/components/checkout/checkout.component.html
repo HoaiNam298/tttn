@@ -1,166 +1,255 @@
-<main class="container">
-  <a class="back" [routerLink]="buyNow ? '/products' : '/cart'"
+<main class="container checkout-page">
+  <a mat-button [routerLink]="buyNow ? '/products' : '/cart'"
     >← Tiếp tục mua sắm</a
   >
   <div class="page-heading">
-    <div>
-      <p class="eyebrow">Thanh toán</p>
-      <h1>Thông tin nhận hàng</h1>
-    </div>
+    <p class="eyebrow">Thanh toán</p>
+    <h1>Xác nhận đơn hàng</h1>
   </div>
   @if (error) {
-    <p class="error" role="alert">{{ error }}</p>
+    <p class="notice error-notice" role="alert">{{ error }}</p>
   }
   @if (pending) {
-    <p class="panel">
-      Yêu cầu đặt hàng đang chờ xác nhận. Bấm xác nhận lại để kiểm tra đơn cũ;
-      thông tin được giữ nguyên để tránh tạo đơn trùng.
+    <p class="notice" role="status">
+      Yêu cầu đặt hàng đang chờ xác nhận. Xác nhận lại sẽ sử dụng yêu cầu cũ;
+      thông tin được khóa để tránh tạo đơn trùng.
     </p>
   }
-
+  @if (loading || submitting) {
+    <mat-progress-bar mode="indeterminate" aria-label="Đang xử lý đơn hàng" />
+  }
   @if (loading) {
-    <p class="state">Đang tải đơn hàng...</p>
+    <p class="state" aria-live="polite">Đang tải thông tin đơn hàng...</p>
   } @else if (lines.length === 0) {
-    @if (pending) {
-      <section class="panel">
-        <p>
-          Chưa tải được thông tin sản phẩm. Bạn vẫn có thể xác nhận lại yêu cầu
-          đã gửi.
-        </p>
-        <button [disabled]="submitting" (click)="submit()">
-          {{ submitting ? "Đang kiểm tra..." : "Xác nhận lại yêu cầu" }}
-        </button>
-      </section>
-    } @else {
-      <p class="state">
-        Giỏ hàng trống. <a routerLink="/products">Chọn sản phẩm</a>
-      </p>
-    }
-  } @else {
-    <form class="checkout-layout" [formGroup]="form" (ngSubmit)="submit()">
-      <section class="panel form">
-        <a routerLink="/account/addresses">Quản lý sổ địa chỉ</a>
-        @if (addressError) {
-          <p class="error">{{ addressError }}</p>
-        }
-        @if (addresses.length) {
-          <label
-            >Chọn địa chỉ đã lưu<select
-              [disabled]="submitting || !!pending"
-              (change)="selectAddress($event)"
-            >
-              <option value="">Chọn địa chỉ</option>
-              @for (address of addresses; track address.id) {
-                <option [value]="address.id">
-                  {{ address.recipientName }} — {{ address.shippingAddress }}
-                </option>
-              }
-            </select></label
-          >
-        }
-        <fieldset class="editor-fields" [disabled]="submitting || !!pending">
-          <label
-            >Họ tên người nhận <input formControlName="recipientName"
-          /></label>
-          <label>Số điện thoại <input formControlName="phoneNumber" /></label>
-          <label
-            >Địa chỉ giao hàng
-            <textarea rows="3" formControlName="shippingAddress"></textarea>
-          </label>
-          <label
-            >Ghi chú <textarea rows="3" formControlName="note"></textarea>
-          </label>
-          <label
-            >Phương thức thanh toán
-            <input value="Thanh toán khi nhận hàng (COD)" disabled
-          /></label>
-          <label
-            >Giao hàng (phí demo)
-            <select formControlName="shippingMethod" (change)="refreshQuote()">
-              <option value="STANDARD">Tiêu chuẩn</option>
-              <option value="EXPRESS">Nhanh</option>
-            </select>
-          </label>
-          <label
-            >Mã giảm giá
-            <input
-              formControlName="voucherCode"
-              (input)="invalidateQuote()"
-              placeholder="Nhập mã voucher"
-            />
-          </label>
+    <mat-card appearance="outlined" class="empty-card">
+      <mat-card-content>
+        @if (pending) {
+          <p>
+            Chưa tải được sản phẩm. Bạn vẫn có thể xác nhận lại yêu cầu đã gửi.
+          </p>
           <button
+            mat-flat-button
             type="button"
-            class="secondary"
-            [disabled]="quoting"
-            (click)="refreshQuote()"
+            [disabled]="submitting"
+            (click)="submit()"
           >
-            {{ quoting ? "Đang tính..." : "Áp dụng / Tính lại tổng tiền" }}
+            Xác nhận lại yêu cầu
           </button>
-          @if (quoteError) {
-            <p class="error" role="alert">{{ quoteError }}</p>
+        } @else {
+          <p>Chưa có sản phẩm để đặt hàng.</p>
+          <a mat-flat-button routerLink="/products">Chọn sản phẩm</a>
+        }
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <form class="checkout-grid" [formGroup]="form" (ngSubmit)="submit()">
+      <mat-card appearance="outlined">
+        <mat-card-content>
+          <div class="section-heading">
+            <h2>Thông tin nhận hàng</h2>
+            <a mat-button routerLink="/account/addresses">Sổ địa chỉ</a>
+          </div>
+          @if (addressError) {
+            <p class="error-notice" role="alert">{{ addressError }}</p>
           }
-          @if (form.invalid && form.touched) {
-            <p class="error">
-              Vui lòng nhập đầy đủ thông tin nhận hàng hợp lệ.
-            </p>
+          @if (addresses.length) {
+            <mat-form-field appearance="outline">
+              <mat-label>Chọn địa chỉ đã lưu</mat-label>
+              <mat-select
+                [disabled]="submitting || !!pending"
+                (selectionChange)="selectAddress($event.value)"
+              >
+                @for (address of addresses; track address.id) {
+                  <mat-option [value]="address.id"
+                    >{{ address.recipientName }} —
+                    {{ address.shippingAddress }}</mat-option
+                  >
+                }
+              </mat-select>
+            </mat-form-field>
           }
-        </fieldset>
-      </section>
-      <aside class="panel order-summary">
-        <h2>Đơn hàng</h2>
-        @for (
-          line of lines;
-          track line.product.id + ":" + (line.variantId ?? "")
-        ) {
-          <div class="summary-row">
-            <span
-              >{{ line.product.name }}
-              @if (line.variantName) {
-                ({{ line.variantName }})
+          <div class="recipient-fields">
+            <mat-form-field appearance="outline"
+              ><mat-label>Họ tên người nhận</mat-label
+              ><input
+                matInput
+                formControlName="recipientName"
+                autocomplete="name"
+                maxlength="100"
+              />
+              @if (form.controls.recipientName.invalid) {
+                <mat-error>Nhập họ tên, tối đa 100 ký tự.</mat-error>
               }
-              × {{ line.quantity }}</span
+            </mat-form-field>
+            <mat-form-field appearance="outline"
+              ><mat-label>Số điện thoại</mat-label
+              ><input
+                matInput
+                formControlName="phoneNumber"
+                autocomplete="tel"
+                inputmode="tel"
+              />
+              @if (form.controls.phoneNumber.invalid) {
+                <mat-error>Nhập số điện thoại hợp lệ, 9–15 ký tự.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+          <mat-form-field appearance="outline"
+            ><mat-label>Địa chỉ giao hàng</mat-label
+            ><textarea
+              matInput
+              rows="3"
+              formControlName="shippingAddress"
+              autocomplete="street-address"
+              maxlength="255"
+            ></textarea>
+            @if (form.controls.shippingAddress.invalid) {
+              <mat-error>Nhập địa chỉ, tối đa 255 ký tự.</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline"
+            ><mat-label>Ghi chú (không bắt buộc)</mat-label
+            ><textarea
+              matInput
+              rows="2"
+              formControlName="note"
+              maxlength="500"
+            ></textarea
+            ><mat-hint>Tối đa 500 ký tự</mat-hint></mat-form-field
+          >
+          <mat-divider />
+          <h2>Giao hàng & thanh toán</h2>
+          <mat-form-field appearance="outline"
+            ><mat-label>Giao hàng (phí demo)</mat-label>
+            <mat-select
+              formControlName="shippingMethod"
+              (selectionChange)="refreshQuote()"
+              ><mat-option value="STANDARD">Tiêu chuẩn</mat-option
+              ><mat-option value="EXPRESS">Nhanh</mat-option></mat-select
+            >
+          </mat-form-field>
+          <p class="payment-note">Thanh toán khi nhận hàng (COD)</p>
+          <div class="voucher-row">
+            <mat-form-field appearance="outline"
+              ><mat-label>Mã giảm giá</mat-label
+              ><input
+                matInput
+                formControlName="voucherCode"
+                placeholder="Nhập mã voucher"
+                maxlength="40"
+              />
+              @if (form.controls.voucherCode.invalid) {
+                <mat-error>Mã gồm 3–40 chữ, số, dấu _ hoặc -.</mat-error>
+              }
+            </mat-form-field>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="quoting || submitting || !!pending"
+              (click)="refreshQuote()"
+            >
+              Tính tổng tiền
+            </button>
+          </div>
+          @if (quoteError) {
+            <p class="error-notice" role="alert">{{ quoteError }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+      <mat-card appearance="outlined" class="checkout-summary">
+        <mat-card-content>
+          <h2>Đơn hàng của bạn</h2>
+          @for (
+            line of lines;
+            track line.product.id + ":" + (line.variantId ?? "")
+          ) {
+            <div class="checkout-line">
+              <div>
+                <strong>{{ line.product.name }}</strong>
+                @if (line.variantName) {
+                  <small>{{ line.variantName }}</small>
+                }
+                <small>Số lượng: {{ line.quantity }}</small>
+              </div>
+              <span>{{
+                line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
+              }}</span>
+            </div>
+          }
+          <mat-divider />
+          <div class="cost-row">
+            <span>Tạm tính</span
             ><strong>{{
-              line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
+              quote?.subtotal ?? subtotal | currency: "VND" : "symbol" : "1.0-0"
             }}</strong>
           </div>
-        }
-        <div class="summary-row">
-          <span>Tạm tính</span
-          ><strong>{{
-            quote?.subtotal ?? subtotal | currency: "VND" : "symbol" : "1.0-0"
-          }}</strong>
-        </div>
-        <div class="summary-row">
-          <span>Phí giao hàng</span
-          ><strong>{{
-            quote?.shippingFee ?? 0 | currency: "VND" : "symbol" : "1.0-0"
-          }}</strong>
-        </div>
-        @if (quote; as price) {
-          <div class="summary-row">
-            <span>Giảm giá {{ price.voucherCode }}</span>
-            <strong
-              >−{{
-                price.discount | currency: "VND" : "symbol" : "1.0-0"
-              }}</strong
-            >
-          </div>
-          <p class="summary-total">
-            {{ price.total | currency: "VND" : "symbol" : "1.0-0" }}
+          @if (quoting) {
+            <mat-progress-bar
+              mode="indeterminate"
+              aria-label="Đang tính tổng tiền"
+            />
+          }
+          @if (quote; as price) {
+            <div class="cost-row">
+              <span>Phí giao hàng</span
+              ><strong>{{
+                price.shippingFee | currency: "VND" : "symbol" : "1.0-0"
+              }}</strong>
+            </div>
+            @if (price.discount > 0) {
+              <div class="cost-row">
+                <span>Giảm giá {{ price.voucherCode }}</span
+                ><strong
+                  >−{{
+                    price.discount | currency: "VND" : "symbol" : "1.0-0"
+                  }}</strong
+                >
+              </div>
+            }
+            <mat-divider />
+            <div class="cost-row total">
+              <span>Tổng thanh toán</span
+              ><strong>{{
+                price.total | currency: "VND" : "symbol" : "1.0-0"
+              }}</strong>
+            </div>
+          } @else if (pending) {
+            @if (pending.payload.expectedTotal != null) {
+              <div class="cost-row total">
+                <span>Tổng tiền yêu cầu đã gửi</span
+                ><strong>{{
+                  pending.payload.expectedTotal
+                    | currency: "VND" : "symbol" : "1.0-0"
+                }}</strong>
+              </div>
+            }
+          } @else {
+            <p class="summary-note">
+              Nhấn tính tổng tiền để xác nhận phí giao hàng và giảm giá từ hệ
+              thống.
+            </p>
+          }
+          <p class="summary-note">
+            Giá, tồn kho và voucher được kiểm tra lại khi đặt hàng.
           </p>
-          <p>Giá, tồn kho và voucher sẽ được kiểm tra lại khi đặt hàng.</p>
-        } @else if (!pending) {
-          <p>Hãy tính tổng tiền từ hệ thống trước khi đặt hàng.</p>
-        }
-        <button
-          [disabled]="
-            form.invalid || submitting || (!pending && (!quote || quoting))
-          "
-        >
-          {{ submitting ? "Đang đặt hàng..." : "Xác nhận đặt hàng" }}
-        </button>
-      </aside>
+          <button
+            mat-flat-button
+            class="submit-order"
+            type="submit"
+            [disabled]="
+              form.invalid || submitting || (!pending && (!quote || quoting))
+            "
+          >
+            {{
+              submitting
+                ? "Đang xử lý…"
+                : pending
+                  ? "Xác nhận lại yêu cầu"
+                  : "Xác nhận đặt hàng"
+            }}
+          </button>
+        </mat-card-content>
+      </mat-card>
     </form>
   }
 </main>
