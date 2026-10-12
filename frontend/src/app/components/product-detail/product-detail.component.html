@@ -26,7 +26,11 @@
           aria-label="Phóng to ảnh sản phẩm"
         >
           @if (selectedImage) {
-            <img [src]="selectedImage" [alt]="value.name" />
+            <img
+              [src]="selectedImage"
+              [alt]="value.name"
+              (error)="onImageError($event)"
+            />
           } @else {
             <span>ShopApp</span>
           }
@@ -45,6 +49,7 @@
                 <img
                   [src]="image"
                   [alt]="value.name"
+                  (error)="onImageError($event)"
                   loading="lazy"
                   decoding="async"
                 />
@@ -353,7 +358,11 @@
             Đóng ×
           </button>
         </div>
-        <img [src]="selectedImage" [alt]="value.name" />
+        <img
+          [src]="selectedImage"
+          [alt]="value.name"
+          (error)="onImageError($event)"
+        />
         @if (images.length > 1) {
           <div class="pagination">
             <button mat-stroked-button (click)="moveImage(-1)">Ảnh trước</button

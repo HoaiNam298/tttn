@@ -745,6 +745,13 @@ input.cart-checkbox {
   padding: 0;
   cursor: zoom-in;
 }
+// Material projects the image into its label. Give that positioned wrapper
+// the full gallery bounds so percentage image dimensions do not collapse.
+.detail-image.gallery-open > .mdc-button__label {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
 .detail-image.gallery-open img {
   position: absolute;
   inset: 0;

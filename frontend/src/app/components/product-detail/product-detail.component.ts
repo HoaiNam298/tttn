@@ -66,6 +66,8 @@ export class ProductDetailComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private currentProductId = 0;
+  readonly fallbackImage = '/images/product-placeholder.svg';
+  private readonly failedImages = new Set<string>();
   private reviewRequest = 0;
   private eligibilityRequest = 0;
   reviewRating?: number;
@@ -108,7 +110,10 @@ export class ProductDetailComponent implements OnInit {
     this.selectedVariantId = variant.id;
     this.quantity = 1;
     this.added = false;
-    this.selectedImage = variant.imageUrl || this.images[0] || '';
+    this.selectedImage =
+      variant.imageUrl && !this.failedImages.has(variant.imageUrl)
+        ? variant.imageUrl
+        : this.images[0] || this.fallbackImage;
   }
 
   get images(): string[] {
@@ -118,7 +123,9 @@ export class ProductDetailComponent implements OnInit {
           this.product?.thumbnail,
           ...(this.product?.images ?? []),
           this.selectedVariant?.imageUrl,
-        ].filter((image): image is string => !!image),
+        ].filter(
+          (image): image is string => !!image && !this.failedImages.has(image),
+        ),
       ),
     ];
   }
@@ -142,6 +149,19 @@ export class ProductDetailComponent implements OnInit {
   closeImage(): void {
     this.imageDialog?.close();
     this.imageDialog = undefined;
+  }
+
+  onImageError(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    const failedUrl = image.getAttribute('src') || '';
+    if (!failedUrl || failedUrl === this.fallbackImage) {
+      return;
+    }
+    this.failedImages.add(failedUrl);
+    if (failedUrl === this.selectedImage) {
+      this.selectedImage = this.images[0] || this.fallbackImage;
+    }
+    image.src = this.fallbackImage;
   }
 
   moveImage(offset: number): void {
@@ -197,6 +217,8 @@ export class ProductDetailComponent implements OnInit {
           const id = Number(params.get('id'));
           this.currentProductId = id;
           this.product = undefined;
+          this.failedImages.clear();
+          this.selectedImage = '';
           this.quantity = 1;
           this.selectedVariantId = undefined;
           this.added = false;
@@ -252,7 +274,8 @@ export class ProductDetailComponent implements OnInit {
               },
             });
         }
-        this.selectedImage = value.thumbnail || value.images?.[0] || '';
+        this.selectedImage =
+          value.thumbnail || value.images?.[0] || this.fallbackImage;
         this.catalog
           .products('', value.category.id, 0, 7)
           .pipe(takeUntilDestroyed(this.destroyRef))
