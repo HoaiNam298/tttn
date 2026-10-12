@@ -12,13 +12,14 @@ import { CheckoutComponent } from './checkout.component';
 describe('Checkout request recovery', () => {
   const key = 'shopapp_checkout_attempt_901';
   const cart = { lines: vi.fn(), removePurchased: vi.fn() };
-  const orders = { create: vi.fn(), quote: vi.fn() };
+  const orders = { create: vi.fn(), quote: vi.fn(), paymentMethods: vi.fn() };
   const catalog = { product: vi.fn() };
   const router = { navigate: vi.fn() };
 
   beforeEach(() => {
     sessionStorage.removeItem(key);
     vi.resetAllMocks();
+    orders.paymentMethods.mockReturnValue(of({ vnpayEnabled: false }));
     orders.quote.mockReturnValue(
       of({
         subtotal: 200,
@@ -68,6 +69,35 @@ describe('Checkout request recovery', () => {
   });
 
   afterEach(() => sessionStorage.removeItem(key));
+
+  it('sends VNPAY and navigates to the persisted order instead of COD success', () => {
+    orders.paymentMethods.mockReturnValue(of({ vnpayEnabled: true }));
+    orders.create.mockReturnValue(of({ id: 32, paymentMethod: 'VNPAY' }));
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    component.form.controls.paymentMethod.setValue('VNPAY');
+    component.refreshQuote();
+    component.submit();
+    expect(orders.create.mock.calls[0][0].paymentMethod).toBe('VNPAY');
+    expect(orders.create.mock.calls[0][0].requestId).toBeTruthy();
+    expect(router.navigate).toHaveBeenCalledWith(['/orders', 32], {
+      queryParams: { payment: 'start' },
+    });
+    expect(sessionStorage.getItem(key)).toBeNull();
+  });
+
+  it('keeps VNPAY disabled if capabilities cannot be loaded', () => {
+    orders.paymentMethods.mockReturnValue(
+      throwError(() => new Error('Unavailable')),
+    );
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    expect(component.vnpayEnabled).toBe(false);
+  });
 
   it('uses the selected SKU price and sends its ID for buy-now', () => {
     TestBed.overrideProvider(ActivatedRoute, {

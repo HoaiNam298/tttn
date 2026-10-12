@@ -3,6 +3,8 @@ package com.project.shopapp.responses;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.PaymentMethod;
+import com.project.shopapp.model.PaymentStatus;
+import com.project.shopapp.model.ShippingMethod;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -22,10 +24,12 @@ public record OrderResponse(
         BigDecimal total,
         Instant createdAt,
         List<OrderItemResponse> items,
-        com.project.shopapp.model.ShippingMethod shippingMethod,
+        ShippingMethod shippingMethod,
         String voucherCode,
         BigDecimal discount,
-        List<OrderStatusHistoryResponse> history) {
+        List<OrderStatusHistoryResponse> history,
+        PaymentStatus paymentStatus,
+        Instant paymentExpiresAt) {
     public OrderResponse(
             Long id,
             UUID orderNumber,
@@ -54,10 +58,12 @@ public record OrderResponse(
                 total,
                 createdAt,
                 items,
-                com.project.shopapp.model.ShippingMethod.STANDARD,
+                ShippingMethod.STANDARD,
                 null,
                 BigDecimal.ZERO,
-                List.of());
+                List.of(),
+                PaymentStatus.UNPAID,
+                null);
     }
 
     public static OrderResponse from(Order order) {
@@ -78,6 +84,8 @@ public record OrderResponse(
                 order.getShippingMethod(),
                 order.getVoucherCode(),
                 order.getDiscount(),
-                order.getHistory().stream().map(OrderStatusHistoryResponse::from).toList());
+                order.getHistory().stream().map(OrderStatusHistoryResponse::from).toList(),
+                order.getPaymentStatus(),
+                order.getPaymentExpiresAt());
     }
 }

@@ -128,7 +128,20 @@
               ><mat-option value="EXPRESS">Nhanh</mat-option></mat-select
             >
           </mat-form-field>
-          <p class="payment-note">Thanh toán khi nhận hàng (COD)</p>
+          <mat-form-field appearance="outline">
+            <mat-label>Phương thức thanh toán</mat-label>
+            <mat-select formControlName="paymentMethod">
+              <mat-option value="COD">Khi nhận hàng (COD)</mat-option>
+              <mat-option value="VNPAY" [disabled]="!vnpayEnabled"
+                >VNPAY Sandbox (thử nghiệm)</mat-option
+              >
+            </mat-select>
+            <mat-hint>{{
+              vnpayEnabled
+                ? "Sandbox chỉ dùng thẻ test, không thanh toán tiền thật."
+                : "VNPAY đang chờ cấu hình; COD vẫn hoạt động."
+            }}</mat-hint>
+          </mat-form-field>
           <div class="voucher-row">
             <mat-form-field appearance="outline"
               ><mat-label>Mã giảm giá</mat-label

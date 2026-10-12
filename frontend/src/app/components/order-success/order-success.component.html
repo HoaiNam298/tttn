@@ -17,7 +17,14 @@
           order.total | currency: "VND" : "symbol" : "1.0-0"
         }}</strong>
       </p>
-      <p>Phương thức: Thanh toán khi nhận hàng (COD)</p>
+      <p>
+        Phương thức:
+        {{
+          order.paymentMethod === "VNPAY"
+            ? "VNPAY Sandbox — kiểm tra thanh toán tại chi tiết đơn hàng"
+            : "Thanh toán khi nhận hàng (COD)"
+        }}
+      </p>
       <a mat-stroked-button [routerLink]="['/orders', order.id]"
         >Theo dõi đơn hàng</a
       >

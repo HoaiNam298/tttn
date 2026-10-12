@@ -49,13 +49,19 @@ describe('Material order detail', () => {
       },
     ],
   };
-  function setup(adminMode: boolean, status = order.status) {
-    const current = { ...order, status };
+  function setup(
+    adminMode: boolean,
+    status = order.status,
+    payment: Partial<Order> = {},
+  ) {
+    const current = { ...order, status, ...payment };
     const orders = {
       findAdminOrder: vi.fn(() => of(current)),
       findById: vi.fn(() => of(current)),
       confirmReceipt: vi.fn(() => of<Order>({ ...order, status: 'COMPLETED' })),
       cancel: vi.fn(),
+      createPaymentLink: vi.fn(),
+      openSandboxPayment: vi.fn(),
     };
     const catalog = {
       orderReviewStatuses: vi.fn(() =>
@@ -96,6 +102,45 @@ describe('Material order detail', () => {
     );
     component.confirmReceipt();
     expect(orders.confirmReceipt).not.toHaveBeenCalled();
+  });
+
+  it('opens only one payment request and allows retry after a link error', () => {
+    const { component, orders } = setup(false, 'PENDING', {
+      paymentMethod: 'VNPAY',
+      paymentStatus: 'PENDING',
+      paymentExpiresAt: new Date(Date.now() + 60000).toISOString(),
+    });
+    const pending = new Subject();
+    orders.createPaymentLink.mockReturnValue(pending);
+    component.pay();
+    component.pay();
+    expect(orders.createPaymentLink).toHaveBeenCalledTimes(1);
+    pending.error(new Error('Timeout'));
+    expect(component.paying).toBe(false);
+    expect(component.paymentError).not.toBe('');
+  });
+
+  it('does not offer payment or cancellation for a paid online order', () => {
+    const { fixture, component, orders } = setup(false, 'PENDING', {
+      paymentMethod: 'VNPAY',
+      paymentStatus: 'PAID',
+    });
+    expect(component.canPay).toBe(false);
+    component.pay();
+    expect(orders.createPaymentLink).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Đã thanh toán');
+    expect(fixture.nativeElement.textContent).not.toContain('Hủy đơn hàng');
+  });
+
+  it('does not allow expired or administrator payment actions', () => {
+    const { component, orders } = setup(true, 'PENDING', {
+      paymentMethod: 'VNPAY',
+      paymentStatus: 'PENDING',
+      paymentExpiresAt: new Date(Date.now() + 60000).toISOString(),
+    });
+    component.pay();
+    expect(orders.createPaymentLink).not.toHaveBeenCalled();
+    expect(component.canPay).toBe(false);
   });
   it('shows receipt confirmation only for a delivered customer order', () => {
     const { fixture, component, orders } = setup(false);

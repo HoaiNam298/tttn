@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -64,7 +65,7 @@ public class Order extends BaseEntity {
     private OrderStatus status;
 
     @Column(name = "completed_at")
-    private java.time.Instant completedAt;
+    private Instant completedAt;
 
     @Column(name = "completion_time_estimated", nullable = false)
     private boolean completionTimeEstimated;
@@ -72,6 +73,34 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
     private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 30)
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    @Column(name = "payment_expires_at")
+    private Instant paymentExpiresAt;
+
+    public void selectOnlinePayment(Instant expiresAt) {
+        paymentMethod = PaymentMethod.VNPAY;
+        paymentStatus = PaymentStatus.PENDING;
+        paymentExpiresAt = expiresAt;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public Instant getPaymentExpiresAt() {
+        return paymentExpiresAt;
+    }
+
+    public void recordPayment(PaymentStatus result) {
+        if (paymentMethod != PaymentMethod.VNPAY) {
+            throw new IllegalStateException("Order does not use online payment");
+        }
+        paymentStatus = result;
+    }
 
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal subtotal;
@@ -142,13 +171,30 @@ public class Order extends BaseEntity {
     }
 
     public void updateStatus(OrderStatus nextStatus, String actor) {
+        if (paymentMethod == PaymentMethod.VNPAY) {
+            if (nextStatus == OrderStatus.CANCELLED
+                    && (paymentStatus == PaymentStatus.PAID
+                            || paymentStatus == PaymentStatus.REVIEW_REQUIRED)) {
+                throw new IllegalStateException("A paid order requires a separate refund workflow");
+            }
+            if (nextStatus == OrderStatus.CONFIRMED && paymentStatus != PaymentStatus.PAID) {
+                throw new IllegalStateException(
+                        "Online payment must be verified before confirming the order");
+            }
+        }
         if (!status.canTransitionTo(nextStatus)) {
             throw new IllegalStateException(
                     "Cannot change order status from " + status + " to " + nextStatus);
         }
         status = nextStatus;
+        if (nextStatus == OrderStatus.CANCELLED && paymentStatus == PaymentStatus.PENDING) {
+            paymentStatus = PaymentStatus.CANCELLED;
+        }
         if (status == OrderStatus.COMPLETED) {
-            completedAt = java.time.Instant.now();
+            if (paymentMethod == PaymentMethod.COD) {
+                paymentStatus = PaymentStatus.PAID;
+            }
+            completedAt = Instant.now();
             completionTimeEstimated = false;
         }
         history.add(new OrderStatusHistory(this, status, actor));

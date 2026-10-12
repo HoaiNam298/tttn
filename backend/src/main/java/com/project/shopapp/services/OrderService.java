@@ -2,12 +2,15 @@ package com.project.shopapp.services;
 
 import com.project.shopapp.dtos.CreateOrderRequest;
 import com.project.shopapp.model.OrderStatus;
+import com.project.shopapp.model.PaymentStatus;
 import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.responses.OrderSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
+    void closeUnpaidPayment(Long id, PaymentStatus reason);
+
     OrderResponse create(String phoneNumber, CreateOrderRequest request);
 
     com.project.shopapp.responses.CheckoutQuoteResponse quote(

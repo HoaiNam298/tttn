@@ -38,6 +38,10 @@
           <p class="order-reference">{{ order.orderNumber }}</p>
           <p>Ngày đặt: {{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</p>
           <p>Người nhận: {{ order.recipientName }}</p>
+          <p>
+            Thanh toán: {{ order.paymentMethod ?? "COD" }} ·
+            {{ paymentLabels[order.paymentStatus ?? "UNPAID"] }}
+          </p>
           @if (order.status === "DELIVERED") {
             <p class="success">
               Đơn đã được giao. Vào chi tiết để xác nhận đã nhận hàng.

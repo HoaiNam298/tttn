@@ -62,6 +62,23 @@ describe('Material order management', () => {
     expect(service.updateStatus).not.toHaveBeenCalled();
   });
 
+  it('blocks confirmation before online payment and blocks cancellation after payment', () => {
+    const { component, service } = setup();
+    const online = {
+      ...order,
+      paymentMethod: 'VNPAY',
+      paymentStatus: 'PENDING' as const,
+    };
+    expect(component.availableStatuses(online)).toEqual(['CANCELLED']);
+    component.update(online, 'CONFIRMED');
+    expect(service.updateStatus).not.toHaveBeenCalled();
+    expect(
+      component.availableStatuses({ ...online, paymentStatus: 'PAID' }),
+    ).toEqual(['CONFIRMED']);
+    component.update({ ...online, paymentStatus: 'PAID' }, 'CANCELLED');
+    expect(service.updateStatus).not.toHaveBeenCalled();
+  });
+
   it('blocks duplicate updates while pending and unlocks the row on error', () => {
     const { component, service } = setup();
     const pending = new Subject<OrderSummary>();

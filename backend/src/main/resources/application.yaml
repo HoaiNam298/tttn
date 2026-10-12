@@ -21,10 +21,15 @@ spring:
     enabled: true
 
 app:
+  vnpay:
+    enabled: ${SHOPAPP_VNPAY_ENABLED:false}
+    tmn-code: ${SHOPAPP_VNPAY_TMN_CODE:}
+    hash-secret: ${SHOPAPP_VNPAY_HASH_SECRET:}
+    public-base-url: ${SHOPAPP_PUBLIC_BASE_URL:http://localhost:4200}
   media:
     directory: ${SHOPAPP_UPLOAD_DIR:uploads}
   cors:
-    allowed-origins: ${SHOPAPP_CORS_ALLOWED_ORIGINS:http://localhost:4200}
+    allowed-origins: ${SHOPAPP_CORS_ALLOWED_ORIGINS:http://localhost:4200},${SHOPAPP_PUBLIC_BASE_URL:http://localhost:4200}
   admin:
     phone-number: ${SHOPAPP_ADMIN_PHONE:}
     password: ${SHOPAPP_ADMIN_PASSWORD:}

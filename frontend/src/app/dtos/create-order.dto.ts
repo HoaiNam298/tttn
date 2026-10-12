@@ -5,6 +5,7 @@ export interface OrderItemPayload {
 }
 
 export interface CreateOrderPayload {
+  paymentMethod?: 'COD' | 'VNPAY';
   expectedTotal?: number;
   shippingMethod?: 'STANDARD' | 'EXPRESS';
   voucherCode?: string;

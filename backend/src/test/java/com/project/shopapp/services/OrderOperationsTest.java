@@ -178,4 +178,21 @@ class OrderOperationsTest {
                 ResourceNotFoundException.class, () -> service.cancelOwnedOrder(21L, "0999999999"));
         verify(vouchers, never()).release(any());
     }
+
+    @Test
+    void expiryReleasesStockAndVoucherOnlyOnce() {
+        Order order = new Order(user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
+        product.reserve(1);
+        order.addItem(product, 1);
+        order.applyVoucher(voucher());
+        order.selectOnlinePayment(Instant.now().minusSeconds(5));
+        when(orders.findWithItemsById(21L)).thenReturn(Optional.of(order));
+        when(products.findAllByIdInOrderById(any())).thenReturn(List.of(product));
+        service.closeUnpaidPayment(21L, com.project.shopapp.model.PaymentStatus.EXPIRED);
+        service.closeUnpaidPayment(21L, com.project.shopapp.model.PaymentStatus.EXPIRED);
+        assertEquals(100, product.getStock());
+        verify(vouchers).release(4L);
+        assertEquals(com.project.shopapp.model.PaymentStatus.EXPIRED, order.getPaymentStatus());
+        assertEquals(OrderStatus.CANCELLED, order.getStatus());
+    }
 }

@@ -24,6 +24,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import {
   ORDER_STATUS_LABELS,
+  PAYMENT_STATUS_LABELS,
   OrderStatus,
   OrderSummary,
 } from '../../../models/order.model';
@@ -55,12 +56,17 @@ export class AdminOrdersComponent implements OnInit {
   private readonly orders = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);
   readonly labels = ORDER_STATUS_LABELS;
+  readonly paymentLabels = PAYMENT_STATUS_LABELS;
+  paymentLabel(order: OrderSummary): string {
+    return this.paymentLabels[order.paymentStatus ?? 'UNPAID'];
+  }
   readonly columns = [
     'number',
     'customer',
     'created',
     'total',
     'status',
+    'payment',
     'actions',
   ];
   readonly updating = new Set<number>();
@@ -136,7 +142,7 @@ export class AdminOrdersComponent implements OnInit {
   update(order: OrderSummary, status: OrderStatus): void {
     if (
       this.updating.has(order.id) ||
-      !this.nextStatuses(order.status).includes(status)
+      !this.availableStatuses(order).includes(status)
     ) {
       return;
     }
@@ -169,5 +175,21 @@ export class AdminOrdersComponent implements OnInit {
       default:
         return [];
     }
+  }
+
+  availableStatuses(order: OrderSummary): OrderStatus[] {
+    return this.nextStatuses(order.status).filter((next) => {
+      if (order.paymentMethod !== 'VNPAY') {
+        return true;
+      }
+      if (next === 'CONFIRMED') {
+        return order.paymentStatus === 'PAID';
+      }
+      return (
+        next !== 'CANCELLED' ||
+        (order.paymentStatus !== 'PAID' &&
+          order.paymentStatus !== 'REVIEW_REQUIRED')
+      );
+    });
   }
 }

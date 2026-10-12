@@ -65,6 +65,12 @@ public class SecurityConfig {
                                                 "/api/v1/media/**")
                                         .permitAll()
                                         .requestMatchers(
+                                                HttpMethod.GET,
+                                                "/api/v1/payments/methods",
+                                                "/api/v1/payments/vnpay/ipn",
+                                                "/api/v1/payments/vnpay/return")
+                                        .permitAll()
+                                        .requestMatchers(
                                                 HttpMethod.POST, "/api/v1/products/*/reviews")
                                         .authenticated()
                                         .requestMatchers(

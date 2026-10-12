@@ -138,6 +138,65 @@
         </mat-card>
         <mat-card appearance="outlined" class="detail-card">
           <h2>Thanh toán</h2>
+          <p role="status">
+            {{ paymentLabels[value.paymentStatus ?? "UNPAID"] }}
+          </p>
+          @if (value.paymentMethod === "VNPAY") {
+            <p class="muted">VNPAY Sandbox — chỉ sử dụng thẻ test.</p>
+            @if (
+              value.paymentStatus === "EXPIRED" ||
+              value.paymentStatus === "CANCELLED" ||
+              value.paymentStatus === "FAILED"
+            ) {
+              <p class="muted">
+                Nếu bạn đã thanh toán, không thanh toán lại. Liên hệ quản trị để
+                đối soát; kết quả đến muộn sẽ được ghi nhận cần kiểm tra.
+              </p>
+            }
+            @if (value.paymentExpiresAt && value.paymentStatus === "PENDING") {
+              <p>
+                Hạn thanh toán:
+                {{ value.paymentExpiresAt | date: "dd/MM/yyyy HH:mm:ss" }}
+              </p>
+            }
+            @if (value.paymentStatus === "REVIEW_REQUIRED") {
+              <p class="error" role="alert">
+                Giao dịch cần đối soát do đơn đã đóng hoặc kết quả đến muộn.
+                Không thanh toán lại; liên hệ quản trị để kiểm tra.
+              </p>
+            }
+            @if (!adminMode && value.paymentStatus === "PENDING") {
+              @if (canPay) {
+                <button
+                  mat-flat-button
+                  [disabled]="paying || checkingPayment || cancelling"
+                  (click)="pay()"
+                >
+                  {{ paying ? "Đang mở VNPAY..." : "Thanh toán VNPAY Sandbox" }}
+                </button>
+              }
+              <button
+                mat-stroked-button
+                [disabled]="checkingPayment || paying"
+                (click)="checkPayment()"
+              >
+                {{
+                  checkingPayment
+                    ? "Đang xác nhận..."
+                    : "Kiểm tra kết quả thanh toán"
+                }}
+              </button>
+            }
+            @if (paying || checkingPayment) {
+              <mat-progress-bar
+                mode="indeterminate"
+                aria-label="Đang xử lý thanh toán"
+              />
+            }
+            @if (paymentError) {
+              <p class="error" role="alert">{{ paymentError }}</p>
+            }
+          }
           <div class="cost-row">
             <span>Tiền hàng</span
             ><strong>{{
@@ -166,11 +225,16 @@
               value.total | currency: "VND" : "symbol" : "1.0-0"
             }}</strong>
           </div>
-          @if (!adminMode && value.status === "PENDING") {
+          @if (
+            !adminMode &&
+            value.status === "PENDING" &&
+            value.paymentStatus !== "PAID" &&
+            value.paymentStatus !== "REVIEW_REQUIRED"
+          ) {
             <button
               mat-stroked-button
               class="cancel-button"
-              [disabled]="cancelling"
+              [disabled]="cancelling || paying || checkingPayment"
               (click)="cancel()"
             >
               {{ cancelling ? "Đang hủy..." : "Hủy đơn hàng" }}

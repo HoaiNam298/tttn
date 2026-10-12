@@ -6,10 +6,38 @@ import { environment } from '../environments/environment';
 import { Order, OrderStatus, OrderSummary } from '../models/order.model';
 import { PageResponse } from '../responses/page.response';
 import { CheckoutQuote } from '../responses/checkout-quote.response';
+import {
+  PaymentLinkResponse,
+  PaymentMethodsResponse,
+} from '../responses/payment-link.response';
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private readonly http = inject(HttpClient);
+
+  paymentMethods(): Observable<PaymentMethodsResponse> {
+    return this.http.get<PaymentMethodsResponse>(
+      `${environment.apiUrl}/payments/methods`,
+    );
+  }
+
+  createPaymentLink(id: number): Observable<PaymentLinkResponse> {
+    return this.http.post<PaymentLinkResponse>(
+      `${environment.apiUrl}/payments/vnpay/orders/${id}`,
+      {},
+    );
+  }
+
+  openSandboxPayment(paymentUrl: string): void {
+    const url = new URL(paymentUrl);
+    if (
+      url.origin !== 'https://sandbox.vnpayment.vn' ||
+      url.pathname !== '/paymentv2/vpcpay.html'
+    ) {
+      throw new Error('Invalid VNPAY Sandbox URL');
+    }
+    window.location.assign(url.href);
+  }
 
   create(payload: CreateOrderPayload): Observable<Order> {
     return this.http.post<Order>(`${environment.apiUrl}/orders`, payload);

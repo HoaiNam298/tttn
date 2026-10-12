@@ -6,6 +6,25 @@ export type OrderStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
+export type PaymentStatus =
+  | 'UNPAID'
+  | 'PENDING'
+  | 'PAID'
+  | 'FAILED'
+  | 'EXPIRED'
+  | 'CANCELLED'
+  | 'REVIEW_REQUIRED';
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  UNPAID: 'Chưa thanh toán',
+  PENDING: 'Chờ thanh toán',
+  PAID: 'Đã thanh toán',
+  FAILED: 'Thanh toán thất bại',
+  EXPIRED: 'Hết hạn thanh toán',
+  CANCELLED: 'Đã hủy thanh toán',
+  REVIEW_REQUIRED: 'Đã nhận thông báo tiền — cần kiểm tra',
+};
+
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING: 'Chờ xác nhận',
   CONFIRMED: 'Chờ vận chuyển',
@@ -27,6 +46,8 @@ export interface OrderItem {
 }
 
 export interface Order {
+  paymentStatus?: PaymentStatus;
+  paymentExpiresAt?: string | null;
   shippingMethod?: 'STANDARD' | 'EXPRESS';
   voucherCode?: string | null;
   discount?: number;
@@ -54,6 +75,8 @@ export interface OrderStatusHistory {
 }
 
 export interface OrderSummary {
+  paymentMethod?: string;
+  paymentStatus?: PaymentStatus;
   id: number;
   orderNumber: string;
   recipientName: string;

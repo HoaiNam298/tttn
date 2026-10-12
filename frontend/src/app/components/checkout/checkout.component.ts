@@ -57,6 +57,7 @@ export class CheckoutComponent implements OnInit {
   private readonly addressService = inject(AddressService);
   private readonly destroyRef = inject(DestroyRef);
   quote?: CheckoutQuote;
+  vnpayEnabled = false;
   quoting = false;
   quoteError = '';
   private quoteRevision = 0;
@@ -86,6 +87,7 @@ export class CheckoutComponent implements OnInit {
   submitting = false;
   error = '';
   form = this.fb.nonNullable.group({
+    paymentMethod: this.fb.nonNullable.control<'COD' | 'VNPAY'>('COD'),
     recipientName: ['', [Validators.required, Validators.maxLength(100)]],
     phoneNumber: [
       '',
@@ -110,6 +112,17 @@ export class CheckoutComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.orders
+      .paymentMethods()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (methods) => {
+          this.vnpayEnabled = methods.vnpayEnabled;
+        },
+        error: () => {
+          this.vnpayEnabled = false;
+        },
+      });
     const query = this.route.snapshot.queryParamMap;
     this.buyNow = query.has('productId');
     const productId = Number(query.get('productId'));
@@ -230,6 +243,14 @@ export class CheckoutComponent implements OnInit {
 
   submit(): void {
     if (
+      !this.pending &&
+      this.form.controls.paymentMethod.value === 'VNPAY' &&
+      !this.vnpayEnabled
+    ) {
+      this.error = 'VNPAY Sandbox chưa được cấu hình. Vui lòng chọn COD.';
+      return;
+    }
+    if (
       this.form.invalid ||
       this.loading ||
       (!this.pending && this.lines.length === 0) ||
@@ -272,7 +293,13 @@ export class CheckoutComponent implements OnInit {
             this.cart.removePurchased(this.pending!.payload.items);
           }
           sessionStorage.removeItem(this.attemptKey);
-          void this.router.navigate(['/orders', order.id, 'success']);
+          if (order.paymentMethod === 'VNPAY') {
+            void this.router.navigate(['/orders', order.id], {
+              queryParams: { payment: 'start' },
+            });
+          } else {
+            void this.router.navigate(['/orders', order.id, 'success']);
+          }
         },
         error: (response) => {
           this.error =

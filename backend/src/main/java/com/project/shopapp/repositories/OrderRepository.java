@@ -12,6 +12,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
+    @org.springframework.data.jpa.repository.Query(
+            "select o.id from Order o where o.paymentMethod = com.project.shopapp.model.PaymentMethod.VNPAY and o.paymentStatus = com.project.shopapp.model.PaymentStatus.PENDING and o.status = com.project.shopapp.model.OrderStatus.PENDING and o.paymentExpiresAt <= :now order by o.id")
+    java.util.List<Long> findExpiredPaymentIds(java.time.Instant now, Pageable pageable);
+
     long countByVoucher_IdAndUser_IdAndStatusNot(Long voucherId, Long userId, OrderStatus status);
 
     @EntityGraph(attributePaths = {"items", "items.product"})
@@ -37,7 +41,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = {"items", "items.product"})
     Optional<Order> findDetailById(Long id);
 
-    @EntityGraph(attributePaths = {"items"})
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Order> findWithItemsById(Long id);
 }

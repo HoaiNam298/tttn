@@ -1,11 +1,15 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.VnpayGateway;
+import com.project.shopapp.configuration.VnpayProperties;
 import com.project.shopapp.dtos.CreateOrderRequest;
 import com.project.shopapp.dtos.OrderItemRequest;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.OrderLineKey;
 import com.project.shopapp.model.OrderStatus;
+import com.project.shopapp.model.PaymentMethod;
+import com.project.shopapp.model.PaymentStatus;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductVariant;
 import com.project.shopapp.model.ShippingMethod;
@@ -23,10 +27,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,6 +45,18 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final VoucherService vouchers;
+    private VnpayProperties vnpay;
+
+    @Autowired
+    public OrderServiceImpl(
+            OrderRepository orderRepository,
+            ProductRepository productRepository,
+            UserRepository userRepository,
+            VoucherService vouchers,
+            VnpayProperties vnpay) {
+        this(orderRepository, productRepository, userRepository, vouchers);
+        this.vnpay = vnpay;
+    }
 
     public OrderServiceImpl(
             OrderRepository orderRepository,
@@ -54,6 +72,16 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse create(String phoneNumber, CreateOrderRequest request) {
+        if (request.paymentMethod() == PaymentMethod.VNPAY) {
+            if (request.requestId() == null) {
+                throw new IllegalArgumentException(
+                        "Online payment requires a request ID for safe retries");
+            }
+            if (vnpay == null) {
+                throw new IllegalStateException("VNPAY Sandbox is not configured");
+            }
+            vnpay.requireEnabled();
+        }
         User user =
                 (request.requestId() == null
                                 ? userRepository.findByPhoneNumber(phoneNumber)
@@ -122,6 +150,10 @@ public class OrderServiceImpl implements OrderService {
                 && request.expectedTotal().compareTo(order.getTotal()) != 0) {
             throw new IllegalStateException(
                     "Order total changed. Recalculate and confirm the new total");
+        }
+        if (request.paymentMethod() == PaymentMethod.VNPAY) {
+            VnpayGateway.amount(order.getTotal());
+            order.selectOnlinePayment(Instant.now().plusSeconds(900));
         }
         return OrderResponse.from(orderRepository.save(order));
     }
@@ -302,6 +334,9 @@ public class OrderServiceImpl implements OrderService {
     private String fingerprint(CreateOrderRequest request, Map<OrderLineKey, Integer> quantities) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            if (request.paymentMethod() == PaymentMethod.VNPAY) {
+                hashField(digest, "payment:VNPAY");
+            }
             hashField(digest, request.recipientName().trim());
             hashField(digest, request.phoneNumber().trim());
             hashField(digest, request.shippingAddress().trim());
@@ -339,6 +374,29 @@ public class OrderServiceImpl implements OrderService {
         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
         digest.update(ByteBuffer.allocate(Integer.BYTES).putInt(bytes.length).array());
         digest.update(bytes);
+    }
+
+    @Override
+    @Transactional
+    public void closeUnpaidPayment(Long id, PaymentStatus reason) {
+        if (reason != PaymentStatus.FAILED && reason != PaymentStatus.EXPIRED) {
+            throw new IllegalArgumentException("Invalid payment closure reason");
+        }
+        Order order =
+                orderRepository
+                        .findWithItemsById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getPaymentMethod() != PaymentMethod.VNPAY
+                || order.getPaymentStatus() != PaymentStatus.PENDING
+                || order.getStatus() != OrderStatus.PENDING) {
+            return;
+        }
+        if (reason == PaymentStatus.EXPIRED && order.getPaymentExpiresAt().isAfter(Instant.now())) {
+            return;
+        }
+        order.recordPayment(reason);
+        order.updateStatus(OrderStatus.CANCELLED, "SYSTEM");
+        restoreStockAndVoucher(order);
     }
 
     @Override

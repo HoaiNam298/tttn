@@ -17,11 +17,13 @@ import {
   Order,
   OrderItem,
   ORDER_STATUS_LABELS,
+  PAYMENT_STATUS_LABELS,
 } from '../../models/order.model';
 import { CatalogService } from '../../services/catalog.service';
 import { OrderService } from '../../services/order.service';
 import { CartService } from '../../services/cart.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, Subscription, catchError, exhaustMap, take, timer } from 'rxjs';
 
 @Component({
   selector: 'app-order-detail',
@@ -76,6 +78,101 @@ export class OrderDetailComponent implements OnInit {
       });
   }
   readonly statusLabels = ORDER_STATUS_LABELS;
+  readonly paymentLabels = PAYMENT_STATUS_LABELS;
+  paying = false;
+  checkingPayment = false;
+  paymentError = '';
+  private paymentPolling?: Subscription;
+
+  get canPay(): boolean {
+    return (
+      !this.adminMode &&
+      this.order?.paymentMethod === 'VNPAY' &&
+      this.order.status === 'PENDING' &&
+      this.order.paymentStatus === 'PENDING' &&
+      !!this.order.paymentExpiresAt &&
+      Date.parse(this.order.paymentExpiresAt) > Date.now()
+    );
+  }
+
+  pay(): void {
+    if (
+      !this.canPay ||
+      this.paying ||
+      this.cancelling ||
+      this.checkingPayment ||
+      this.confirmationOpen ||
+      !this.order
+    ) {
+      return;
+    }
+    this.paying = true;
+    this.paymentError = '';
+    this.orders
+      .createPaymentLink(this.order.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (link) => {
+          try {
+            this.orders.openSandboxPayment(link.paymentUrl);
+          } catch {
+            this.paying = false;
+            this.paymentError = 'Không thể mở trang VNPAY Sandbox.';
+          }
+        },
+        error: (response) => {
+          this.paying = false;
+          this.paymentError =
+            response.error?.message ??
+            'Chưa tạo được link thanh toán. Bạn có thể thử lại với đơn này.';
+        },
+      });
+  }
+
+  checkPayment(): void {
+    if (
+      this.adminMode ||
+      !this.order ||
+      this.order.paymentMethod !== 'VNPAY' ||
+      this.checkingPayment ||
+      this.paying
+    ) {
+      return;
+    }
+    const id = this.order.id;
+    this.checkingPayment = true;
+    this.paymentError = '';
+    this.paymentPolling = timer(0, 3000)
+      .pipe(
+        take(20),
+        exhaustMap(() =>
+          this.orders.findById(id).pipe(
+            catchError(() => {
+              this.paymentError =
+                'Chưa kiểm tra được thanh toán. Vui lòng thử lại sau.';
+              return EMPTY;
+            }),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (order) => {
+          this.order = order;
+          if (order.paymentStatus !== 'PENDING') {
+            this.paymentPolling?.unsubscribe();
+            this.checkingPayment = false;
+          }
+        },
+        complete: () => {
+          this.checkingPayment = false;
+          if (this.order?.paymentStatus === 'PENDING') {
+            this.paymentError =
+              'Chưa nhận được xác nhận IPN. Không thanh toán lại nếu bạn đã trả tiền; hãy kiểm tra lại hoặc liên hệ quản trị.';
+          }
+        },
+      });
+  }
   get itemColumns(): string[] {
     return !this.adminMode && this.order?.status === 'COMPLETED'
       ? ['product', 'price', 'quantity', 'total', 'review']
@@ -193,6 +290,17 @@ export class OrderDetailComponent implements OnInit {
       next: (order) => {
         this.order = order;
         this.loadReviewStatuses();
+        if (!this.adminMode && order.paymentMethod === 'VNPAY') {
+          const action = this.route.snapshot.queryParamMap?.get('payment');
+          if (action === 'start') {
+            this.pay();
+          } else if (
+            action === 'returned' &&
+            order.paymentStatus === 'PENDING'
+          ) {
+            this.checkPayment();
+          }
+        }
       },
       error: () => (this.error = 'Không tìm thấy đơn hàng.'),
     });

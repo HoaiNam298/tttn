@@ -1,5 +1,6 @@
 package com.project.shopapp.dtos;
 
+import com.project.shopapp.model.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -26,7 +27,31 @@ public record CreateOrderRequest(
         @Size(max = 40) @Pattern(regexp = "^$|^[A-Za-z0-9_-]{3,40}$") String voucherCode,
         @jakarta.validation.constraints.DecimalMin("0")
                 @jakarta.validation.constraints.Digits(integer = 12, fraction = 2)
-                java.math.BigDecimal expectedTotal) {
+                java.math.BigDecimal expectedTotal,
+        PaymentMethod paymentMethod) {
+    public CreateOrderRequest(
+            String recipientName,
+            String phoneNumber,
+            String shippingAddress,
+            String note,
+            List<OrderItemRequest> items,
+            UUID requestId,
+            com.project.shopapp.model.ShippingMethod shippingMethod,
+            String voucherCode,
+            java.math.BigDecimal expectedTotal) {
+        this(
+                recipientName,
+                phoneNumber,
+                shippingAddress,
+                note,
+                items,
+                requestId,
+                shippingMethod,
+                voucherCode,
+                expectedTotal,
+                null);
+    }
+
     public CreateOrderRequest(
             String recipientName,
             String phoneNumber,

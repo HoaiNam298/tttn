@@ -13,7 +13,11 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { OrderSummary, OrderStatus } from '../../models/order.model';
+import {
+  OrderSummary,
+  OrderStatus,
+  PAYMENT_STATUS_LABELS,
+} from '../../models/order.model';
 import { EMPTY, Subject, catchError, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OrderService } from '../../services/order.service';
@@ -36,6 +40,7 @@ import { OrderService } from '../../services/order.service';
   styleUrl: './order-history.component.scss',
 })
 export class OrderHistoryComponent implements OnInit {
+  readonly paymentLabels = PAYMENT_STATUS_LABELS;
   private readonly orders = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly requests = new Subject<number>();
