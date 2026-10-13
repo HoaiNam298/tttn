@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.AddressRequest;
 import com.project.shopapp.dtos.response.AddressResponse;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
@@ -9,10 +10,12 @@ import com.project.shopapp.repositories.UserAddressRepository;
 import com.project.shopapp.repositories.UserRepository;
 import com.project.shopapp.services.AddressService;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class AddressServiceImpl implements AddressService {
     private final UserRepository users;
@@ -51,7 +54,15 @@ public class AddressServiceImpl implements AddressService {
         address.update(
                 request.getRecipientName(), request.getPhoneNumber(), request.getShippingAddress());
         address.setDefaultAddress(makeDefault);
-        return AddressResponse.from(addresses.save(address));
+        UserAddress saved = addresses.save(address);
+        TransactionLog.debug(
+                log,
+                "Address saved addressId={} userId={} created={} defaultAddress={}",
+                saved.getId(),
+                user.getId(),
+                id == null,
+                makeDefault);
+        return AddressResponse.from(saved);
     }
 
     @Override
@@ -62,6 +73,7 @@ public class AddressServiceImpl implements AddressService {
         UserAddress target = findOwned(owned, id);
         addresses.delete(target);
         addresses.flush();
+        TransactionLog.debug(log, "Address deleted addressId={} userId={}", id, user.getId());
         if (target.isDefaultAddress()) {
             owned.stream()
                     .filter(item -> !item.getId().equals(id))

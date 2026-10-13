@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
 import com.project.shopapp.dtos.response.PaymentLinkResponse;
@@ -22,15 +23,14 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
 @Service
+@Slf4j
 public class PaymentServiceImpl implements PaymentService {
-    private static final Logger LOG = LoggerFactory.getLogger(PaymentServiceImpl.class);
     private final OrderRepository orders;
     private final PaymentAttemptRepository attempts;
     private final VnpayGateway gateway;
@@ -78,7 +78,8 @@ public class PaymentServiceImpl implements PaymentService {
                     gateway.createUrl(
                             ref, orderId, order.getTotal(), now, order.getPaymentExpiresAt(), ip);
             attempt = attempts.save(new PaymentAttempt(order, ref, url, now));
-            LOG.info("Created VNPAY Sandbox attempt for order {} ref {}", orderId, ref);
+            TransactionLog.info(
+                    log, "Created VNPAY Sandbox attempt for order {} ref {}", orderId, ref);
         }
         if (attempt.getStatus() != PaymentStatus.PENDING) {
             throw new IllegalStateException("Payment attempt is already processed");
@@ -90,12 +91,13 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public VnpayIpnResponse receiveIpn(MultiValueMap<String, String> params) {
         if (!gateway.verify(params)) {
-            LOG.warn("Rejected VNPAY IPN with invalid signature or merchant");
+            log.warn("Rejected VNPAY IPN with invalid signature or merchant");
             return new VnpayIpnResponse("97", "Invalid signature");
         }
         String ref = params.getFirst("vnp_TxnRef");
         PaymentAttempt mapped = attempts.findByTxnRef(ref).orElse(null);
         if (mapped == null) {
+            log.warn("VNPAY IPN rejected reason=unknown_transaction");
             return new VnpayIpnResponse("01", "Order not found");
         }
         // Every mutation locks the order first, including cancellation and expiration.
@@ -107,10 +109,18 @@ public class PaymentServiceImpl implements PaymentService {
                 || !amount.matches("[0-9]{1,12}")
                 || Long.parseLong(amount) != VnpayGateway.amount(attempt.getAmount())
                 || attempt.getAmount().compareTo(order.getTotal()) != 0) {
+            log.warn(
+                    "VNPAY IPN rejected orderId={} txnRef={} reason=invalid_amount",
+                    order.getId(),
+                    ref);
             return new VnpayIpnResponse("04", "Invalid amount");
         }
         if (attempt.getStatus() == PaymentStatus.PAID
                 || attempt.getStatus() == PaymentStatus.REVIEW_REQUIRED) {
+            log.debug(
+                    "VNPAY IPN ignored orderId={} txnRef={} reason=already_processed",
+                    order.getId(),
+                    ref);
             return new VnpayIpnResponse("02", "Already processed");
         }
         String code = params.getFirst("vnp_ResponseCode");
@@ -122,11 +132,19 @@ public class PaymentServiceImpl implements PaymentService {
                 || !state.matches("[0-9]{2}")
                 || transactionNo == null
                 || !transactionNo.matches("[0-9]{1,15}")) {
+            log.warn(
+                    "VNPAY IPN rejected orderId={} txnRef={} reason=invalid_result_data",
+                    order.getId(),
+                    ref);
             return new VnpayIpnResponse("99", "Invalid result data");
         }
         boolean success = "00".equals(code) && "00".equals(state);
         boolean suspiciousDebit = "07".equals(code);
         if (!success && !suspiciousDebit && attempt.getStatus() == PaymentStatus.FAILED) {
+            log.debug(
+                    "VNPAY IPN ignored orderId={} txnRef={} reason=already_processed",
+                    order.getId(),
+                    ref);
             return new VnpayIpnResponse("02", "Already processed");
         }
         Instant paidAt = null;
@@ -139,10 +157,18 @@ public class PaymentServiceImpl implements PaymentService {
                         LocalDateTime.parse(params.getFirst("vnp_PayDate"), formatter);
                 paidAt = paymentDate.atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
             } catch (RuntimeException exception) {
+                log.warn(
+                        "VNPAY IPN rejected orderId={} txnRef={} reason=invalid_payment_date",
+                        order.getId(),
+                        ref);
                 return new VnpayIpnResponse("99", "Invalid payment date");
             }
             if (paidAt.isBefore(attempt.getCreatedAt().minusSeconds(1))
                     || paidAt.isAfter(Instant.now().plusSeconds(60))) {
+                log.warn(
+                        "VNPAY IPN rejected orderId={} txnRef={} reason=invalid_payment_date",
+                        order.getId(),
+                        ref);
                 return new VnpayIpnResponse("99", "Invalid payment date");
             }
             boolean needsReview =
@@ -156,7 +182,21 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentStatus result = needsReview ? PaymentStatus.REVIEW_REQUIRED : PaymentStatus.PAID;
             orderBusinessService.recordPayment(order, result);
             attempt.finish(result, transactionNo, code, paidAt);
-            LOG.info("VNPAY result order {} ref {} status {}", order.getId(), ref, result);
+            if (needsReview) {
+                TransactionLog.warn(
+                        log,
+                        "VNPAY payment requires review orderId={} txnRef={} status={}",
+                        order.getId(),
+                        ref,
+                        result);
+            } else {
+                TransactionLog.info(
+                        log,
+                        "VNPAY payment confirmed orderId={} txnRef={} status={}",
+                        order.getId(),
+                        ref,
+                        result);
+            }
         } else {
             attempt.finish(
                     PaymentStatus.FAILED,
@@ -164,7 +204,12 @@ public class PaymentServiceImpl implements PaymentService {
                     code,
                     null);
             orderService.closeUnpaidPayment(order.getId(), PaymentStatus.FAILED);
-            LOG.info("VNPAY failed order {} ref {} code {}", order.getId(), ref, code);
+            TransactionLog.info(
+                    log,
+                    "VNPAY payment failed orderId={} txnRef={} code={}",
+                    order.getId(),
+                    ref,
+                    code);
         }
         // Flush before acknowledgement; controller only replies after the transaction commits.
         attempts.flush();
@@ -177,12 +222,14 @@ public class PaymentServiceImpl implements PaymentService {
         if (gateway.verify(params)) {
             var attempt = attempts.findByTxnRef(params.getFirst("vnp_TxnRef"));
             if (attempt.isPresent()) {
+                log.debug("VNPAY browser return accepted orderId={}", attempt.get().getOrderId());
                 return properties.getPublicBaseUrl()
                         + "/orders/"
                         + attempt.get().getOrderId()
                         + "?payment=returned";
             }
         }
+        log.warn("VNPAY browser return rejected reason=invalid_signature_or_unknown_transaction");
         return properties.getPublicBaseUrl() + "/orders?payment=invalid";
     }
 }

@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.ProductInventoryRequest;
 import com.project.shopapp.dtos.request.ProductRequest;
 import com.project.shopapp.dtos.response.ProductDetailResponse;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository repository;
@@ -172,7 +175,14 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Duplicate gallery image");
         }
         product.changeInventory(request.getStock(), request.getImages());
-        return ProductDetailResponse.from(repository.saveAndFlush(product));
+        Product saved = repository.saveAndFlush(product);
+        TransactionLog.info(
+                log,
+                "Product inventory updated productId={} stock={} variants={}",
+                saved.getId(),
+                saved.getStock(),
+                saved.getVariants().size());
+        return ProductDetailResponse.from(saved);
     }
 
     @Transactional
@@ -188,7 +198,9 @@ public class ProductServiceImpl implements ProductService {
                                         : request.getDescription().trim())
                         .category(categoryService.getEntity(request.getCategoryId()))
                         .build();
-        return ProductResponse.from(repository.save(product));
+        Product saved = repository.save(product);
+        TransactionLog.info(log, "Product created productId={}", saved.getId());
+        return ProductResponse.from(saved);
     }
 
     @Transactional
@@ -200,12 +212,15 @@ public class ProductServiceImpl implements ProductService {
                 request.getThumbnail(),
                 request.getDescription() == null ? "" : request.getDescription().trim(),
                 categoryService.getEntity(request.getCategoryId()));
-        return ProductResponse.from(repository.save(product));
+        Product saved = repository.save(product);
+        TransactionLog.info(log, "Product updated productId={}", saved.getId());
+        return ProductResponse.from(saved);
     }
 
     @Transactional
     public void delete(Long id) {
         repository.delete(getEntity(id));
+        TransactionLog.info(log, "Product deleted productId={}", id);
     }
 
     public Product getEntity(Long id) {

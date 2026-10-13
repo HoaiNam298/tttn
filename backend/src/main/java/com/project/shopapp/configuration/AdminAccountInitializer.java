@@ -1,9 +1,11 @@
 package com.project.shopapp.configuration;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.model.Role;
 import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.RoleRepository;
 import com.project.shopapp.repositories.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Slf4j
 public class AdminAccountInitializer implements ApplicationRunner {
     private static final String ADMIN_ROLE = "ADMIN";
     private static final String ADMIN_NAME = "ShopApp Administrator";
@@ -55,6 +58,7 @@ public class AdminAccountInitializer implements ApplicationRunner {
                         .password(passwordEncoder.encode(password))
                         .role(adminRole)
                         .build();
-        userRepository.save(admin);
+        User saved = userRepository.save(admin);
+        TransactionLog.info(log, "Bootstrap administrator created userId={}", saved.getId());
     }
 }

@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.CreateProductReviewRequest;
 import com.project.shopapp.dtos.request.ReviewReplyRequest;
 import com.project.shopapp.dtos.response.OrderReviewStatusResponse;
@@ -16,6 +17,7 @@ import com.project.shopapp.services.ProductReviewService;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class ProductReviewServiceImpl implements ProductReviewService {
     private final ProductReviewRepository reviewRepository;
@@ -89,7 +92,15 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                         .comment(request.getComment().trim())
                         .build();
         review.attachImages(images);
-        return ProductReviewResponse.from(reviewRepository.saveAndFlush(review));
+        ProductReview saved = reviewRepository.saveAndFlush(review);
+        TransactionLog.info(
+                log,
+                "Product review created reviewId={} productId={} orderId={} userId={}",
+                saved.getId(),
+                productId,
+                orderItem.getOrder().getId(),
+                orderItem.getOrder().getUser().getId());
+        return ProductReviewResponse.from(saved);
     }
 
     @Override
@@ -120,7 +131,9 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                         .findById(reviewId)
                         .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
         review.reply(request.getReply(), request.getVersion());
-        return ProductReviewResponse.from(reviewRepository.saveAndFlush(review));
+        ProductReview saved = reviewRepository.saveAndFlush(review);
+        TransactionLog.info(log, "Product review replied reviewId={}", reviewId);
+        return ProductReviewResponse.from(saved);
     }
 
     private Pageable bounded(Pageable pageable) {

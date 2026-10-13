@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.VoucherRequest;
 import com.project.shopapp.dtos.response.VoucherResponse;
 import com.project.shopapp.enums.OrderStatus;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class VoucherServiceImpl implements VoucherService {
     private final VoucherRepository vouchers;
@@ -55,7 +58,9 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse create(VoucherRequest request) {
         validateTarget(request.getTargetUserId());
         Voucher voucher = new Voucher(request);
-        return VoucherResponse.from(vouchers.saveAndFlush(voucher));
+        Voucher saved = vouchers.saveAndFlush(voucher);
+        TransactionLog.info(log, "Voucher created voucherId={}", saved.getId());
+        return VoucherResponse.from(saved);
     }
 
     @Transactional
@@ -68,7 +73,9 @@ public class VoucherServiceImpl implements VoucherService {
         }
         validateTarget(request.getTargetUserId());
         voucher.update(request);
-        return VoucherResponse.from(vouchers.saveAndFlush(voucher));
+        Voucher saved = vouchers.saveAndFlush(voucher);
+        TransactionLog.info(log, "Voucher updated voucherId={}", saved.getId());
+        return VoucherResponse.from(saved);
     }
 
     public BigDecimal preview(String code, Long userId, BigDecimal subtotal) {
@@ -85,6 +92,8 @@ public class VoucherServiceImpl implements VoucherService {
                         .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
         eligibleDiscount(voucher, userId, subtotal);
         voucher.reserve();
+        TransactionLog.debug(
+                log, "Voucher reserved voucherId={} userId={}", voucher.getId(), userId);
         return voucher;
     }
 
@@ -93,6 +102,7 @@ public class VoucherServiceImpl implements VoucherService {
         vouchers.findForUpdateById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"))
                 .release();
+        TransactionLog.debug(log, "Voucher released voucherId={}", id);
     }
 
     private BigDecimal eligibleDiscount(Voucher voucher, Long userId, BigDecimal subtotal) {

@@ -9,14 +9,13 @@ import com.project.shopapp.services.ReviewSubmissionService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
+@Slf4j
 public class ReviewSubmissionServiceImpl implements ReviewSubmissionService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewSubmissionServiceImpl.class);
     private final MediaService media;
     private final ProductReviewService reviews;
 
@@ -54,7 +53,7 @@ public class ReviewSubmissionServiceImpl implements ReviewSubmissionService {
                     media.deleteUpload(url);
                 } catch (IOException | RuntimeException cleanupException) {
                     exception.addSuppressed(cleanupException);
-                    LOGGER.error(
+                    log.error(
                             "Failed to clean up uncommitted review image {}",
                             url,
                             cleanupException);

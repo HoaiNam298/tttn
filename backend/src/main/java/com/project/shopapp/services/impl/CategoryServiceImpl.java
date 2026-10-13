@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.CategoryRequest;
 import com.project.shopapp.dtos.response.CategoryResponse;
 import com.project.shopapp.exceptions.DuplicateResourceException;
@@ -8,12 +9,14 @@ import com.project.shopapp.model.Category;
 import com.project.shopapp.repositories.CategoryRepository;
 import com.project.shopapp.services.CategoryService;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
@@ -43,7 +46,9 @@ public class CategoryServiceImpl implements CategoryService {
         if (repository.findByNameIgnoreCase(name).isPresent()) {
             throw new DuplicateResourceException("Category already exists: " + name);
         }
-        return CategoryResponse.from(repository.save(new Category(name)));
+        Category saved = repository.save(new Category(name));
+        TransactionLog.info(log, "Category created categoryId={}", saved.getId());
+        return CategoryResponse.from(saved);
     }
 
     @Transactional
@@ -59,12 +64,14 @@ public class CategoryServiceImpl implements CategoryService {
             throw new DuplicateResourceException("Category already exists: " + name);
         }
         category.rename(name);
+        TransactionLog.info(log, "Category updated categoryId={}", id);
         return CategoryResponse.from(category);
     }
 
     @Transactional
     public void delete(Long id) {
         repository.delete(getEntity(id));
+        TransactionLog.info(log, "Category deleted categoryId={}", id);
     }
 
     public Category getEntity(Long id) {

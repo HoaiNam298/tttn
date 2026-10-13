@@ -33,12 +33,14 @@ services:
       SHOPAPP_CORS_ALLOWED_ORIGINS: ${SHOPAPP_CORS_ALLOWED_ORIGINS:-http://localhost:4200}
       SERVER_PORT: 8088
       SHOPAPP_UPLOAD_DIR: /app/uploads
+      SHOPAPP_LOG_DIR: /app/logs
       SHOPAPP_VNPAY_ENABLED: ${SHOPAPP_VNPAY_ENABLED:-false}
       SHOPAPP_VNPAY_TMN_CODE: ${SHOPAPP_VNPAY_TMN_CODE:-}
       SHOPAPP_VNPAY_HASH_SECRET: ${SHOPAPP_VNPAY_HASH_SECRET:-}
       SHOPAPP_PUBLIC_BASE_URL: ${SHOPAPP_PUBLIC_BASE_URL:-http://localhost:4200}
     volumes:
       - shopapp_uploads:/app/uploads
+      - shopapp_logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,3 +70,4 @@ services:
 volumes:
   shopapp_postgres_data:
   shopapp_uploads:
+  shopapp_logs:

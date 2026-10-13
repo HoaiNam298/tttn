@@ -4,22 +4,26 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.ConversionNotSupportedException;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<ApiError> unreadableRequest(Exception exception) {
@@ -39,7 +43,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IOException.class)
     ResponseEntity<ApiError> storageFailure(IOException exception) {
-        LOGGER.error("Image storage operation failed", exception);
+        log.error("Image storage operation failed", exception);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Image storage is unavailable", Map.of());
     }
 
@@ -89,6 +93,44 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 "The resource is referenced by other data or violates a unique constraint",
                 Map.of());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<ApiError> accessDenied(AccessDeniedException exception) {
+        return build(HttpStatus.FORBIDDEN, "Access denied", Map.of());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    ResponseEntity<ApiError> authenticationFailure(AuthenticationException exception) {
+        if (exception instanceof AuthenticationServiceException) {
+            log.error("Authentication failed due to a system error", exception);
+            return build(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Authentication is unavailable", Map.of());
+        }
+        return build(HttpStatus.UNAUTHORIZED, "Authentication required", Map.of());
+    }
+
+    @ExceptionHandler(Exception.class)
+    ResponseEntity<ApiError> unexpectedFailure(Exception exception) {
+        if (exception instanceof TypeMismatchException
+                && !(exception instanceof ConversionNotSupportedException)) {
+            return build(HttpStatus.BAD_REQUEST, "Invalid request parameter", Map.of());
+        }
+        if (exception instanceof ErrorResponse error) {
+            var status = error.getStatusCode();
+            if (status.is4xxClientError()) {
+                return ResponseEntity.status(status)
+                        .headers(error.getHeaders())
+                        .body(
+                                new ApiError(
+                                        Instant.now(),
+                                        status.value(),
+                                        "Request rejected",
+                                        Map.of()));
+            }
+        }
+        log.error("Unexpected request processing failure", exception);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());
     }
 
     private ResponseEntity<ApiError> build(

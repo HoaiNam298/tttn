@@ -1,4 +1,7 @@
 .env
 *.log
+*.log.gz
+/logs/
+/backend/logs/
 /backend/uploads/
 /uploads/

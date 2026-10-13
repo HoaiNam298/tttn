@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.UUID;
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
+@Slf4j
 public class MediaServiceImpl implements MediaService {
     private final Path directory;
 
@@ -65,6 +67,11 @@ public class MediaServiceImpl implements MediaService {
                     Files.deleteIfExists(target);
                     throw exception;
                 }
+                log.info(
+                        "Image stored fileId={} format={} uploadBytes={}",
+                        filename,
+                        format,
+                        file.getSize());
                 return "/api/v1/media/" + filename;
             } finally {
                 reader.dispose();
@@ -94,6 +101,7 @@ public class MediaServiceImpl implements MediaService {
         if (!filename.matches("^[a-f0-9-]{36}\\.(jpg|png)$")) {
             throw new IllegalArgumentException("Invalid upload filename");
         }
-        Files.deleteIfExists(directory.resolve(filename));
+        boolean deleted = Files.deleteIfExists(directory.resolve(filename));
+        log.info("Image deletion completed fileId={} deleted={}", filename, deleted);
     }
 }

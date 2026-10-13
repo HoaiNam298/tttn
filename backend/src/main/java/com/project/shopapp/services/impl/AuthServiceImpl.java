@@ -2,6 +2,7 @@ package com.project.shopapp.services.impl;
 
 import com.project.shopapp.components.CustomUserDetailsService;
 import com.project.shopapp.components.JwtService;
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.LoginRequest;
 import com.project.shopapp.dtos.request.RegisterRequest;
 import com.project.shopapp.dtos.response.AuthResponse;
@@ -16,7 +17,9 @@ import com.project.shopapp.repositories.RoleRepository;
 import com.project.shopapp.repositories.TokenRepository;
 import com.project.shopapp.repositories.UserRepository;
 import com.project.shopapp.services.AuthService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
@@ -55,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            log.debug("Registration rejected reason=account_already_exists");
             throw new DuplicateResourceException("Phone number is already registered");
         }
         Role role = roleRepository.findByName("USER").orElse(null);
@@ -71,7 +76,10 @@ public class AuthServiceImpl implements AuthService {
                         .dateOfBirth(request.getDateOfBirth())
                         .role(role)
                         .build();
-        return issueToken(userRepository.save(user));
+        User saved = userRepository.save(user);
+        AuthResponse response = issueToken(saved);
+        TransactionLog.info(log, "User registered userId={}", saved.getId());
+        return response;
     }
 
     @Transactional
@@ -80,12 +88,17 @@ public class AuthServiceImpl implements AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getPhoneNumber(), request.getPassword()));
+        } catch (AuthenticationServiceException exception) {
+            throw exception;
         } catch (AuthenticationException exception) {
+            log.warn("Login rejected reason=authentication_failed");
             throw new InvalidCredentialsException("Phone number or password is incorrect");
         }
         User user = findUser(request.getPhoneNumber());
         revokeActiveTokens(user.getId());
-        return issueToken(user);
+        AuthResponse response = issueToken(user);
+        TransactionLog.info(log, "User logged in userId={}", user.getId());
+        return response;
     }
 
     public UserResponse currentUser(String phoneNumber) {
@@ -114,6 +127,7 @@ public class AuthServiceImpl implements AuthService {
     private void revokeToken(Token token) {
         token.revoke();
         tokenRepository.save(token);
+        TransactionLog.info(log, "User logged out userId={}", token.getUser().getId());
     }
 
     private User findUser(String phoneNumber) {

@@ -7,11 +7,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,6 +29,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@Slf4j
 public class SecurityConfig {
     private static final List<String> ALLOWED_METHODS =
             List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
@@ -51,7 +54,10 @@ public class SecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.sessionManagement(
                 session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.exceptionHandling(errors -> errors.authenticationEntryPoint(this::sendUnauthorized));
+        http.exceptionHandling(
+                errors ->
+                        errors.authenticationEntryPoint(this::sendUnauthorized)
+                                .accessDeniedHandler(this::sendForbidden));
         http.authorizeHttpRequests(
                 auth -> {
                     auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
@@ -88,6 +94,16 @@ public class SecurityConfig {
             AuthenticationException exception)
             throws IOException {
         response.sendError(HttpStatus.UNAUTHORIZED.value());
+        log.debug("Access rejected reason=authentication_required");
+    }
+
+    private void sendForbidden(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AccessDeniedException exception)
+            throws IOException {
+        log.warn("Access rejected reason=insufficient_permission");
+        response.sendError(HttpStatus.FORBIDDEN.value());
     }
 
     @Bean
@@ -107,6 +123,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(ALLOWED_METHODS);
         configuration.setAllowedHeaders(ALLOWED_HEADERS);
+        configuration.setExposedHeaders(List.of("X-Request-ID"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

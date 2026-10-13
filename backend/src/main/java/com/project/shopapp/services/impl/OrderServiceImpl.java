@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
 import com.project.shopapp.dtos.request.CreateOrderRequest;
@@ -38,12 +39,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
@@ -100,9 +103,13 @@ public class OrderServiceImpl implements OrderService {
                     orderRepository.findByUserIdAndRequestId(user.getId(), request.getRequestId());
             if (existing.isPresent()) {
                 if (!fingerprint.equals(existing.get().getRequestFingerprint())) {
+                    log.warn(
+                            "Order retry rejected orderId={} reason=different_order_data",
+                            existing.get().getId());
                     throw new IllegalStateException(
                             "Request ID has already been used with different order data");
                 }
+                log.debug("Order retry reused existing orderId={}", existing.get().getId());
                 return OrderResponse.from(existing.get());
             }
         }
@@ -157,6 +164,12 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
         orderItems.saveAll(order.getItems());
         orderHistory.saveAll(order.getHistory());
+        TransactionLog.info(
+                log,
+                "Order created orderId={} userId={} paymentMethod={}",
+                order.getId(),
+                user.getId(),
+                order.getPaymentMethod());
         return OrderResponse.from(order);
     }
 
@@ -300,6 +313,7 @@ public class OrderServiceImpl implements OrderService {
                         .findByIdAndUserPhoneNumber(id, phoneNumber)
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         if (order.getStatus() == OrderStatus.CANCELLED) {
+            log.debug("Order cancellation skipped orderId={} reason=already_cancelled", id);
             return OrderResponse.from(order);
         }
         if (order.getStatus() != OrderStatus.PENDING) {
@@ -386,6 +400,7 @@ public class OrderServiceImpl implements OrderService {
             return;
         }
         orderBusinessService.recordPayment(order, reason);
+        TransactionLog.info(log, "Unpaid payment closed orderId={} reason={}", id, reason);
         changeStatus(order, OrderStatus.CANCELLED, "SYSTEM");
         restoreStockAndVoucher(order);
     }
@@ -407,7 +422,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void changeStatus(Order order, OrderStatus status, String actor) {
+        OrderStatus previous = order.getStatus();
         orderHistory.save(orderBusinessService.updateStatus(order, status, actor));
+        TransactionLog.info(
+                log,
+                "Order status changed orderId={} previousStatus={} status={} actor={}",
+                order.getId(),
+                previous,
+                status,
+                actor);
     }
 
     private void changeStatus(Order order, OrderStatus status) {

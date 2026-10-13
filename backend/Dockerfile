@@ -7,7 +7,7 @@ RUN mvn -q clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 RUN addgroup -S shopapp && adduser -S shopapp -G shopapp
 WORKDIR /app
-RUN mkdir /app/uploads && chown shopapp:shopapp /app/uploads
+RUN mkdir -p /app/uploads /app/logs && chown shopapp:shopapp /app/uploads /app/logs
 COPY --from=build /workspace/target/shopapp-*.jar app.jar
 USER shopapp
 EXPOSE 8088
