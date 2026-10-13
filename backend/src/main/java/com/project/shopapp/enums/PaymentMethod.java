@@ -1,4 +1,4 @@
-package com.project.shopapp.model;
+package com.project.shopapp.enums;
 
 public enum PaymentMethod {
     COD,

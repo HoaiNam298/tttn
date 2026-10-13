@@ -43,12 +43,13 @@ public class AddressServiceImpl implements AddressService {
         }
         UserAddress address = id == null ? new UserAddress(user) : findOwned(owned, id);
         boolean makeDefault =
-                owned.isEmpty() || request.defaultAddress() || address.isDefaultAddress();
+                owned.isEmpty() || request.isDefaultAddress() || address.isDefaultAddress();
         if (makeDefault) {
             owned.forEach(item -> item.setDefaultAddress(false));
             addresses.flush();
         }
-        address.update(request.recipientName(), request.phoneNumber(), request.shippingAddress());
+        address.update(
+                request.getRecipientName(), request.getPhoneNumber(), request.getShippingAddress());
         address.setDefaultAddress(makeDefault);
         return AddressResponse.from(addresses.save(address));
     }

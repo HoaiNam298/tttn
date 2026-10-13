@@ -1,37 +1,45 @@
 package com.project.shopapp.exceptions;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<ApiError> unreadableRequest(Exception exception) {
         return build(HttpStatus.BAD_REQUEST, "Invalid request JSON or enum value", Map.of());
     }
 
-    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     ResponseEntity<ApiError> concurrentUpdate(Exception exception) {
         return build(HttpStatus.CONFLICT, "Data changed concurrently. Reload and retry", Map.of());
     }
 
-    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
     ResponseEntity<ApiError> uploadTooLarge(Exception exception) {
         return build(
                 HttpStatus.PAYLOAD_TOO_LARGE, "Image upload exceeds the allowed size", Map.of());
     }
 
-    @ExceptionHandler(java.io.IOException.class)
-    ResponseEntity<ApiError> storageFailure(java.io.IOException exception) {
-        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
-                .error("Image storage operation failed", exception);
+    @ExceptionHandler(IOException.class)
+    ResponseEntity<ApiError> storageFailure(IOException exception) {
+        LOGGER.error("Image storage operation failed", exception);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Image storage is unavailable", Map.of());
     }
 

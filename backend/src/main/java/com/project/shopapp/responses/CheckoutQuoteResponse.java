@@ -1,6 +1,6 @@
 package com.project.shopapp.responses;
 
-import com.project.shopapp.model.ShippingMethod;
+import com.project.shopapp.enums.ShippingMethod;
 import java.math.BigDecimal;
 
 public record CheckoutQuoteResponse(

@@ -1,18 +1,18 @@
 package com.project.shopapp.repositories;
 
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.model.OrderItem;
-import com.project.shopapp.model.OrderStatus;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
-    java.util.List<OrderItem> findByOrderIdAndOrderUserPhoneNumberAndOrderStatus(
+    List<OrderItem> findByOrderIdAndOrderUserPhoneNumberAndOrderStatus(
             Long orderId, String phoneNumber, OrderStatus status);
 
-    @org.springframework.data.jpa.repository.Lock(
-            jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
-    @org.springframework.data.jpa.repository.Query("select i from OrderItem i where i.id = :id")
+    @Query(value = "SELECT * FROM order_items WHERE id = :id FOR UPDATE", nativeQuery = true)
     Optional<OrderItem> lockById(Long id);
 
     @EntityGraph(attributePaths = {"product", "order", "order.user"})

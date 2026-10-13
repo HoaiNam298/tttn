@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,8 +46,7 @@ class CategoryControllerTest {
                         post("/api/v1/categories")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"name\":\"Tablet\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/v1/categories/4"));
+                .andExpect(status().isOk());
     }
 
     @Test

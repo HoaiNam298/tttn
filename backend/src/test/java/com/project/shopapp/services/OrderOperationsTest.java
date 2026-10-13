@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,18 +12,21 @@ import static org.mockito.Mockito.when;
 import com.project.shopapp.dtos.CreateOrderRequest;
 import com.project.shopapp.dtos.OrderItemRequest;
 import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.ShippingMethod;
+import com.project.shopapp.enums.VoucherType;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Order;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.Product;
-import com.project.shopapp.model.ShippingMethod;
 import com.project.shopapp.model.User;
 import com.project.shopapp.model.Voucher;
-import com.project.shopapp.model.VoucherType;
+import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.OrderRepository;
+import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
+import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.OrderServiceImpl;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -38,6 +42,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class OrderOperationsTest {
+    private final OrderBusinessService orderBusinessService = new OrderBusinessServiceImpl();
     @Mock OrderRepository orders;
     @Mock ProductRepository products;
     @Mock UserRepository users;
@@ -48,7 +53,16 @@ class OrderOperationsTest {
 
     @BeforeEach
     void setUp() {
-        service = new OrderServiceImpl(orders, products, users, vouchers);
+        service =
+                new OrderServiceImpl(
+                        orders,
+                        products,
+                        users,
+                        vouchers,
+                        null,
+                        mock(OrderItemRepository.class),
+                        mock(OrderStatusHistoryRepository.class),
+                        new OrderBusinessServiceImpl());
         user = new User("Customer", "0900000000", "HCM", "pw", null, null);
         ReflectionTestUtils.setField(user, "id", 1L);
         product = new Product("Phone", new BigDecimal("100000"), "", "", new Category("Phones"));
@@ -56,15 +70,16 @@ class OrderOperationsTest {
     }
 
     private CreateOrderRequest request(UUID key, ShippingMethod method, String code) {
-        return new CreateOrderRequest(
-                "Customer",
-                "0900000000",
-                "HCM",
-                "",
-                List.of(new OrderItemRequest(8L, 1)),
-                key,
-                method,
-                code);
+        return CreateOrderRequest.builder()
+                .recipientName("Customer")
+                .phoneNumber("0900000000")
+                .shippingAddress("HCM")
+                .note("")
+                .items(List.of(OrderItemRequest.builder().productId(8L).quantity(1).build()))
+                .requestId(key)
+                .shippingMethod(method)
+                .voucherCode(code)
+                .build();
     }
 
     private Voucher voucher() {
@@ -132,10 +147,12 @@ class OrderOperationsTest {
 
     @Test
     void ownedCancelRestoresStockAndVoucherOnceAndKeepsAuditTrail() {
-        Order order = new Order(user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
+        Order order =
+                orderBusinessService.createOrder(
+                        user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
         product.reserve(1);
-        order.addItem(product, 1);
-        order.applyVoucher(voucher());
+        orderBusinessService.addItem(order, product, 1);
+        orderBusinessService.applyVoucher(order, voucher());
         when(orders.findByIdAndUserPhoneNumber(21L, "0900000000")).thenReturn(Optional.of(order));
         when(products.findAllByIdInOrderById(any())).thenReturn(List.of(product));
         service.cancelOwnedOrder(21L, "0900000000");
@@ -152,24 +169,31 @@ class OrderOperationsTest {
         when(products.findAllByIdInOrderById(any())).thenReturn(List.of(product));
         when(vouchers.reserve(eq("SAVE10"), eq(1L), any())).thenReturn(voucher());
         var input =
-                new CreateOrderRequest(
-                        "Customer",
-                        "0900000000",
-                        "HCM",
-                        "",
-                        List.of(new OrderItemRequest(8L, 1)),
-                        null,
-                        ShippingMethod.EXPRESS,
-                        "SAVE10",
-                        new BigDecimal("150000"));
+                CreateOrderRequest.builder()
+                        .recipientName("Customer")
+                        .phoneNumber("0900000000")
+                        .shippingAddress("HCM")
+                        .note("")
+                        .items(
+                                List.of(
+                                        OrderItemRequest.builder()
+                                                .productId(8L)
+                                                .quantity(1)
+                                                .build()))
+                        .shippingMethod(ShippingMethod.EXPRESS)
+                        .voucherCode("SAVE10")
+                        .expectedTotal(new BigDecimal("150000"))
+                        .build();
         assertThrows(IllegalStateException.class, () -> service.create("0900000000", input));
         verify(orders, never()).save(any());
     }
 
     @Test
     void cannotCancelConfirmedOrOtherUsersOrder() {
-        Order order = new Order(user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
-        order.updateStatus(OrderStatus.CONFIRMED);
+        Order order =
+                orderBusinessService.createOrder(
+                        user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
+        orderBusinessService.updateStatus(order, OrderStatus.CONFIRMED);
         when(orders.findByIdAndUserPhoneNumber(21L, "0900000000")).thenReturn(Optional.of(order));
         assertThrows(
                 IllegalStateException.class, () -> service.cancelOwnedOrder(21L, "0900000000"));
@@ -181,18 +205,20 @@ class OrderOperationsTest {
 
     @Test
     void expiryReleasesStockAndVoucherOnlyOnce() {
-        Order order = new Order(user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
+        Order order =
+                orderBusinessService.createOrder(
+                        user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
         product.reserve(1);
-        order.addItem(product, 1);
-        order.applyVoucher(voucher());
-        order.selectOnlinePayment(Instant.now().minusSeconds(5));
+        orderBusinessService.addItem(order, product, 1);
+        orderBusinessService.applyVoucher(order, voucher());
+        orderBusinessService.selectOnlinePayment(order, Instant.now().minusSeconds(5));
         when(orders.findWithItemsById(21L)).thenReturn(Optional.of(order));
         when(products.findAllByIdInOrderById(any())).thenReturn(List.of(product));
-        service.closeUnpaidPayment(21L, com.project.shopapp.model.PaymentStatus.EXPIRED);
-        service.closeUnpaidPayment(21L, com.project.shopapp.model.PaymentStatus.EXPIRED);
+        service.closeUnpaidPayment(21L, com.project.shopapp.enums.PaymentStatus.EXPIRED);
+        service.closeUnpaidPayment(21L, com.project.shopapp.enums.PaymentStatus.EXPIRED);
         assertEquals(100, product.getStock());
         verify(vouchers).release(4L);
-        assertEquals(com.project.shopapp.model.PaymentStatus.EXPIRED, order.getPaymentStatus());
+        assertEquals(com.project.shopapp.enums.PaymentStatus.EXPIRED, order.getPaymentStatus());
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
     }
 }

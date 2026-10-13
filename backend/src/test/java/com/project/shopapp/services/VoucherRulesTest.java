@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.enums.VoucherType;
 import com.project.shopapp.model.Voucher;
-import com.project.shopapp.model.VoucherType;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -52,15 +52,15 @@ class VoucherRulesTest {
         VoucherRequest input = request(VoucherType.FIXED, "10", null);
         voucher.update(
                 new VoucherRequest(
-                        input.code(),
-                        input.type(),
-                        input.amount(),
-                        input.minimumSubtotal(),
-                        input.maximumDiscount(),
-                        input.startsAt(),
-                        input.endsAt(),
-                        input.usageLimit(),
-                        input.perUserLimit(),
+                        input.getCode(),
+                        input.getType(),
+                        input.getAmount(),
+                        input.getMinimumSubtotal(),
+                        input.getMaximumDiscount(),
+                        input.getStartsAt(),
+                        input.getEndsAt(),
+                        input.getUsageLimit(),
+                        input.getPerUserLimit(),
                         null,
                         false,
                         null));
@@ -105,12 +105,12 @@ class VoucherRulesTest {
                         voucher.update(
                                 new VoucherRequest(
                                         "OTHER",
-                                        input.type(),
-                                        input.amount(),
-                                        input.minimumSubtotal(),
-                                        input.maximumDiscount(),
-                                        input.startsAt(),
-                                        input.endsAt(),
+                                        input.getType(),
+                                        input.getAmount(),
+                                        input.getMinimumSubtotal(),
+                                        input.getMaximumDiscount(),
+                                        input.getStartsAt(),
+                                        input.getEndsAt(),
                                         1,
                                         1,
                                         null,
@@ -122,10 +122,10 @@ class VoucherRulesTest {
                         new Voucher(
                                 new VoucherRequest(
                                         "SAVE10",
-                                        input.type(),
-                                        input.amount(),
-                                        input.minimumSubtotal(),
-                                        input.maximumDiscount(),
+                                        input.getType(),
+                                        input.getAmount(),
+                                        input.getMinimumSubtotal(),
+                                        input.getMaximumDiscount(),
                                         now,
                                         now,
                                         1,

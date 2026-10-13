@@ -23,6 +23,7 @@ spring:
 app:
   vnpay:
     enabled: ${SHOPAPP_VNPAY_ENABLED:false}
+    expiry-job-enabled: ${SHOPAPP_VNPAY_EXPIRY_JOB_ENABLED:true}
     tmn-code: ${SHOPAPP_VNPAY_TMN_CODE:}
     hash-secret: ${SHOPAPP_VNPAY_HASH_SECRET:}
     public-base-url: ${SHOPAPP_PUBLIC_BASE_URL:http://localhost:4200}

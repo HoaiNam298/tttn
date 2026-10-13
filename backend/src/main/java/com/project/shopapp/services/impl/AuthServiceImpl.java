@@ -54,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByPhoneNumber(request.phoneNumber())) {
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new DuplicateResourceException("Phone number is already registered");
         }
         Role role =
@@ -67,11 +67,11 @@ public class AuthServiceImpl implements AuthService {
         User user =
                 userRepository.save(
                         new User(
-                                request.fullName().trim(),
-                                request.phoneNumber().trim(),
-                                request.address().trim(),
-                                passwordEncoder.encode(request.password()),
-                                request.dateOfBirth(),
+                                request.getFullName().trim(),
+                                request.getPhoneNumber().trim(),
+                                request.getAddress().trim(),
+                                passwordEncoder.encode(request.getPassword()),
+                                request.getDateOfBirth(),
                                 role));
         return issueToken(user);
     }
@@ -81,11 +81,11 @@ public class AuthServiceImpl implements AuthService {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.phoneNumber(), request.password()));
+                            request.getPhoneNumber(), request.getPassword()));
         } catch (AuthenticationException exception) {
             throw new InvalidCredentialsException("Phone number or password is incorrect");
         }
-        User user = findUser(request.phoneNumber());
+        User user = findUser(request.getPhoneNumber());
         revokeActiveTokens(user.getId());
         return issueToken(user);
     }

@@ -7,7 +7,6 @@ import com.project.shopapp.responses.ProductResponse;
 import com.project.shopapp.services.ProductService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
-import java.net.URI;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -51,7 +50,7 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
         ProductResponse created = service.create(request);
-        return ResponseEntity.created(URI.create("/api/v1/products/" + created.id())).body(created);
+        return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")

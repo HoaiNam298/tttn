@@ -1,6 +1,7 @@
 package com.project.shopapp.model;
 
 import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.enums.VoucherType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,9 +15,20 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.Locale;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "vouchers")
+@Data
+@Builder
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Voucher extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,34 +75,32 @@ public class Voucher extends BaseEntity {
     @Column(nullable = false)
     private long version;
 
-    protected Voucher() {}
-
     public Voucher(VoucherRequest request) {
         update(request);
     }
 
     public void update(VoucherRequest request) {
-        if (!request.endsAt().isAfter(request.startsAt())
-                || (request.type() == VoucherType.PERCENT
-                        && request.amount().compareTo(BigDecimal.valueOf(100)) > 0)
-                || request.usageLimit() < usedCount) {
+        if (!request.getEndsAt().isAfter(request.getStartsAt())
+                || (request.getType() == VoucherType.PERCENT
+                        && request.getAmount().compareTo(BigDecimal.valueOf(100)) > 0)
+                || request.getUsageLimit() < usedCount) {
             throw new IllegalArgumentException("Invalid voucher dates, percentage or usage limit");
         }
-        String normalizedCode = request.code().trim().toUpperCase(Locale.ROOT);
+        String normalizedCode = request.getCode().trim().toUpperCase(Locale.ROOT);
         if (code != null && !code.equals(normalizedCode)) {
             throw new IllegalArgumentException("Voucher code cannot be changed");
         }
         code = normalizedCode;
-        type = request.type();
-        amount = request.amount();
-        minimumSubtotal = request.minimumSubtotal();
-        maximumDiscount = request.maximumDiscount();
-        startsAt = request.startsAt();
-        endsAt = request.endsAt();
-        usageLimit = request.usageLimit();
-        perUserLimit = request.perUserLimit();
-        targetUserId = request.targetUserId();
-        active = request.active();
+        type = request.getType();
+        amount = request.getAmount();
+        minimumSubtotal = request.getMinimumSubtotal();
+        maximumDiscount = request.getMaximumDiscount();
+        startsAt = request.getStartsAt();
+        endsAt = request.getEndsAt();
+        usageLimit = request.getUsageLimit();
+        perUserLimit = request.getPerUserLimit();
+        targetUserId = request.getTargetUserId();
+        active = request.isActive();
     }
 
     public BigDecimal discountFor(Long userId, BigDecimal subtotal, long userUses, Instant now) {
@@ -127,61 +137,5 @@ public class Voucher extends BaseEntity {
             throw new IllegalStateException("Invalid voucher usage count");
         }
         usedCount--;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public VoucherType getType() {
-        return type;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public BigDecimal getMinimumSubtotal() {
-        return minimumSubtotal;
-    }
-
-    public BigDecimal getMaximumDiscount() {
-        return maximumDiscount;
-    }
-
-    public Instant getStartsAt() {
-        return startsAt;
-    }
-
-    public Instant getEndsAt() {
-        return endsAt;
-    }
-
-    public int getUsageLimit() {
-        return usageLimit;
-    }
-
-    public int getPerUserLimit() {
-        return perUserLimit;
-    }
-
-    public int getUsedCount() {
-        return usedCount;
-    }
-
-    public Long getTargetUserId() {
-        return targetUserId;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public long getVersion() {
-        return version;
     }
 }

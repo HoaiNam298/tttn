@@ -1,6 +1,8 @@
 package com.project.shopapp.model;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -9,62 +11,46 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "product_reviews")
+@Data
+@Builder
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class ProductReview extends BaseEntity {
-    @jakarta.persistence.Version private long version;
+    @Version private long version;
 
     @Column(name = "shop_reply", length = 1000)
     private String shopReply;
 
     @Column(name = "replied_at")
-    private java.time.Instant repliedAt;
+    private Instant repliedAt;
 
-    @jakarta.persistence.ElementCollection
-    @jakarta.persistence.CollectionTable(
-            name = "review_images",
-            joinColumns = @JoinColumn(name = "review_id"))
-    @jakarta.persistence.OrderColumn(name = "position")
+    @ElementCollection
+    @CollectionTable(name = "review_images", joinColumns = @JoinColumn(name = "review_id"))
+    @OrderColumn(name = "position")
     @Column(name = "url", nullable = false, length = 500)
-    @org.hibernate.annotations.BatchSize(size = 50)
-    private java.util.List<String> images = new java.util.ArrayList<>();
-
-    public void attachImages(java.util.List<String> images) {
-        if (images.size() > 5) {
-            throw new IllegalArgumentException("At most five review images are allowed");
-        }
-        this.images = new java.util.ArrayList<>(images);
-    }
-
-    public java.util.List<String> getImages() {
-        return java.util.List.copyOf(images);
-    }
-
-    public void reply(String text, long expectedVersion) {
-        if (version != expectedVersion) {
-            throw new IllegalStateException("Review changed. Reload before replying");
-        }
-        shopReply = text.trim();
-        repliedAt = java.time.Instant.now();
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public long getVersion() {
-        return version;
-    }
-
-    public String getShopReply() {
-        return shopReply;
-    }
-
-    public java.time.Instant getRepliedAt() {
-        return repliedAt;
-    }
+    @BatchSize(size = 50)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<String> images = new ArrayList<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,14 +58,20 @@ public class ProductReview extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User user;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_item_id", nullable = false, unique = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private OrderItem orderItem;
 
     @Column(nullable = false)
@@ -88,30 +80,32 @@ public class ProductReview extends BaseEntity {
     @Column(nullable = false, length = 1000)
     private String comment;
 
-    protected ProductReview() {}
+    public void attachImages(List<String> images) {
+        if (images.size() > 5) {
+            throw new IllegalArgumentException("At most five review images are allowed");
+        }
+        this.images = new ArrayList<>(images);
+    }
+
+    public List<String> getImages() {
+        return List.copyOf(images);
+    }
+
+    public void reply(String text, long expectedVersion) {
+        if (version != expectedVersion) {
+            throw new IllegalStateException("Review changed. Reload before replying");
+        }
+        shopReply = text.trim();
+        repliedAt = Instant.now();
+    }
 
     public ProductReview(
             Product product, User user, OrderItem orderItem, int rating, String comment) {
+        this();
         this.product = product;
         this.user = user;
         this.orderItem = orderItem;
         this.rating = rating;
         this.comment = comment;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public int getRating() {
-        return rating;
-    }
-
-    public String getComment() {
-        return comment;
     }
 }

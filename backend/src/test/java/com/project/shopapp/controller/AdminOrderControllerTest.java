@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.filters.JwtAuthenticationFilter;
-import com.project.shopapp.model.OrderStatus;
-import com.project.shopapp.model.PaymentMethod;
 import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.services.OrderService;
 import java.math.BigDecimal;

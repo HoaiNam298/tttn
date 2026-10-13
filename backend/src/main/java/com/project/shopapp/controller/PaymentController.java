@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.security.Principal;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/payments")
 public class PaymentController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
     private final PaymentService service;
     private final VnpayProperties properties;
 
@@ -44,8 +47,7 @@ public class PaymentController {
         try {
             return service.receiveIpn(params);
         } catch (RuntimeException exception) {
-            org.slf4j.LoggerFactory.getLogger(PaymentController.class)
-                    .error("VNPAY IPN processing failed", exception);
+            LOGGER.error("VNPAY IPN processing failed", exception);
             return new VnpayIpnResponse("99", "Processing failed. Retry notification");
         }
     }

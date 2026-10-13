@@ -10,18 +10,31 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "tokens")
+@Data
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 512)
+    @ToString.Exclude
     private String token;
 
     @Column(name = "token_type", nullable = false, length = 30)
+    @Builder.Default
     private String tokenType = "BEARER";
 
     @Column(name = "expires_at", nullable = false)
@@ -32,34 +45,19 @@ public class Token {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User user;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected Token() {}
-
     public Token(String token, Instant expiresAt, User user) {
+        this();
         this.token = token;
         this.expiresAt = expiresAt;
         this.user = user;
         this.createdAt = Instant.now();
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public boolean isRevoked() {
-        return revoked;
-    }
-
-    public User getUser() {
-        return user;
     }
 
     public void revoke() {

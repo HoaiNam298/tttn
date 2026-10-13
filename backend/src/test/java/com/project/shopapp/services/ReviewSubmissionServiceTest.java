@@ -23,7 +23,7 @@ class ReviewSubmissionServiceTest {
     @Mock MediaService media;
     @Mock ProductReviewService reviews;
     private final CreateProductReviewRequest request =
-            new CreateProductReviewRequest(21L, 5, "Great");
+            CreateProductReviewRequest.builder().orderId(21L).rating(5).comment("Great").build();
     private final MockMultipartFile file =
             new MockMultipartFile("images", "photo.png", "image/png", new byte[] {1});
 

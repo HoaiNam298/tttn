@@ -39,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
-        String name = request.name().trim();
+        String name = request.getName().trim();
         repository
                 .findByNameIgnoreCase(name)
                 .ifPresent(
@@ -53,7 +53,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = getEntity(id);
-        String name = request.name().trim();
+        String name = request.getName().trim();
         repository
                 .findByNameIgnoreCase(name)
                 .filter(item -> !item.getId().equals(id))

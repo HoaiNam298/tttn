@@ -9,14 +9,15 @@ import static org.mockito.Mockito.when;
 
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentStatus;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Order;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.PaymentAttempt;
-import com.project.shopapp.model.PaymentStatus;
 import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.PaymentAttemptRepository;
+import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.PaymentServiceImpl;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -34,6 +35,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 @ExtendWith(MockitoExtension.class)
 class VnpayPaymentServiceTest {
+    private final OrderBusinessService orderBusinessService = new OrderBusinessServiceImpl();
     @Mock OrderRepository orders;
     @Mock PaymentAttemptRepository attempts;
     @Mock OrderService orderService;
@@ -50,9 +52,15 @@ class VnpayPaymentServiceTest {
     void setup() {
         service =
                 new PaymentServiceImpl(
-                        orders, attempts, gateway, properties, orderService, entityManager);
+                        orders,
+                        attempts,
+                        gateway,
+                        properties,
+                        orderService,
+                        entityManager,
+                        new OrderBusinessServiceImpl());
         order =
-                new Order(
+                orderBusinessService.createOrder(
                         new User("Customer", "0900000000", "HCM", "hash", null, null),
                         "Customer",
                         "0900000000",
@@ -60,7 +68,7 @@ class VnpayPaymentServiceTest {
                         "",
                         BigDecimal.valueOf(30000));
         ReflectionTestUtils.setField(order, "id", 7L);
-        order.selectOnlinePayment(Instant.now().plusSeconds(900));
+        orderBusinessService.selectOnlinePayment(order, Instant.now().plusSeconds(900));
         attempt =
                 new PaymentAttempt(
                         order,
@@ -142,7 +150,7 @@ class VnpayPaymentServiceTest {
     @Test
     void paymentAfterCancellationRequiresReviewWithoutReopeningOrder() {
         storedAttempt();
-        order.updateStatus(OrderStatus.CANCELLED, "CUSTOMER");
+        orderBusinessService.updateStatus(order, OrderStatus.CANCELLED, "CUSTOMER");
         assertEquals("00", service.receiveIpn(callback("00")).rspCode());
         assertEquals(PaymentStatus.REVIEW_REQUIRED, order.getPaymentStatus());
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
@@ -152,7 +160,7 @@ class VnpayPaymentServiceTest {
     @Test
     void successfulResultAfterEarlierFailureIsNotDiscarded() {
         storedAttempt();
-        order.updateStatus(OrderStatus.CANCELLED, "SYSTEM");
+        orderBusinessService.updateStatus(order, OrderStatus.CANCELLED, "SYSTEM");
         attempt.finish(PaymentStatus.FAILED, null, "24", null);
         assertEquals("00", service.receiveIpn(callback("00")).rspCode());
         assertEquals(PaymentStatus.REVIEW_REQUIRED, attempt.getStatus());
@@ -191,7 +199,7 @@ class VnpayPaymentServiceTest {
 
     @Test
     void expiredOrderCannotCreateLink() {
-        order.selectOnlinePayment(Instant.now().minusSeconds(1));
+        orderBusinessService.selectOnlinePayment(order, Instant.now().minusSeconds(1));
         when(orders.findByIdAndUserPhoneNumber(7L, "0900000000")).thenReturn(Optional.of(order));
         assertThrows(
                 IllegalStateException.class,
@@ -208,10 +216,14 @@ class VnpayPaymentServiceTest {
 
     @Test
     void unpaidOnlineOrderCannotBeConfirmedAndPaidOrderCannotBeCancelled() {
-        assertThrows(IllegalStateException.class, () -> order.updateStatus(OrderStatus.CONFIRMED));
-        order.recordPayment(PaymentStatus.PAID);
-        assertThrows(IllegalStateException.class, () -> order.updateStatus(OrderStatus.CANCELLED));
-        order.updateStatus(OrderStatus.CONFIRMED);
+        assertThrows(
+                IllegalStateException.class,
+                () -> orderBusinessService.updateStatus(order, OrderStatus.CONFIRMED));
+        orderBusinessService.recordPayment(order, PaymentStatus.PAID);
+        assertThrows(
+                IllegalStateException.class,
+                () -> orderBusinessService.updateStatus(order, OrderStatus.CANCELLED));
+        orderBusinessService.updateStatus(order, OrderStatus.CONFIRMED);
         assertEquals(OrderStatus.CONFIRMED, order.getStatus());
     }
 }

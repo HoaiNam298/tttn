@@ -1,8 +1,8 @@
 package com.project.shopapp.services.impl;
 
 import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.Voucher;
 import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.UserRepository;
@@ -12,8 +12,11 @@ import com.project.shopapp.services.VoucherService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Set;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +35,7 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     public Page<VoucherResponse> findAll(Pageable pageable) {
-        var allowed = java.util.Set.of("id", "code", "createdAt", "startsAt", "endsAt");
+        var allowed = Set.of("id", "code", "createdAt", "startsAt", "endsAt");
         for (var order : pageable.getSort()) {
             if (!allowed.contains(order.getProperty())) {
                 throw new IllegalArgumentException("Unsupported voucher sort field");
@@ -40,10 +43,10 @@ public class VoucherServiceImpl implements VoucherService {
         }
         var sort = pageable.getSort();
         if (sort.getOrderFor("id") == null) {
-            sort = sort.and(org.springframework.data.domain.Sort.by("id"));
+            sort = sort.and(Sort.by("id"));
         }
         return vouchers.findAll(
-                        org.springframework.data.domain.PageRequest.of(
+                        PageRequest.of(
                                 pageable.getPageNumber(),
                                 Math.min(pageable.getPageSize(), 100),
                                 sort))
@@ -52,7 +55,7 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Transactional
     public VoucherResponse create(VoucherRequest request) {
-        validateTarget(request.targetUserId());
+        validateTarget(request.getTargetUserId());
         return VoucherResponse.from(vouchers.saveAndFlush(new Voucher(request)));
     }
 
@@ -61,10 +64,10 @@ public class VoucherServiceImpl implements VoucherService {
         Voucher voucher =
                 vouchers.findForUpdateById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
-        if (request.version() == null || request.version() != voucher.getVersion()) {
+        if (request.getVersion() == null || request.getVersion() != voucher.getVersion()) {
             throw new IllegalStateException("Voucher changed. Reload before saving");
         }
-        validateTarget(request.targetUserId());
+        validateTarget(request.getTargetUserId());
         voucher.update(request);
         return VoucherResponse.from(vouchers.saveAndFlush(voucher));
     }

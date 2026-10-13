@@ -6,9 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.dtos.CreateOrderRequest;
 import com.project.shopapp.dtos.OrderItemRequest;
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentMethod;
+import com.project.shopapp.enums.PaymentStatus;
 import com.project.shopapp.model.Category;
-import com.project.shopapp.model.PaymentMethod;
-import com.project.shopapp.model.PaymentStatus;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.CategoryRepository;
@@ -103,17 +104,16 @@ class VnpayTransactionTest {
     }
 
     private CreateOrderRequest request(BigDecimal expectedTotal) {
-        return new CreateOrderRequest(
-                "Customer",
-                phone,
-                "HCM",
-                "",
-                List.of(new OrderItemRequest(productId, 1)),
-                requestId,
-                null,
-                null,
-                expectedTotal,
-                PaymentMethod.VNPAY);
+        return CreateOrderRequest.builder()
+                .recipientName("Customer")
+                .phoneNumber(phone)
+                .shippingAddress("HCM")
+                .note("")
+                .items(List.of(OrderItemRequest.builder().productId(productId).quantity(1).build()))
+                .requestId(requestId)
+                .expectedTotal(expectedTotal)
+                .paymentMethod(PaymentMethod.VNPAY)
+                .build();
     }
 
     private LinkedMultiValueMap<String, String> callback(Long id) {
@@ -132,6 +132,44 @@ class VnpayTransactionTest {
                         .format(Instant.now()));
         params.set("vnp_SecureHash", gateway.sign(params.toSingleValueMap()));
         return params;
+    }
+
+    @Test
+    void persistsItemsAndStatusHistoryWithoutCascade() {
+        CreateOrderRequest request = request(null);
+        request.setPaymentMethod(PaymentMethod.COD);
+        Long orderId = orderService.create(phone, request).id();
+
+        assertEquals(
+                1L,
+                jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM order_items WHERE order_id = ?",
+                        Long.class,
+                        orderId));
+        assertEquals(
+                1L,
+                jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM order_status_history WHERE order_id = ?",
+                        Long.class,
+                        orderId));
+
+        orderService.updateStatus(orderId, OrderStatus.CONFIRMED);
+        orderService.updateStatus(orderId, OrderStatus.SHIPPING);
+        orderService.updateStatus(orderId, OrderStatus.DELIVERED);
+        orderService.confirmReceipt(orderId, phone);
+        orderService.confirmReceipt(orderId, phone);
+
+        var reloaded = orderService.findOwnedOrder(orderId, phone);
+        assertEquals(OrderStatus.COMPLETED, reloaded.status());
+        assertEquals(PaymentStatus.PAID, reloaded.paymentStatus());
+        assertEquals(1, reloaded.items().size());
+        assertEquals(5, reloaded.history().size());
+        assertEquals(
+                5L,
+                jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM order_status_history WHERE order_id = ?",
+                        Long.class,
+                        orderId));
     }
 
     @Test

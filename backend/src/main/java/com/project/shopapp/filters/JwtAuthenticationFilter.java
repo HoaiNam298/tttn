@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
@@ -49,9 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .filter(
                                     saved ->
                                             !saved.isRevoked()
-                                                    && saved.getExpiresAt()
-                                                            .isAfter(java.time.Instant.now()))
+                                                    && saved.getExpiresAt().isAfter(Instant.now()))
                             .isPresent();
+
             if (activeToken && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails user = userDetailsService.loadUserByUsername(username);
                 if (jwtService.isValid(token, user)) {
@@ -66,6 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (RuntimeException ignored) {
             // Invalid tokens continue unauthenticated and are rejected by protected endpoints.
         }
+
         filterChain.doFilter(request, response);
     }
 }

@@ -2,6 +2,7 @@ package com.project.shopapp.responses;
 
 import com.project.shopapp.model.ProductReview;
 import java.time.Instant;
+import java.util.List;
 
 public record ProductReviewResponse(
         Long id,
@@ -9,7 +10,7 @@ public record ProductReviewResponse(
         int rating,
         String comment,
         Instant createdAt,
-        java.util.List<String> images,
+        List<String> images,
         String shopReply,
         Instant repliedAt,
         long version,

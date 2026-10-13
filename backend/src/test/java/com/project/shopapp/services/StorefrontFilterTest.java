@@ -3,14 +3,18 @@ package com.project.shopapp.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.model.OrderStatus;
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.model.Product;
+import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.OrderRepository;
+import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
+import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.OrderServiceImpl;
 import com.project.shopapp.services.impl.ProductServiceImpl;
 import java.math.BigDecimal;
@@ -75,7 +79,14 @@ class StorefrontFilterTest {
         when(orders.findAllByUserPhoneNumberAndStatus("0900000000", OrderStatus.SHIPPING, page))
                 .thenReturn(Page.empty());
         new OrderServiceImpl(
-                        orders, products, users, org.mockito.Mockito.mock(VoucherService.class))
+                        orders,
+                        products,
+                        users,
+                        org.mockito.Mockito.mock(VoucherService.class),
+                        null,
+                        mock(OrderItemRepository.class),
+                        mock(OrderStatusHistoryRepository.class),
+                        new OrderBusinessServiceImpl())
                 .findOwnedOrders("0900000000", OrderStatus.SHIPPING, page);
         verify(orders).findAllByUserPhoneNumberAndStatus("0900000000", OrderStatus.SHIPPING, page);
     }

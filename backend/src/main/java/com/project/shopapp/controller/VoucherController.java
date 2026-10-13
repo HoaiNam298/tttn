@@ -4,7 +4,6 @@ import com.project.shopapp.dtos.VoucherRequest;
 import com.project.shopapp.responses.VoucherResponse;
 import com.project.shopapp.services.VoucherService;
 import jakarta.validation.Valid;
-import java.net.URI;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -37,8 +36,7 @@ public class VoucherController {
     @PostMapping
     ResponseEntity<VoucherResponse> create(@Valid @RequestBody VoucherRequest request) {
         VoucherResponse response = service.create(request);
-        return ResponseEntity.created(URI.create("/api/v1/admin/vouchers/" + response.id()))
-                .body(response);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")

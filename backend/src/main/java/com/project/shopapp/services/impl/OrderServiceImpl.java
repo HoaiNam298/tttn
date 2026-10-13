@@ -4,22 +4,25 @@ import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
 import com.project.shopapp.dtos.CreateOrderRequest;
 import com.project.shopapp.dtos.OrderItemRequest;
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentMethod;
+import com.project.shopapp.enums.PaymentStatus;
+import com.project.shopapp.enums.ShippingMethod;
+import com.project.shopapp.exceptions.InsufficientStockException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Order;
-import com.project.shopapp.model.OrderLineKey;
-import com.project.shopapp.model.OrderStatus;
-import com.project.shopapp.model.PaymentMethod;
-import com.project.shopapp.model.PaymentStatus;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductVariant;
-import com.project.shopapp.model.ShippingMethod;
 import com.project.shopapp.model.User;
+import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.OrderRepository;
+import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
 import com.project.shopapp.responses.CheckoutQuoteResponse;
 import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.responses.OrderSummaryResponse;
+import com.project.shopapp.services.OrderBusinessService;
 import com.project.shopapp.services.OrderService;
 import com.project.shopapp.services.VoucherService;
 import java.math.BigDecimal;
@@ -30,9 +33,10 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,35 +49,35 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final VoucherService vouchers;
-    private VnpayProperties vnpay;
+    private final VnpayProperties vnpay;
+    private final OrderItemRepository orderItems;
+    private final OrderStatusHistoryRepository orderHistory;
+    private final OrderBusinessService orderBusinessService;
 
-    @Autowired
     public OrderServiceImpl(
             OrderRepository orderRepository,
             ProductRepository productRepository,
             UserRepository userRepository,
             VoucherService vouchers,
-            VnpayProperties vnpay) {
-        this(orderRepository, productRepository, userRepository, vouchers);
-        this.vnpay = vnpay;
-    }
-
-    public OrderServiceImpl(
-            OrderRepository orderRepository,
-            ProductRepository productRepository,
-            UserRepository userRepository,
-            VoucherService vouchers) {
+            VnpayProperties vnpay,
+            OrderItemRepository orderItems,
+            OrderStatusHistoryRepository orderHistory,
+            OrderBusinessService orderBusinessService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.vouchers = vouchers;
+        this.vnpay = vnpay;
+        this.orderItems = orderItems;
+        this.orderHistory = orderHistory;
+        this.orderBusinessService = orderBusinessService;
     }
 
     @Override
     @Transactional
     public OrderResponse create(String phoneNumber, CreateOrderRequest request) {
-        if (request.paymentMethod() == PaymentMethod.VNPAY) {
-            if (request.requestId() == null) {
+        if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
+            if (request.getRequestId() == null) {
                 throw new IllegalArgumentException(
                         "Online payment requires a request ID for safe retries");
             }
@@ -83,15 +87,16 @@ public class OrderServiceImpl implements OrderService {
             vnpay.requireEnabled();
         }
         User user =
-                (request.requestId() == null
+                (request.getRequestId() == null
                                 ? userRepository.findByPhoneNumber(phoneNumber)
                                 : userRepository.findForUpdateByPhoneNumber(phoneNumber))
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Map<OrderLineKey, Integer> quantities = aggregateItems(request.items());
-        String fingerprint = request.requestId() == null ? null : fingerprint(request, quantities);
-        if (request.requestId() != null) {
+        Map<OrderLineKey, Integer> quantities = aggregateItems(request.getItems());
+        String fingerprint =
+                request.getRequestId() == null ? null : fingerprint(request, quantities);
+        if (request.getRequestId() != null) {
             var existing =
-                    orderRepository.findByUserIdAndRequestId(user.getId(), request.requestId());
+                    orderRepository.findByUserIdAndRequestId(user.getId(), request.getRequestId());
             if (existing.isPresent()) {
                 if (!fingerprint.equals(existing.get().getRequestFingerprint())) {
                     throw new IllegalStateException(
@@ -103,23 +108,24 @@ public class OrderServiceImpl implements OrderService {
         var productIds =
                 quantities.keySet().stream()
                         .map(OrderLineKey::productId)
-                        .collect(java.util.stream.Collectors.toSet());
+                        .collect(Collectors.toSet());
         List<Product> products = productRepository.findAllByIdInOrderById(productIds);
         if (products.size() != productIds.size()) {
             throw new ResourceNotFoundException("One or more products no longer exist");
         }
 
         Order order =
-                new Order(
+                orderBusinessService.createOrder(
                         user,
-                        request.recipientName().trim(),
-                        request.phoneNumber().trim(),
-                        request.shippingAddress().trim(),
-                        request.note() == null ? "" : request.note().trim(),
+                        request.getRecipientName().trim(),
+                        request.getPhoneNumber().trim(),
+                        request.getShippingAddress().trim(),
+                        request.getNote() == null ? "" : request.getNote().trim(),
                         shipping(request).getFee());
-        order.selectShipping(shipping(request));
-        if (request.requestId() != null) {
-            order.identifyRequest(request.requestId(), fingerprint);
+        orderBusinessService.selectShipping(order, shipping(request));
+        if (request.getRequestId() != null) {
+            order.setRequestId(request.getRequestId());
+            order.setRequestFingerprint(fingerprint);
         }
         for (Product product : products) {
             for (var entry : quantities.entrySet()) {
@@ -139,23 +145,27 @@ public class OrderServiceImpl implements OrderService {
                                                                 "Variant does not belong to the selected product"));
                 int quantity = entry.getValue();
                 product.reserve(quantity, variant);
-                order.addItem(product, variant, quantity);
+                orderBusinessService.addItem(order, product, variant, quantity);
             }
         }
         if (hasVoucher(request)) {
-            order.applyVoucher(
-                    vouchers.reserve(request.voucherCode(), user.getId(), order.getSubtotal()));
+            orderBusinessService.applyVoucher(
+                    order,
+                    vouchers.reserve(request.getVoucherCode(), user.getId(), order.getSubtotal()));
         }
-        if (request.expectedTotal() != null
-                && request.expectedTotal().compareTo(order.getTotal()) != 0) {
+        if (request.getExpectedTotal() != null
+                && request.getExpectedTotal().compareTo(order.getTotal()) != 0) {
             throw new IllegalStateException(
                     "Order total changed. Recalculate and confirm the new total");
         }
-        if (request.paymentMethod() == PaymentMethod.VNPAY) {
+        if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
             VnpayGateway.amount(order.getTotal());
-            order.selectOnlinePayment(Instant.now().plusSeconds(900));
+            orderBusinessService.selectOnlinePayment(order, Instant.now().plusSeconds(900));
         }
-        return OrderResponse.from(orderRepository.save(order));
+        orderRepository.save(order);
+        orderItems.saveAll(order.getItems());
+        orderHistory.saveAll(order.getHistory());
+        return OrderResponse.from(order);
     }
 
     @Override
@@ -164,7 +174,7 @@ public class OrderServiceImpl implements OrderService {
                 userRepository
                         .findByPhoneNumber(phoneNumber)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Map<OrderLineKey, Integer> quantities = aggregateItems(request.items());
+        Map<OrderLineKey, Integer> quantities = aggregateItems(request.getItems());
         BigDecimal subtotal = BigDecimal.ZERO;
         var productIds =
                 quantities.keySet().stream().map(OrderLineKey::productId).distinct().toList();
@@ -195,19 +205,18 @@ public class OrderServiceImpl implements OrderService {
             }
             int stock = variant == null ? product.getStock() : variant.getStock();
             if (stock < entry.getValue()) {
-                throw new com.project.shopapp.exceptions.InsufficientStockException(
-                        product.getName(), stock, entry.getValue());
+                throw new InsufficientStockException(product.getName(), stock, entry.getValue());
             }
             BigDecimal price = variant == null ? product.getPrice() : variant.getPrice();
             subtotal = subtotal.add(price.multiply(BigDecimal.valueOf(entry.getValue())));
         }
         BigDecimal discount =
                 hasVoucher(request)
-                        ? vouchers.preview(request.voucherCode(), user.getId(), subtotal)
+                        ? vouchers.preview(request.getVoucherCode(), user.getId(), subtotal)
                         : BigDecimal.ZERO;
         String code =
                 hasVoucher(request)
-                        ? request.voucherCode().trim().toUpperCase(java.util.Locale.ROOT)
+                        ? request.getVoucherCode().trim().toUpperCase(Locale.ROOT)
                         : null;
         return new CheckoutQuoteResponse(
                 subtotal,
@@ -219,13 +228,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private ShippingMethod shipping(CreateOrderRequest request) {
-        return request.shippingMethod() == null
+        return request.getShippingMethod() == null
                 ? ShippingMethod.STANDARD
-                : request.shippingMethod();
+                : request.getShippingMethod();
     }
 
     private boolean hasVoucher(CreateOrderRequest request) {
-        return request.voucherCode() != null && !request.voucherCode().isBlank();
+        return request.getVoucherCode() != null && !request.getVoucherCode().isBlank();
     }
 
     @Override
@@ -279,7 +288,7 @@ public class OrderServiceImpl implements OrderService {
                 orderRepository
                         .findWithItemsById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
-        order.updateStatus(status);
+        changeStatus(order, status);
         if (status == OrderStatus.CANCELLED) {
             restoreStockAndVoucher(order);
         }
@@ -290,7 +299,7 @@ public class OrderServiceImpl implements OrderService {
         var productIds =
                 order.getItems().stream()
                         .map(item -> item.getProductId())
-                        .collect(java.util.stream.Collectors.toSet());
+                        .collect(Collectors.toSet());
         productRepository.findAllByIdInOrderById(productIds);
         order.getItems()
                 .forEach(item -> item.getProduct().release(item.getQuantity(), item.getVariant()));
@@ -312,7 +321,7 @@ public class OrderServiceImpl implements OrderService {
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Only pending orders can be cancelled by the customer");
         }
-        order.updateStatus(OrderStatus.CANCELLED, "CUSTOMER");
+        changeStatus(order, OrderStatus.CANCELLED, "CUSTOMER");
         restoreStockAndVoucher(order);
         return OrderResponse.from(order);
     }
@@ -321,8 +330,8 @@ public class OrderServiceImpl implements OrderService {
         Map<OrderLineKey, Integer> quantities = new TreeMap<>();
         for (OrderItemRequest item : items) {
             quantities.merge(
-                    new OrderLineKey(item.productId(), item.variantId()),
-                    item.quantity(),
+                    new OrderLineKey(item.getProductId(), item.getVariantId()),
+                    item.getQuantity(),
                     Math::addExact);
         }
         if (quantities.values().stream().anyMatch(quantity -> quantity > 100 || quantity < 1)) {
@@ -334,13 +343,13 @@ public class OrderServiceImpl implements OrderService {
     private String fingerprint(CreateOrderRequest request, Map<OrderLineKey, Integer> quantities) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            if (request.paymentMethod() == PaymentMethod.VNPAY) {
+            if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
                 hashField(digest, "payment:VNPAY");
             }
-            hashField(digest, request.recipientName().trim());
-            hashField(digest, request.phoneNumber().trim());
-            hashField(digest, request.shippingAddress().trim());
-            hashField(digest, request.note() == null ? "" : request.note().trim());
+            hashField(digest, request.getRecipientName().trim());
+            hashField(digest, request.getPhoneNumber().trim());
+            hashField(digest, request.getShippingAddress().trim());
+            hashField(digest, request.getNote() == null ? "" : request.getNote().trim());
             new TreeMap<>(quantities)
                     .forEach(
                             (id, quantity) -> {
@@ -356,13 +365,12 @@ public class OrderServiceImpl implements OrderService {
             if (hasVoucher(request)) {
                 hashField(
                         digest,
-                        "voucher:"
-                                + request.voucherCode().trim().toUpperCase(java.util.Locale.ROOT));
+                        "voucher:" + request.getVoucherCode().trim().toUpperCase(Locale.ROOT));
             }
-            if (request.expectedTotal() != null) {
+            if (request.getExpectedTotal() != null) {
                 hashField(
                         digest,
-                        "total:" + request.expectedTotal().stripTrailingZeros().toPlainString());
+                        "total:" + request.getExpectedTotal().stripTrailingZeros().toPlainString());
             }
             return HexFormat.of().formatHex(digest.digest());
         } catch (NoSuchAlgorithmException exception) {
@@ -394,8 +402,8 @@ public class OrderServiceImpl implements OrderService {
         if (reason == PaymentStatus.EXPIRED && order.getPaymentExpiresAt().isAfter(Instant.now())) {
             return;
         }
-        order.recordPayment(reason);
-        order.updateStatus(OrderStatus.CANCELLED, "SYSTEM");
+        orderBusinessService.recordPayment(order, reason);
+        changeStatus(order, OrderStatus.CANCELLED, "SYSTEM");
         restoreStockAndVoucher(order);
     }
 
@@ -410,8 +418,31 @@ public class OrderServiceImpl implements OrderService {
             if (order.getStatus() != OrderStatus.DELIVERED) {
                 throw new IllegalStateException("Only delivered orders can be confirmed received");
             }
-            order.updateStatus(OrderStatus.COMPLETED, "CUSTOMER");
+            changeStatus(order, OrderStatus.COMPLETED, "CUSTOMER");
         }
         return OrderResponse.from(order);
+    }
+
+    private void changeStatus(Order order, OrderStatus status, String actor) {
+        orderHistory.save(orderBusinessService.updateStatus(order, status, actor));
+    }
+
+    private void changeStatus(Order order, OrderStatus status) {
+        changeStatus(order, status, "ADMIN");
+    }
+
+    private record OrderLineKey(Long productId, Long variantId)
+            implements Comparable<OrderLineKey> {
+        @Override
+        public int compareTo(OrderLineKey other) {
+            int result = productId.compareTo(other.productId);
+            if (result != 0) {
+                return result;
+            }
+            if (variantId == null) {
+                return other.variantId == null ? 0 : -1;
+            }
+            return other.variantId == null ? 1 : variantId.compareTo(other.variantId);
+        }
     }
 }

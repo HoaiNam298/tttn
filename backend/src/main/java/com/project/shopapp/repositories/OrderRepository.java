@@ -1,8 +1,11 @@
 package com.project.shopapp.repositories;
 
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.model.Order;
-import com.project.shopapp.model.OrderStatus;
 import jakarta.persistence.LockModeType;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -10,20 +13,25 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    @org.springframework.data.jpa.repository.Query(
-            "select o.id from Order o where o.paymentMethod = com.project.shopapp.model.PaymentMethod.VNPAY and o.paymentStatus = com.project.shopapp.model.PaymentStatus.PENDING and o.status = com.project.shopapp.model.OrderStatus.PENDING and o.paymentExpiresAt <= :now order by o.id")
-    java.util.List<Long> findExpiredPaymentIds(java.time.Instant now, Pageable pageable);
+    @Query(
+            value =
+                    "SELECT o.id FROM orders o WHERE o.payment_method = 'VNPAY' AND o.payment_status = 'PENDING' AND o.status = 'PENDING' AND o.payment_expires_at <= :now ORDER BY o.id",
+            nativeQuery = true)
+    List<Long> findExpiredPaymentIds(Instant now, Pageable pageable);
 
     long countByVoucher_IdAndUser_IdAndStatusNot(Long voucherId, Long userId, OrderStatus status);
 
     @EntityGraph(attributePaths = {"items", "items.product"})
     Optional<Order> findByUserIdAndRequestId(Long userId, UUID requestId);
 
-    @org.springframework.data.jpa.repository.Query(
-            "select (count(i) > 0) from OrderItem i where i.product.id = :productId and i.variant is null and i.order.status in :statuses")
-    boolean existsOpenLegacyItems(Long productId, java.util.Collection<OrderStatus> statuses);
+    @Query(
+            value =
+                    "SELECT EXISTS (SELECT 1 FROM order_items i JOIN orders o ON o.id = i.order_id WHERE i.product_id = :productId AND i.variant_id IS NULL AND o.status IN (:statuses))",
+            nativeQuery = true)
+    boolean existsOpenLegacyItems(Long productId, Collection<OrderStatus> statuses);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Order> findByIdAndUserPhoneNumber(Long id, String phoneNumber);
@@ -34,7 +42,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findAllByUserPhoneNumber(String phoneNumber, Pageable pageable);
 
     Page<Order> findAllByUserPhoneNumberAndStatus(
-            String phoneNumber, com.project.shopapp.model.OrderStatus status, Pageable pageable);
+            String phoneNumber, OrderStatus status, Pageable pageable);
 
     Page<Order> findAllByStatus(OrderStatus status, Pageable pageable);
 

@@ -12,9 +12,21 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
+import java.util.Locale;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "product_variants")
+@Data
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class ProductVariant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +34,8 @@ public class ProductVariant {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Product product;
 
     @Column(nullable = false, length = 64, unique = true)
@@ -31,12 +45,15 @@ public class ProductVariant {
     private String name;
 
     @Column(nullable = false, length = 60)
+    @Builder.Default
     private String color = "";
 
     @Column(nullable = false, length = 60)
+    @Builder.Default
     private String size = "";
 
     @Column(nullable = false, length = 60)
+    @Builder.Default
     private String capacity = "";
 
     @Column(nullable = false, precision = 12, scale = 2)
@@ -49,13 +66,13 @@ public class ProductVariant {
     private String imageUrl;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @Version private long version;
 
-    protected ProductVariant() {}
-
     public ProductVariant(Product product) {
+        this();
         this.product = product;
     }
 
@@ -69,7 +86,7 @@ public class ProductVariant {
             int stock,
             String imageUrl,
             boolean active) {
-        this.sku = sku.trim().toUpperCase(java.util.Locale.ROOT);
+        this.sku = sku.trim().toUpperCase(Locale.ROOT);
         this.name = name.trim();
         this.color = color == null ? "" : color.trim();
         this.size = size == null ? "" : size.trim();
@@ -89,45 +106,5 @@ public class ProductVariant {
 
     public void release(int quantity) {
         stock = Math.addExact(stock, quantity);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getSku() {
-        return sku;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public String getSize() {
-        return size;
-    }
-
-    public String getCapacity() {
-        return capacity;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public int getStock() {
-        return stock;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public boolean isActive() {
-        return active;
     }
 }

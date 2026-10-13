@@ -3,7 +3,6 @@ package com.project.shopapp.controller;
 import com.project.shopapp.responses.ImageUploadResponse;
 import com.project.shopapp.services.MediaService;
 import java.io.IOException;
-import java.net.URI;
 import java.time.Duration;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
@@ -28,7 +27,7 @@ public class MediaController {
     public ResponseEntity<ImageUploadResponse> upload(@RequestParam MultipartFile file)
             throws IOException {
         String url = media.upload(file);
-        return ResponseEntity.created(URI.create(url)).body(new ImageUploadResponse(url));
+        return ResponseEntity.ok(new ImageUploadResponse(url));
     }
 
     @GetMapping("/api/v1/media/{filename}")

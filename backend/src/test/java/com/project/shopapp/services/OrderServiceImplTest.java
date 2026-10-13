@@ -3,6 +3,7 @@ package com.project.shopapp.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.project.shopapp.dtos.CreateOrderRequest;
@@ -12,10 +13,13 @@ import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.User;
+import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.OrderRepository;
+import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
 import com.project.shopapp.responses.OrderResponse;
+import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.OrderServiceImpl;
 import java.math.BigDecimal;
 import java.util.List;
@@ -43,7 +47,11 @@ class OrderServiceImplTest {
                         orderRepository,
                         productRepository,
                         userRepository,
-                        org.mockito.Mockito.mock(VoucherService.class));
+                        org.mockito.Mockito.mock(VoucherService.class),
+                        null,
+                        mock(OrderItemRepository.class),
+                        mock(OrderStatusHistoryRepository.class),
+                        new OrderBusinessServiceImpl());
         product = new Product("Phone", new BigDecimal("100000"), "", "", new Category("Phone"));
         ReflectionTestUtils.setField(product, "id", 8L);
         when(userRepository.findByPhoneNumber("0900000000")).thenReturn(Optional.of(user()));
@@ -58,7 +66,16 @@ class OrderServiceImplTest {
         OrderResponse response =
                 service.create(
                         "0900000000",
-                        request(List.of(new OrderItemRequest(8L, 1), new OrderItemRequest(8L, 2))));
+                        request(
+                                List.of(
+                                        OrderItemRequest.builder()
+                                                .productId(8L)
+                                                .quantity(1)
+                                                .build(),
+                                        OrderItemRequest.builder()
+                                                .productId(8L)
+                                                .quantity(2)
+                                                .build())));
 
         assertEquals(new BigDecimal("300000"), response.subtotal());
         assertEquals(new BigDecimal("330000.00"), response.total());
@@ -70,11 +87,25 @@ class OrderServiceImplTest {
         ReflectionTestUtils.setField(product, "stock", 10);
         assertThrows(
                 InsufficientStockException.class,
-                () -> service.create("0900000000", request(List.of(new OrderItemRequest(8L, 11)))));
+                () ->
+                        service.create(
+                                "0900000000",
+                                request(
+                                        List.of(
+                                                OrderItemRequest.builder()
+                                                        .productId(8L)
+                                                        .quantity(11)
+                                                        .build()))));
     }
 
     private CreateOrderRequest request(List<OrderItemRequest> items) {
-        return new CreateOrderRequest("Nguyen Van A", "0900000000", "1 Nguyen Hue, HCM", "", items);
+        return CreateOrderRequest.builder()
+                .recipientName("Nguyen Van A")
+                .phoneNumber("0900000000")
+                .shippingAddress("1 Nguyen Hue, HCM")
+                .note("")
+                .items(items)
+                .build();
     }
 
     private User user() {

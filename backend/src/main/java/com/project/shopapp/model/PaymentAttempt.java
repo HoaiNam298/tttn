@@ -1,5 +1,6 @@
 package com.project.shopapp.model;
 
+import com.project.shopapp.enums.PaymentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,9 +14,20 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "payment_attempts")
+@Data
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class PaymentAttempt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +35,8 @@ public class PaymentAttempt {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Order order;
 
     @Column(name = "txn_ref", nullable = false, unique = true, length = 64)
@@ -42,6 +56,7 @@ public class PaymentAttempt {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
+    @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
 
     @Column(name = "provider_transaction_no", unique = true, length = 30)
@@ -53,9 +68,8 @@ public class PaymentAttempt {
     @Column(name = "paid_at")
     private Instant paidAt;
 
-    protected PaymentAttempt() {}
-
     public PaymentAttempt(Order order, String txnRef, String paymentUrl, Instant createdAt) {
+        this();
         this.order = order;
         this.txnRef = txnRef;
         this.amount = order.getTotal();
@@ -66,30 +80,6 @@ public class PaymentAttempt {
 
     public Long getOrderId() {
         return order.getId();
-    }
-
-    public String getTxnRef() {
-        return txnRef;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public String getPaymentUrl() {
-        return paymentUrl;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public PaymentStatus getStatus() {
-        return status;
     }
 
     public void finish(

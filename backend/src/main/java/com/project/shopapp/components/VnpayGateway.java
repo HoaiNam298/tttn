@@ -4,6 +4,7 @@ import com.project.shopapp.configuration.VnpayProperties;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -11,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
@@ -99,7 +101,7 @@ public class VnpayGateway {
                             "HmacSHA512"));
             return HexFormat.of()
                     .formatHex(mac.doFinal(canonical(params).getBytes(StandardCharsets.UTF_8)));
-        } catch (java.security.GeneralSecurityException exception) {
+        } catch (GeneralSecurityException exception) {
             throw new IllegalStateException("Cannot sign VNPAY request", exception);
         }
     }
@@ -115,7 +117,7 @@ public class VnpayGateway {
                                                 && entry.getValue() != null
                                                 && !entry.getValue().isEmpty())
                         .map(entry -> encode(entry.getKey()) + "=" + encode(entry.getValue()))
-                        .collect(java.util.stream.Collectors.joining("&"));
+                        .collect(Collectors.joining("&"));
     }
 
     private String encode(String value) {

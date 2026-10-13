@@ -2,8 +2,8 @@ package com.project.shopapp.services.impl;
 
 import com.project.shopapp.dtos.ProductInventoryRequest;
 import com.project.shopapp.dtos.ProductRequest;
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductVariant;
 import com.project.shopapp.repositories.OrderRepository;
@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -68,7 +69,7 @@ public class ProductServiceImpl implements ProductService {
                     var predicates = new ArrayList<Predicate>();
                     if (!value.isEmpty()) {
                         String escaped =
-                                value.toLowerCase(java.util.Locale.ROOT)
+                                value.toLowerCase(Locale.ROOT)
                                         .replace("\\", "\\\\")
                                         .replace("%", "\\%")
                                         .replace("_", "\\_");
@@ -119,11 +120,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDetailResponse updateInventory(Long id, ProductInventoryRequest request) {
         Product product = getEntity(id);
-        if (product.getVersion() != request.version()) {
+        if (product.getVersion() != request.getVersion()) {
             throw new IllegalStateException("Product inventory has changed. Reload before saving");
         }
         if (product.getVariants().isEmpty()
-                && !request.variants().isEmpty()
+                && !request.getVariants().isEmpty()
                 && orders.existsOpenLegacyItems(
                         id,
                         List.of(
@@ -136,22 +137,22 @@ public class ProductServiceImpl implements ProductService {
         var ids = new HashSet<Long>();
         var names = new HashSet<String>();
         var skus = new HashSet<String>();
-        for (var input : request.variants()) {
-            if (!names.add(input.name().trim().toLowerCase(java.util.Locale.ROOT))
-                    || !skus.add(input.sku().trim().toUpperCase(java.util.Locale.ROOT))) {
+        for (var input : request.getVariants()) {
+            if (!names.add(input.getName().trim().toLowerCase(Locale.ROOT))
+                    || !skus.add(input.getSku().trim().toUpperCase(Locale.ROOT))) {
                 throw new IllegalArgumentException("Duplicate variant name or SKU");
             }
             ProductVariant variant;
-            if (input.id() == null) {
+            if (input.getId() == null) {
                 variant = new ProductVariant(product);
                 product.addVariant(variant);
             } else {
-                if (!ids.add(input.id())) {
+                if (!ids.add(input.getId())) {
                     throw new IllegalArgumentException("Duplicate variant ID");
                 }
                 variant =
                         product.getVariants().stream()
-                                .filter(item -> input.id().equals(item.getId()))
+                                .filter(item -> input.getId().equals(item.getId()))
                                 .findFirst()
                                 .orElseThrow(
                                         () ->
@@ -159,25 +160,25 @@ public class ProductServiceImpl implements ProductService {
                                                         "Variant does not belong to this product"));
             }
             variant.update(
-                    input.sku(),
-                    input.name(),
-                    input.color(),
-                    input.size(),
-                    input.capacity(),
-                    input.price(),
-                    input.stock(),
-                    input.imageUrl(),
-                    input.active());
+                    input.getSku(),
+                    input.getName(),
+                    input.getColor(),
+                    input.getSize(),
+                    input.getCapacity(),
+                    input.getPrice(),
+                    input.getStock(),
+                    input.getImageUrl(),
+                    input.isActive());
         }
         if (product.getVariants().stream()
                 .anyMatch(item -> item.getId() != null && !ids.contains(item.getId()))) {
             throw new IllegalArgumentException(
                     "Keep existing variants and deactivate them instead of deleting");
         }
-        if (request.images().stream().distinct().count() != request.images().size()) {
+        if (request.getImages().stream().distinct().count() != request.getImages().size()) {
             throw new IllegalArgumentException("Duplicate gallery image");
         }
-        product.changeInventory(request.stock(), request.images());
+        product.changeInventory(request.getStock(), request.getImages());
         return ProductDetailResponse.from(repository.saveAndFlush(product));
     }
 
@@ -185,11 +186,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse create(ProductRequest request) {
         Product product =
                 new Product(
-                        request.name().trim(),
-                        request.price(),
-                        request.thumbnail(),
-                        request.description() == null ? "" : request.description().trim(),
-                        categoryService.getEntity(request.categoryId()));
+                        request.getName().trim(),
+                        request.getPrice(),
+                        request.getThumbnail(),
+                        request.getDescription() == null ? "" : request.getDescription().trim(),
+                        categoryService.getEntity(request.getCategoryId()));
         return ProductResponse.from(repository.save(product));
     }
 
@@ -197,11 +198,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse update(Long id, ProductRequest request) {
         Product product = getEntity(id);
         product.update(
-                request.name().trim(),
-                request.price(),
-                request.thumbnail(),
-                request.description() == null ? "" : request.description().trim(),
-                categoryService.getEntity(request.categoryId()));
+                request.getName().trim(),
+                request.getPrice(),
+                request.getThumbnail(),
+                request.getDescription() == null ? "" : request.getDescription().trim(),
+                categoryService.getEntity(request.getCategoryId()));
         return ProductResponse.from(repository.save(product));
     }
 

@@ -3,6 +3,7 @@ package com.project.shopapp.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.project.shopapp.dtos.CreateOrderRequest;
@@ -13,9 +14,12 @@ import com.project.shopapp.model.Order;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductVariant;
 import com.project.shopapp.model.User;
+import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.OrderRepository;
+import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
+import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.OrderServiceImpl;
 import java.math.BigDecimal;
 import java.util.List;
@@ -48,7 +52,14 @@ class VariantOrderTest {
         product.refreshVariantSummary();
         service =
                 new OrderServiceImpl(
-                        orders, products, users, org.mockito.Mockito.mock(VoucherService.class));
+                        orders,
+                        products,
+                        users,
+                        org.mockito.Mockito.mock(VoucherService.class),
+                        null,
+                        mock(OrderItemRepository.class),
+                        mock(OrderStatusHistoryRepository.class),
+                        new OrderBusinessServiceImpl());
         when(users.findByPhoneNumber("0900000000"))
                 .thenReturn(
                         Optional.of(new User("Customer", "0900000000", "HCM", "pw", null, null)));
@@ -63,7 +74,13 @@ class VariantOrderTest {
     }
 
     private CreateOrderRequest request(OrderItemRequest... lines) {
-        return new CreateOrderRequest("Customer", "0900000000", "HCM", "", List.of(lines));
+        return CreateOrderRequest.builder()
+                .recipientName("Customer")
+                .phoneNumber("0900000000")
+                .shippingAddress("HCM")
+                .note("")
+                .items(List.of(lines))
+                .build();
     }
 
     @Test
@@ -72,7 +89,17 @@ class VariantOrderTest {
         var result =
                 service.create(
                         "0900000000",
-                        request(new OrderItemRequest(8L, 2, 1L), new OrderItemRequest(8L, 1, 2L)));
+                        request(
+                                OrderItemRequest.builder()
+                                        .productId(8L)
+                                        .quantity(2)
+                                        .variantId(1L)
+                                        .build(),
+                                OrderItemRequest.builder()
+                                        .productId(8L)
+                                        .quantity(1)
+                                        .variantId(2L)
+                                        .build()));
         assertEquals(2, result.items().size());
         assertEquals(new BigDecimal("400"), result.subtotal());
         assertEquals("BLACK", result.items().get(0).sku());
@@ -89,17 +116,40 @@ class VariantOrderTest {
     void requiresVariantAndRejectsForeignVariant() {
         assertThrows(
                 IllegalStateException.class,
-                () -> service.create("0900000000", request(new OrderItemRequest(8L, 1))));
+                () ->
+                        service.create(
+                                "0900000000",
+                                request(
+                                        OrderItemRequest.builder()
+                                                .productId(8L)
+                                                .quantity(1)
+                                                .build())));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> service.create("0900000000", request(new OrderItemRequest(8L, 1, 999L))));
+                () ->
+                        service.create(
+                                "0900000000",
+                                request(
+                                        OrderItemRequest.builder()
+                                                .productId(8L)
+                                                .quantity(1)
+                                                .variantId(999L)
+                                                .build())));
     }
 
     @Test
     void rejectsInsufficientVariantStock() {
         assertThrows(
                 InsufficientStockException.class,
-                () -> service.create("0900000000", request(new OrderItemRequest(8L, 4, 1L))));
+                () ->
+                        service.create(
+                                "0900000000",
+                                request(
+                                        OrderItemRequest.builder()
+                                                .productId(8L)
+                                                .quantity(4)
+                                                .variantId(1L)
+                                                .build())));
         assertEquals(3, black.getStock());
     }
 }

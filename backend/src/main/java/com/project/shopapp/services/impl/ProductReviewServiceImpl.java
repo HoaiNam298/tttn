@@ -1,18 +1,23 @@
 package com.project.shopapp.services.impl;
 
 import com.project.shopapp.dtos.CreateProductReviewRequest;
+import com.project.shopapp.dtos.ReviewReplyRequest;
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.OrderItem;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.ProductReview;
 import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.ProductReviewRepository;
+import com.project.shopapp.responses.OrderReviewStatusResponse;
 import com.project.shopapp.responses.ProductReviewOverviewResponse;
 import com.project.shopapp.responses.ProductReviewResponse;
 import com.project.shopapp.services.ProductReviewService;
+import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,7 +61,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     @Transactional
     public ProductReviewResponse create(
             Long productId, String phoneNumber, CreateProductReviewRequest request) {
-        return createWithImages(productId, phoneNumber, request, java.util.List.of());
+        return createWithImages(productId, phoneNumber, request, List.of());
     }
 
     @Override
@@ -65,9 +70,9 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             Long productId,
             String phoneNumber,
             CreateProductReviewRequest request,
-            java.util.List<String> images) {
+            List<String> images) {
         OrderItem orderItem =
-                eligible(productId, phoneNumber, request.orderId(), request.variantId());
+                eligible(productId, phoneNumber, request.getOrderId(), request.getVariantId());
         orderItemRepository
                 .lockById(orderItem.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order item not found"));
@@ -79,8 +84,8 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                         orderItem.getProduct(),
                         orderItem.getOrder().getUser(),
                         orderItem,
-                        request.rating(),
-                        request.comment().trim());
+                        request.getRating(),
+                        request.getComment().trim());
         review.attachImages(images);
         return ProductReviewResponse.from(reviewRepository.saveAndFlush(review));
     }
@@ -97,8 +102,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     }
 
     @Override
-    public java.util.List<com.project.shopapp.responses.OrderReviewStatusResponse>
-            orderReviewStatuses(String phoneNumber, Long orderId) {
+    public List<OrderReviewStatusResponse> orderReviewStatuses(String phoneNumber, Long orderId) {
         var items =
                 orderItemRepository.findByOrderIdAndOrderUserPhoneNumberAndOrderStatus(
                         orderId, phoneNumber, OrderStatus.COMPLETED);
@@ -106,7 +110,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
         return items.stream()
                 .map(
                         item ->
-                                new com.project.shopapp.responses.OrderReviewStatusResponse(
+                                new OrderReviewStatusResponse(
                                         item.getProductId(),
                                         item.getVariantId(),
                                         reviewedIds.contains(item.getId())))
@@ -115,22 +119,20 @@ public class ProductReviewServiceImpl implements ProductReviewService {
 
     @Override
     @Transactional
-    public ProductReviewResponse reply(
-            Long reviewId, com.project.shopapp.dtos.ReviewReplyRequest request) {
+    public ProductReviewResponse reply(Long reviewId, ReviewReplyRequest request) {
         ProductReview review =
                 reviewRepository
                         .findById(reviewId)
                         .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
-        review.reply(request.reply(), request.version());
+        review.reply(request.getReply(), request.getVersion());
         return ProductReviewResponse.from(reviewRepository.saveAndFlush(review));
     }
 
     private Pageable bounded(Pageable pageable) {
-        return org.springframework.data.domain.PageRequest.of(
+        return PageRequest.of(
                 pageable.getPageNumber(),
                 Math.min(50, pageable.getPageSize()),
-                org.springframework.data.domain.Sort.by(
-                        org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id"));
+                Sort.by(Sort.Direction.DESC, "createdAt", "id"));
     }
 
     private OrderItem eligible(Long productId, String phoneNumber, Long orderId, Long variantId) {

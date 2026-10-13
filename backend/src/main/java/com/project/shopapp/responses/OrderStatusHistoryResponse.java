@@ -1,6 +1,6 @@
 package com.project.shopapp.responses;
 
-import com.project.shopapp.model.OrderStatus;
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.model.OrderStatusHistory;
 import java.time.Instant;
 

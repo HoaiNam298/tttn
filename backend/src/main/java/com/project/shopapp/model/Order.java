@@ -1,6 +1,9 @@
 package com.project.shopapp.model;
 
-import jakarta.persistence.CascadeType;
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentMethod;
+import com.project.shopapp.enums.PaymentStatus;
+import com.project.shopapp.enums.ShippingMethod;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,15 +15,28 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "orders")
+@Data
+@Builder
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,17 +51,10 @@ public class Order extends BaseEntity {
     @Column(name = "request_fingerprint", length = 64)
     private String requestFingerprint;
 
-    public void identifyRequest(UUID requestId, String fingerprint) {
-        this.requestId = requestId;
-        this.requestFingerprint = fingerprint;
-    }
-
-    public String getRequestFingerprint() {
-        return requestFingerprint;
-    }
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User user;
 
     @Column(name = "recipient_name", nullable = false, length = 100)
@@ -76,31 +85,11 @@ public class Order extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false, length = 30)
+    @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
     @Column(name = "payment_expires_at")
     private Instant paymentExpiresAt;
-
-    public void selectOnlinePayment(Instant expiresAt) {
-        paymentMethod = PaymentMethod.VNPAY;
-        paymentStatus = PaymentStatus.PENDING;
-        paymentExpiresAt = expiresAt;
-    }
-
-    public PaymentStatus getPaymentStatus() {
-        return paymentStatus;
-    }
-
-    public Instant getPaymentExpiresAt() {
-        return paymentExpiresAt;
-    }
-
-    public void recordPayment(PaymentStatus result) {
-        if (paymentMethod != PaymentMethod.VNPAY) {
-            throw new IllegalStateException("Order does not use online payment");
-        }
-        paymentStatus = result;
-    }
 
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal subtotal;
@@ -113,175 +102,32 @@ public class Order extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "shipping_method", nullable = false, length = 20)
+    @Builder.Default
     private ShippingMethod shippingMethod = ShippingMethod.STANDARD;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voucher_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Voucher voucher;
 
     @Column(name = "voucher_code", length = 40)
     private String voucherCode;
 
     @Column(nullable = false, precision = 14, scale = 2)
+    @Builder.Default
     private BigDecimal discount = BigDecimal.ZERO;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    @jakarta.persistence.OrderBy("occurredAt ASC, id ASC")
+    @OneToMany(mappedBy = "order")
+    @OrderBy("occurredAt ASC, id ASC")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<OrderStatusHistory> history = new ArrayList<>();
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<OrderItem> items = new ArrayList<>();
-
-    protected Order() {}
-
-    public Order(
-            User user,
-            String recipientName,
-            String phoneNumber,
-            String shippingAddress,
-            String note,
-            BigDecimal shippingFee) {
-        this.orderNumber = UUID.randomUUID();
-        this.user = user;
-        this.recipientName = recipientName;
-        this.phoneNumber = phoneNumber;
-        this.shippingAddress = shippingAddress;
-        this.note = note;
-        this.status = OrderStatus.PENDING;
-        this.paymentMethod = PaymentMethod.COD;
-        this.subtotal = BigDecimal.ZERO;
-        this.shippingFee = shippingFee;
-        this.total = shippingFee;
-        history.add(new OrderStatusHistory(this, status, "CUSTOMER"));
-    }
-
-    public void addItem(Product product, int quantity) {
-        addItem(product, null, quantity);
-    }
-
-    public void addItem(Product product, ProductVariant variant, int quantity) {
-        OrderItem item = new OrderItem(this, product, variant, quantity);
-        items.add(item);
-        subtotal = subtotal.add(item.getLineTotal());
-        total = subtotal.add(shippingFee);
-    }
-
-    public void updateStatus(OrderStatus nextStatus) {
-        updateStatus(nextStatus, "ADMIN");
-    }
-
-    public void updateStatus(OrderStatus nextStatus, String actor) {
-        if (paymentMethod == PaymentMethod.VNPAY) {
-            if (nextStatus == OrderStatus.CANCELLED
-                    && (paymentStatus == PaymentStatus.PAID
-                            || paymentStatus == PaymentStatus.REVIEW_REQUIRED)) {
-                throw new IllegalStateException("A paid order requires a separate refund workflow");
-            }
-            if (nextStatus == OrderStatus.CONFIRMED && paymentStatus != PaymentStatus.PAID) {
-                throw new IllegalStateException(
-                        "Online payment must be verified before confirming the order");
-            }
-        }
-        if (!status.canTransitionTo(nextStatus)) {
-            throw new IllegalStateException(
-                    "Cannot change order status from " + status + " to " + nextStatus);
-        }
-        status = nextStatus;
-        if (nextStatus == OrderStatus.CANCELLED && paymentStatus == PaymentStatus.PENDING) {
-            paymentStatus = PaymentStatus.CANCELLED;
-        }
-        if (status == OrderStatus.COMPLETED) {
-            if (paymentMethod == PaymentMethod.COD) {
-                paymentStatus = PaymentStatus.PAID;
-            }
-            completedAt = Instant.now();
-            completionTimeEstimated = false;
-        }
-        history.add(new OrderStatusHistory(this, status, actor));
-    }
-
-    public void selectShipping(ShippingMethod method) {
-        shippingMethod = method;
-        shippingFee = method.getFee();
-        total = subtotal.add(shippingFee).subtract(discount);
-    }
-
-    public void applyVoucher(Voucher voucher) {
-        this.voucher = voucher;
-        voucherCode = voucher.getCode();
-        discount = voucher.calculateDiscount(subtotal);
-        total = subtotal.add(shippingFee).subtract(discount);
-    }
-
-    public ShippingMethod getShippingMethod() {
-        return shippingMethod;
-    }
-
-    public Voucher getVoucher() {
-        return voucher;
-    }
-
-    public String getVoucherCode() {
-        return voucherCode;
-    }
-
-    public BigDecimal getDiscount() {
-        return discount;
-    }
-
-    public List<OrderStatusHistory> getHistory() {
-        return List.copyOf(history);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public UUID getOrderNumber() {
-        return orderNumber;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public String getRecipientName() {
-        return recipientName;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public String getShippingAddress() {
-        return shippingAddress;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public OrderStatus getStatus() {
-        return status;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public BigDecimal getSubtotal() {
-        return subtotal;
-    }
-
-    public BigDecimal getShippingFee() {
-        return shippingFee;
-    }
-
-    public BigDecimal getTotal() {
-        return total;
-    }
-
-    public List<OrderItem> getItems() {
-        return List.copyOf(items);
-    }
 }

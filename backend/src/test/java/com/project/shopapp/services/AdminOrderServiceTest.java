@@ -2,16 +2,20 @@ package com.project.shopapp.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Order;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.User;
+import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.OrderRepository;
+import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
+import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.OrderServiceImpl;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -23,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AdminOrderServiceTest {
+    private final OrderBusinessService orderBusinessService = new OrderBusinessServiceImpl();
     @Mock OrderRepository orderRepository;
     @Mock ProductRepository productRepository;
     @Mock UserRepository userRepository;
@@ -38,11 +43,17 @@ class AdminOrderServiceTest {
                         orderRepository,
                         productRepository,
                         userRepository,
-                        org.mockito.Mockito.mock(VoucherService.class));
+                        org.mockito.Mockito.mock(VoucherService.class),
+                        null,
+                        mock(OrderItemRepository.class),
+                        mock(OrderStatusHistoryRepository.class),
+                        new OrderBusinessServiceImpl());
         product = new Product("Phone", BigDecimal.TEN, "", "", new Category("Phone"));
         product.reserve(2);
-        order = new Order(user(), "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
-        order.addItem(product, 2);
+        order =
+                orderBusinessService.createOrder(
+                        user(), "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
+        orderBusinessService.addItem(order, product, 2);
         when(orderRepository.findWithItemsById(21L)).thenReturn(Optional.of(order));
     }
 
@@ -56,8 +67,8 @@ class AdminOrderServiceTest {
 
     @Test
     void rejectsInvalidStatusTransition() {
-        order.updateStatus(OrderStatus.CONFIRMED);
-        order.updateStatus(OrderStatus.SHIPPING);
+        orderBusinessService.updateStatus(order, OrderStatus.CONFIRMED);
+        orderBusinessService.updateStatus(order, OrderStatus.SHIPPING);
 
         assertThrows(
                 IllegalStateException.class,

@@ -1,7 +1,7 @@
 package com.project.shopapp.controller;
 
 import com.project.shopapp.dtos.UpdateOrderStatusRequest;
-import com.project.shopapp.model.OrderStatus;
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.responses.OrderSummaryResponse;
 import com.project.shopapp.services.OrderService;
@@ -38,7 +38,7 @@ public class AdminOrderController {
     @PatchMapping("/{id}/status")
     OrderResponse updateStatus(
             @PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request) {
-        return service.updateStatus(id, request.status());
+        return service.updateStatus(id, request.getStatus());
     }
 
     @GetMapping("/{id}")

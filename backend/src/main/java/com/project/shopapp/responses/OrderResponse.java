@@ -1,10 +1,10 @@
 package com.project.shopapp.responses;
 
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentMethod;
+import com.project.shopapp.enums.PaymentStatus;
+import com.project.shopapp.enums.ShippingMethod;
 import com.project.shopapp.model.Order;
-import com.project.shopapp.model.OrderStatus;
-import com.project.shopapp.model.PaymentMethod;
-import com.project.shopapp.model.PaymentStatus;
-import com.project.shopapp.model.ShippingMethod;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;

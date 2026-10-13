@@ -2,16 +2,17 @@ package com.project.shopapp.services.impl;
 
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentMethod;
+import com.project.shopapp.enums.PaymentStatus;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Order;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.PaymentAttempt;
-import com.project.shopapp.model.PaymentMethod;
-import com.project.shopapp.model.PaymentStatus;
 import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.PaymentAttemptRepository;
 import com.project.shopapp.responses.PaymentLinkResponse;
 import com.project.shopapp.responses.VnpayIpnResponse;
+import com.project.shopapp.services.OrderBusinessService;
 import com.project.shopapp.services.OrderService;
 import com.project.shopapp.services.PaymentService;
 import jakarta.persistence.EntityManager;
@@ -36,6 +37,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final VnpayProperties properties;
     private final OrderService orderService;
     private final EntityManager entityManager;
+    private final OrderBusinessService orderBusinessService;
 
     public PaymentServiceImpl(
             OrderRepository orders,
@@ -43,13 +45,15 @@ public class PaymentServiceImpl implements PaymentService {
             VnpayGateway gateway,
             VnpayProperties properties,
             OrderService orderService,
-            EntityManager entityManager) {
+            EntityManager entityManager,
+            OrderBusinessService orderBusinessService) {
         this.orders = orders;
         this.attempts = attempts;
         this.gateway = gateway;
         this.properties = properties;
         this.orderService = orderService;
         this.entityManager = entityManager;
+        this.orderBusinessService = orderBusinessService;
     }
 
     @Override
@@ -151,7 +155,7 @@ public class PaymentServiceImpl implements PaymentService {
                 orderService.closeUnpaidPayment(order.getId(), PaymentStatus.FAILED);
             }
             PaymentStatus result = needsReview ? PaymentStatus.REVIEW_REQUIRED : PaymentStatus.PAID;
-            order.recordPayment(result);
+            orderBusinessService.recordPayment(order, result);
             attempt.finish(result, transactionNo, code, paidAt);
             LOG.info("VNPAY result order {} ref {} status {}", order.getId(), ref, result);
         } else {

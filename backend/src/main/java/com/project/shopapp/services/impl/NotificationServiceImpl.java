@@ -4,6 +4,7 @@ import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.repositories.NotificationRepository;
 import com.project.shopapp.responses.NotificationResponse;
 import com.project.shopapp.services.NotificationService;
+import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,12 +44,12 @@ public class NotificationServiceImpl implements NotificationService {
         if (!repository.existsByIdAndUserPhoneNumber(id, phoneNumber)) {
             throw new ResourceNotFoundException("Notification not found");
         }
-        repository.markRead(id, phoneNumber, java.time.Instant.now());
+        repository.markRead(id, phoneNumber, Instant.now());
     }
 
     @Override
     @Transactional
     public void markAllRead(String phoneNumber) {
-        repository.markAllRead(phoneNumber, java.time.Instant.now());
+        repository.markAllRead(phoneNumber, Instant.now());
     }
 }

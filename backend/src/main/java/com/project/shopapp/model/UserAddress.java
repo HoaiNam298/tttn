@@ -9,9 +9,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "user_addresses")
+@Data
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class UserAddress {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +30,8 @@ public class UserAddress {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User user;
 
     @Column(name = "recipient_name", nullable = false, length = 100)
@@ -33,8 +46,6 @@ public class UserAddress {
     @Column(name = "is_default", nullable = false)
     private boolean defaultAddress;
 
-    protected UserAddress() {}
-
     public UserAddress(User user) {
         this.user = user;
     }
@@ -43,29 +54,5 @@ public class UserAddress {
         this.recipientName = name.trim();
         this.phoneNumber = phone.trim();
         this.shippingAddress = address.trim();
-    }
-
-    public void setDefaultAddress(boolean value) {
-        this.defaultAddress = value;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getRecipientName() {
-        return recipientName;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public String getShippingAddress() {
-        return shippingAddress;
-    }
-
-    public boolean isDefaultAddress() {
-        return defaultAddress;
     }
 }

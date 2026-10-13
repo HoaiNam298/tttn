@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class AdminAccountInitializer implements ApplicationRunner {
+    private static final String ADMIN_ROLE = "ADMIN";
+    private static final String ADMIN_NAME = "ShopApp Administrator";
+    private static final String SYSTEM_SOURCE = "System";
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -42,13 +45,13 @@ public class AdminAccountInitializer implements ApplicationRunner {
         }
         Role adminRole =
                 roleRepository
-                        .findByName("ADMIN")
+                        .findByName(ADMIN_ROLE)
                         .orElseThrow(() -> new IllegalStateException("ADMIN role was not found"));
         userRepository.save(
                 new User(
-                        "ShopApp Administrator",
+                        ADMIN_NAME,
                         phoneNumber.trim(),
-                        "System",
+                        SYSTEM_SOURCE,
                         passwordEncoder.encode(password),
                         null,
                         adminRole));

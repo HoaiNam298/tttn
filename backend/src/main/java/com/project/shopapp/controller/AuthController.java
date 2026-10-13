@@ -8,7 +8,6 @@ import com.project.shopapp.responses.UserResponse;
 import com.project.shopapp.services.AuthService;
 import jakarta.validation.Valid;
 import java.security.Principal;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +27,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.register(request));
+        return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/login")

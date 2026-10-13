@@ -1,5 +1,6 @@
 package com.project.shopapp.services;
 
+import com.project.shopapp.dtos.ProductInventoryRequest;
 import com.project.shopapp.dtos.ProductRequest;
 import com.project.shopapp.responses.ProductDetailResponse;
 import com.project.shopapp.responses.ProductResponse;
@@ -19,8 +20,7 @@ public interface ProductService {
 
     ProductDetailResponse findById(Long id);
 
-    ProductDetailResponse updateInventory(
-            Long id, com.project.shopapp.dtos.ProductInventoryRequest request);
+    ProductDetailResponse updateInventory(Long id, ProductInventoryRequest request);
 
     ProductResponse create(ProductRequest request);
 

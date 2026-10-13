@@ -10,9 +10,21 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "users")
+@Data
+@Builder
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,19 +40,21 @@ public class User extends BaseEntity {
     private String address;
 
     @Column(nullable = false, length = 100)
+    @ToString.Exclude
     private String password;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "role_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Role role;
-
-    protected User() {}
 
     public User(
             String fullName,
@@ -49,43 +63,12 @@ public class User extends BaseEntity {
             String password,
             LocalDate dateOfBirth,
             Role role) {
+        this();
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.address = address;
         this.password = password;
         this.dateOfBirth = dateOfBirth;
         this.role = role;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public Role getRole() {
-        return role;
     }
 }

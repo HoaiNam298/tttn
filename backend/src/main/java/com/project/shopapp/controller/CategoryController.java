@@ -4,7 +4,6 @@ import com.project.shopapp.dtos.CategoryRequest;
 import com.project.shopapp.responses.CategoryResponse;
 import com.project.shopapp.services.CategoryService;
 import jakarta.validation.Valid;
-import java.net.URI;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,8 +48,7 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CategoryRequest request) {
         CategoryResponse created = service.create(request);
-        return ResponseEntity.created(URI.create("/api/v1/categories/" + created.id()))
-                .body(created);
+        return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")

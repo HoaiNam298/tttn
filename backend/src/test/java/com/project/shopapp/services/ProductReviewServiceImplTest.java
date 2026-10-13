@@ -6,18 +6,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.project.shopapp.dtos.CreateProductReviewRequest;
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.OrderItem;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductReview;
 import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.ProductReviewRepository;
 import com.project.shopapp.responses.ProductReviewResponse;
+import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.ProductReviewServiceImpl;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -30,6 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProductReviewServiceImplTest {
+    private final OrderBusinessService orderBusinessService = new OrderBusinessServiceImpl();
     @Mock ProductReviewRepository reviewRepository;
     @Mock OrderItemRepository orderItemRepository;
 
@@ -42,12 +44,14 @@ class ProductReviewServiceImplTest {
         Product product = new Product("Phone", BigDecimal.TEN, "", "", new Category("Phone"));
         ReflectionTestUtils.setField(product, "id", 8L);
         User user = new User("Customer", "0900000000", "HCM", "password", null, null);
-        Order order = new Order(user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
-        order.addItem(product, 1);
-        order.updateStatus(OrderStatus.CONFIRMED);
-        order.updateStatus(OrderStatus.SHIPPING);
-        order.updateStatus(OrderStatus.DELIVERED);
-        order.updateStatus(OrderStatus.COMPLETED);
+        Order order =
+                orderBusinessService.createOrder(
+                        user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);
+        orderBusinessService.addItem(order, product, 1);
+        orderBusinessService.updateStatus(order, OrderStatus.CONFIRMED);
+        orderBusinessService.updateStatus(order, OrderStatus.SHIPPING);
+        orderBusinessService.updateStatus(order, OrderStatus.DELIVERED);
+        orderBusinessService.updateStatus(order, OrderStatus.COMPLETED);
         orderItem = order.getItems().get(0);
         ReflectionTestUtils.setField(orderItem, "id", 11L);
     }
@@ -65,7 +69,13 @@ class ProductReviewServiceImplTest {
 
         ProductReviewResponse response =
                 service.create(
-                        8L, "0900000000", new CreateProductReviewRequest(21L, 5, "Great product"));
+                        8L,
+                        "0900000000",
+                        CreateProductReviewRequest.builder()
+                                .orderId(21L)
+                                .rating(5)
+                                .comment("Great product")
+                                .build());
 
         assertEquals(5, response.rating());
         assertEquals("Great product", response.comment());
@@ -84,7 +94,11 @@ class ProductReviewServiceImplTest {
                         service.create(
                                 8L,
                                 "0999999999",
-                                new CreateProductReviewRequest(21L, 5, "Fake review")));
+                                CreateProductReviewRequest.builder()
+                                        .orderId(21L)
+                                        .rating(5)
+                                        .comment("Fake review")
+                                        .build()));
     }
 
     @Test
@@ -100,7 +114,13 @@ class ProductReviewServiceImplTest {
                 DuplicateResourceException.class,
                 () ->
                         service.create(
-                                8L, "0900000000", new CreateProductReviewRequest(21L, 5, "Again")));
+                                8L,
+                                "0900000000",
+                                CreateProductReviewRequest.builder()
+                                        .orderId(21L)
+                                        .rating(5)
+                                        .comment("Again")
+                                        .build()));
     }
 
     @Test

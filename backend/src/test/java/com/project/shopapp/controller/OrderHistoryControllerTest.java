@@ -7,8 +7,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.filters.JwtAuthenticationFilter;
-import com.project.shopapp.model.OrderStatus;
 import com.project.shopapp.services.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

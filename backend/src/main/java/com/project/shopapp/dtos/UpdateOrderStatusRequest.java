@@ -1,6 +1,17 @@
 package com.project.shopapp.dtos;
 
-import com.project.shopapp.model.OrderStatus;
+import com.project.shopapp.enums.OrderStatus;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public record UpdateOrderStatusRequest(@NotNull OrderStatus status) {}
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdateOrderStatusRequest {
+
+    @NotNull private OrderStatus status;
+}

@@ -9,11 +9,14 @@ import com.project.shopapp.services.ReviewSubmissionService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class ReviewSubmissionServiceImpl implements ReviewSubmissionService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReviewSubmissionServiceImpl.class);
     private final MediaService media;
     private final ProductReviewService reviews;
 
@@ -32,7 +35,8 @@ public class ReviewSubmissionServiceImpl implements ReviewSubmissionService {
         if (files.size() > 5) {
             throw new IllegalArgumentException("At most five review images are allowed");
         }
-        if (reviews.reviewed(productId, phoneNumber, request.orderId(), request.variantId())) {
+        if (reviews.reviewed(
+                productId, phoneNumber, request.getOrderId(), request.getVariantId())) {
             throw new DuplicateResourceException("This order item has already been reviewed");
         }
         List<String> urls = new ArrayList<>();
@@ -48,11 +52,10 @@ public class ReviewSubmissionServiceImpl implements ReviewSubmissionService {
                     media.deleteUpload(url);
                 } catch (IOException | RuntimeException cleanupException) {
                     exception.addSuppressed(cleanupException);
-                    org.slf4j.LoggerFactory.getLogger(ReviewSubmissionServiceImpl.class)
-                            .error(
-                                    "Failed to clean up uncommitted review image {}",
-                                    url,
-                                    cleanupException);
+                    LOGGER.error(
+                            "Failed to clean up uncommitted review image {}",
+                            url,
+                            cleanupException);
                 }
             }
             throw exception;

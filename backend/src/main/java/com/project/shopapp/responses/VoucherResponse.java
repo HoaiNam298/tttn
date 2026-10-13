@@ -1,7 +1,7 @@
 package com.project.shopapp.responses;
 
+import com.project.shopapp.enums.VoucherType;
 import com.project.shopapp.model.Voucher;
-import com.project.shopapp.model.VoucherType;
 import java.math.BigDecimal;
 import java.time.Instant;
 

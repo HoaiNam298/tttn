@@ -1,12 +1,12 @@
 package com.project.shopapp.controller;
 
 import com.project.shopapp.dtos.CreateOrderRequest;
-import com.project.shopapp.model.OrderStatus;
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.responses.CheckoutQuoteResponse;
 import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.responses.OrderSummaryResponse;
 import com.project.shopapp.services.OrderService;
 import jakarta.validation.Valid;
-import java.net.URI;
 import java.security.Principal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +34,7 @@ public class OrderController {
     ResponseEntity<OrderResponse> create(
             Principal principal, @Valid @RequestBody CreateOrderRequest request) {
         OrderResponse response = service.create(principal.getName(), request);
-        return ResponseEntity.created(URI.create("/api/v1/orders/" + response.id())).body(response);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -43,7 +43,7 @@ public class OrderController {
     }
 
     @PostMapping("/quote")
-    com.project.shopapp.responses.CheckoutQuoteResponse quote(
+    CheckoutQuoteResponse quote(
             Principal principal, @Valid @RequestBody CreateOrderRequest request) {
         return service.quote(principal.getName(), request);
     }

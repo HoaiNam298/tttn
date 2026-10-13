@@ -2,10 +2,13 @@ package com.project.shopapp.services.impl;
 
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.services.MediaService;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.UUID;
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -34,12 +37,12 @@ public class MediaServiceImpl implements MediaService {
             }
             var reader = readers.next();
             try {
-                String format = reader.getFormatName().toLowerCase(java.util.Locale.ROOT);
+                String format = reader.getFormatName().toLowerCase(Locale.ROOT);
                 if (!format.equals("jpeg") && !format.equals("png")) {
                     throw new IllegalArgumentException("Only JPEG and PNG images are supported");
                 }
                 reader.setInput(stream);
-                java.awt.image.BufferedImage image;
+                BufferedImage image;
                 try {
                     int width = reader.getWidth(0);
                     int height = reader.getHeight(0);
@@ -47,7 +50,7 @@ public class MediaServiceImpl implements MediaService {
                         throw new IllegalArgumentException("Image exceeds the 16 megapixel limit");
                     }
                     image = reader.read(0);
-                } catch (javax.imageio.IIOException exception) {
+                } catch (IIOException exception) {
                     throw new IllegalArgumentException("Invalid image data", exception);
                 }
                 String extension = format.equals("jpeg") ? "jpg" : "png";

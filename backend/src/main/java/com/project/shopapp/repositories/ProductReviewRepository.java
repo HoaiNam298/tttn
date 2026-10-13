@@ -1,6 +1,7 @@
 package com.project.shopapp.repositories;
 
 import com.project.shopapp.model.ProductReview;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -24,9 +25,14 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
     boolean existsByOrderItemId(Long orderItemId);
 
     @Query(
-            "select r.orderItem.id from ProductReview r where r.orderItem.order.id = :orderId and r.user.phoneNumber = :phoneNumber")
-    java.util.Set<Long> reviewedItemIds(Long orderId, String phoneNumber);
+            value =
+                    "SELECT r.order_item_id FROM product_reviews r JOIN order_items i ON i.id = r.order_item_id JOIN users u ON u.id = r.user_id WHERE i.order_id = :orderId AND u.phone_number = :phoneNumber",
+            nativeQuery = true)
+    Set<Long> reviewedItemIds(Long orderId, String phoneNumber);
 
-    @Query("select coalesce(avg(r.rating), 0) from ProductReview r where r.product.id = :productId")
+    @Query(
+            value =
+                    "SELECT COALESCE(AVG(rating), 0) FROM product_reviews WHERE product_id = :productId",
+            nativeQuery = true)
     double averageRating(@Param("productId") Long productId);
 }

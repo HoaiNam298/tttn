@@ -5,13 +5,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.filters.JwtAuthenticationFilter;
-import com.project.shopapp.model.OrderStatus;
-import com.project.shopapp.model.PaymentMethod;
 import com.project.shopapp.responses.OrderItemResponse;
 import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.services.OrderService;
@@ -52,8 +51,7 @@ class OrderControllerTest {
                                           "items":[{"productId":8,"quantity":2}]
                                         }
                                         """))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/v1/orders/21"))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(230000));
     }
 

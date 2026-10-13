@@ -4,7 +4,6 @@ import com.project.shopapp.dtos.AddressRequest;
 import com.project.shopapp.responses.AddressResponse;
 import com.project.shopapp.services.AddressService;
 import jakarta.validation.Valid;
-import java.net.URI;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -35,8 +34,7 @@ public class AddressController {
     public ResponseEntity<AddressResponse> create(
             Principal principal, @Valid @RequestBody AddressRequest request) {
         AddressResponse response = service.save(principal.getName(), null, request);
-        return ResponseEntity.created(URI.create("/api/v1/addresses/" + response.id()))
-                .body(response);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")

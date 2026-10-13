@@ -1,6 +1,7 @@
 package com.project.shopapp.configuration;
 
 import com.project.shopapp.filters.JwtAuthenticationFilter;
+import jakarta.servlet.DispatcherType;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
+    private static final List<String> ALLOWED_METHODS =
+            List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+    private static final List<String> ALLOWED_HEADERS = List.of("Authorization", "Content-Type");
     private final JwtAuthenticationFilter jwtFilter;
     private final List<String> allowedOrigins;
 
@@ -50,7 +54,7 @@ public class SecurityConfig {
                                                         HttpStatus.UNAUTHORIZED.value())))
                 .authorizeHttpRequests(
                         auth ->
-                                auth.dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR)
+                                auth.dispatcherTypeMatchers(DispatcherType.ERROR)
                                         .permitAll()
                                         .requestMatchers(
                                                 "/api/v1/auth/register",
@@ -99,9 +103,8 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedMethods(ALLOWED_METHODS);
+        configuration.setAllowedHeaders(ALLOWED_HEADERS);
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
