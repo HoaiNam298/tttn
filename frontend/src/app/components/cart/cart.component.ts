@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
 import { CartLine } from '../../models/cart-line.model';
 import { CartService } from '../../services/cart.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, switchMap, tap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -94,17 +94,7 @@ export class CartComponent implements OnInit {
           this.error = '';
           this.loadFailed = false;
         }),
-        switchMap(() =>
-          this.cart.lines().pipe(
-            catchError(() => {
-              this.error =
-                'Không thể tải thông tin sản phẩm trong giỏ hàng. Vui lòng thử lại trước khi đặt hàng.';
-              this.loadFailed = true;
-              this.loading = false;
-              return EMPTY;
-            }),
-          ),
-        ),
+        switchMap(() => this.loadLines()),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((lines) => {
@@ -140,5 +130,17 @@ export class CartComponent implements OnInit {
 
   load(): void {
     this.refresh.next();
+  }
+
+  private loadLines(): Observable<CartLine[]> {
+    return this.cart.lines().pipe(
+      catchError(() => {
+        this.error =
+          'Không thể tải thông tin sản phẩm trong giỏ hàng. Vui lòng thử lại trước khi đặt hàng.';
+        this.loadFailed = true;
+        this.loading = false;
+        return EMPTY;
+      }),
+    );
   }
 }

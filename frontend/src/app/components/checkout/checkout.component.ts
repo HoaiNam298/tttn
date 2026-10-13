@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
-import { forkJoin, map } from 'rxjs';
+import { Observable, forkJoin, map } from 'rxjs';
 import { CartLine, toCartLine } from '../../models/cart-line.model';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
@@ -17,7 +17,10 @@ import { CatalogService } from '../../services/catalog.service';
 import { AddressService } from '../../services/address.service';
 import { Address } from '../../models/address.model';
 import { CheckoutAttempt } from '../../models/checkout-attempt.model';
-import { CreateOrderPayload } from '../../dtos/create-order.dto';
+import {
+  CreateOrderPayload,
+  OrderItemPayload,
+} from '../../dtos/create-order.dto';
 import { CheckoutQuote } from '../../responses/checkout-quote.response';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -202,23 +205,7 @@ export class CheckoutComponent implements OnInit {
             'Không thể tải sổ địa chỉ. Bạn vẫn có thể nhập địa chỉ trực tiếp.';
         },
       });
-    const request = this.pending
-      ? forkJoin(
-          this.pending.payload.items.map((item) =>
-            this.catalog
-              .product(item.productId)
-              .pipe(
-                map((product) =>
-                  toCartLine(product, item.quantity, item.variantId),
-                ),
-              ),
-          ),
-        )
-      : this.buyNow
-        ? this.catalog
-            .product(productId)
-            .pipe(map((product) => [toCartLine(product, quantity, variantId)]))
-        : this.cart.lines(true);
+    const request = this.loadCheckoutLines(productId, quantity, variantId);
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (lines) => {
         this.lines = lines;
@@ -372,5 +359,31 @@ export class CheckoutComponent implements OnInit {
         ...(line.variantId != null ? { variantId: line.variantId } : {}),
       })),
     };
+  }
+
+  private loadCheckoutLines(
+    productId: number,
+    quantity: number,
+    variantId?: number,
+  ): Observable<CartLine[]> {
+    if (this.pending) {
+      return forkJoin(
+        this.pending.payload.items.map((item) => this.loadOrderItem(item)),
+      );
+    }
+    if (this.buyNow) {
+      return this.catalog
+        .product(productId)
+        .pipe(map((product) => [toCartLine(product, quantity, variantId)]));
+    }
+    return this.cart.lines(true);
+  }
+
+  private loadOrderItem(item: OrderItemPayload): Observable<CartLine> {
+    return this.catalog
+      .product(item.productId)
+      .pipe(
+        map((product) => toCartLine(product, item.quantity, item.variantId)),
+      );
   }
 }

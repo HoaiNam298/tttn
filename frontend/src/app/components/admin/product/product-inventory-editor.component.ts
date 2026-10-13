@@ -56,9 +56,11 @@ export class ProductInventoryEditorComponent {
   constructor() {
     this.destroyRef.onDestroy(() => this.dialogRef?.close());
   }
+
   get busy(): boolean {
     return this.loading || this.saving || this.uploading;
   }
+
   readonly saved = output<void>();
   product?: Product;
   images: string[] = [];

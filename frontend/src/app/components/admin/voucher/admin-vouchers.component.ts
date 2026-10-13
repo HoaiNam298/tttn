@@ -67,6 +67,7 @@ export class AdminVouchersComponent implements OnInit {
   constructor() {
     this.destroyRef.onDestroy(() => this.editorRef?.close());
   }
+
   private showEditor(): void {
     const ref = this.dialogs.open(this.editor, {
       width: '800px',

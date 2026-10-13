@@ -1,6 +1,9 @@
-import { MatPaginatorIntl } from '@angular/material/paginator';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+} from '@angular/material/paginator';
 import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
-import { MatPaginatorModule } from '@angular/material/paginator';
+
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';

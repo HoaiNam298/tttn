@@ -1,15 +1,5 @@
-import { DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.component';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
 import {
+  DestroyRef,
   ChangeDetectionStrategy,
   Component,
   TemplateRef,
@@ -17,6 +7,21 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.component';
+import {
+  MatDialog,
+  MatDialogRef,
+  MatDialogModule,
+} from '@angular/material/dialog';
+
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Address } from '../../../models/address.model';
 import { AddressService } from '../../../services/address.service';
@@ -66,6 +71,7 @@ export class AddressesComponent implements OnInit {
     this.destroyRef.onDestroy(() => this.editorDialog?.close());
     this.load();
   }
+
   load(): void {
     this.loading = true;
     this.error = '';
@@ -83,6 +89,7 @@ export class AddressesComponent implements OnInit {
         },
       });
   }
+
   edit(address?: Address): void {
     if (this.saving || this.editorDialog) {
       return;
@@ -111,6 +118,7 @@ export class AddressesComponent implements OnInit {
         }
       });
   }
+
   close(event?: Event): void {
     event?.preventDefault();
     if (!this.saving) {
@@ -118,6 +126,7 @@ export class AddressesComponent implements OnInit {
       this.editorDialog = undefined;
     }
   }
+
   save(): void {
     if (this.saving || this.form.invalid) {
       this.form.markAllAsTouched();
@@ -150,6 +159,7 @@ export class AddressesComponent implements OnInit {
         },
       });
   }
+
   private removeConfirmed(address: Address): void {
     this.service
       .delete(address.id)

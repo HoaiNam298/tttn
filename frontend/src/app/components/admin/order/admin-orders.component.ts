@@ -60,6 +60,7 @@ export class AdminOrdersComponent implements OnInit {
   paymentLabel(order: OrderSummary): string {
     return this.paymentLabels[order.paymentStatus ?? 'UNPAID'];
   }
+
   readonly columns = [
     'number',
     'customer',
@@ -74,6 +75,7 @@ export class AdminOrdersComponent implements OnInit {
   statusLabel(status: OrderStatus): string {
     return this.labels[status];
   }
+
   private readonly route = inject(ActivatedRoute);
   pageSize = 10;
   totalElements = 0;

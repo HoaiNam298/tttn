@@ -9,9 +9,14 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  FormsModule,
+} from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import {
@@ -76,6 +81,7 @@ export class AdminCatalogComponent implements OnInit {
       this.editorRef?.close();
     });
   }
+
   readonly columns = ['name', 'category', 'price', 'actions'];
 
   changePage(event: PageEvent): void {
@@ -136,6 +142,7 @@ export class AdminCatalogComponent implements OnInit {
   ngOnInit(): void {
     this.reload();
   }
+
   reload(): void {
     this.catalog.categories().subscribe({
       next: (value) => {
@@ -179,6 +186,7 @@ export class AdminCatalogComponent implements OnInit {
         },
       });
   }
+
   saveProduct(): void {
     if (this.saving) {
       return;
@@ -212,6 +220,7 @@ export class AdminCatalogComponent implements OnInit {
       },
     });
   }
+
   editProduct(product: Product): void {
     if (this.saving) {
       return;
@@ -227,6 +236,7 @@ export class AdminCatalogComponent implements OnInit {
     });
     this.showEditor();
   }
+
   cancelEdit(): void {
     if (this.saving) {
       return;
@@ -243,6 +253,7 @@ export class AdminCatalogComponent implements OnInit {
       categoryId: 0,
     });
   }
+
   private deleteProductConfirmed(product: Product): void {
     this.catalog.deleteProduct(product.id).subscribe({
       next: () => this.load(this.page),

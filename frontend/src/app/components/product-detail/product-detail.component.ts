@@ -1,8 +1,14 @@
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatPaginatorIntl } from '@angular/material/paginator';
+import {
+  MatDialog,
+  MatDialogRef,
+  MatDialogModule,
+} from '@angular/material/dialog';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+} from '@angular/material/paginator';
 import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatPaginatorModule } from '@angular/material/paginator';
+
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,8 +24,8 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
+
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CatalogService } from '../../services/catalog.service';
 import { Product, ProductReview } from '../../models/product.model';
@@ -248,51 +254,62 @@ export class ProductDetailComponent implements OnInit {
         }),
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        this.product = value;
-        this.checkEligibility();
-        this.favorite = false;
-        this.favoriteBusy = false;
-        this.favoriteError = '';
-        if (this.auth.userId() !== null && this.auth.token()) {
-          this.favoriteBusy = true;
-          this.favorites
-            .state(value.id)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: (state) => {
-                if (this.currentProductId === value.id) {
-                  this.favorite = state.favorite;
-                  this.favoriteBusy = false;
-                }
-              },
-              error: () => {
-                if (this.currentProductId === value.id) {
-                  this.favoriteBusy = false;
-                  this.favoriteError = 'Không tải được trạng thái yêu thích.';
-                }
-              },
-            });
-        }
-        this.selectedImage =
-          value.thumbnail || value.images?.[0] || this.fallbackImage;
-        this.catalog
-          .products('', value.category.id, 0, 7)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: (page) => {
-              if (this.currentProductId === value.id) {
-                this.relatedProducts = page.content
-                  .filter((item) => item.id !== value.id)
-                  .slice(0, 6);
-              }
-            },
-            error: () => {
-              if (this.currentProductId === value.id) {
-                this.relatedError = 'Chưa tải được sản phẩm liên quan.';
-              }
-            },
-          });
+      .subscribe((value) => this.applyProduct(value));
+  }
+
+  private applyProduct(value: Product): void {
+    this.product = value;
+    this.checkEligibility();
+    this.favorite = false;
+    this.favoriteBusy = false;
+    this.favoriteError = '';
+    this.loadFavorite(value);
+    this.selectedImage =
+      value.thumbnail || value.images?.[0] || this.fallbackImage;
+    this.loadRelatedProducts(value);
+  }
+
+  private loadFavorite(value: Product): void {
+    if (this.auth.userId() === null || !this.auth.token()) {
+      return;
+    }
+    this.favoriteBusy = true;
+    this.favorites
+      .state(value.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (state) => {
+          if (this.currentProductId === value.id) {
+            this.favorite = state.favorite;
+            this.favoriteBusy = false;
+          }
+        },
+        error: () => {
+          if (this.currentProductId === value.id) {
+            this.favoriteBusy = false;
+            this.favoriteError = 'Không tải được trạng thái yêu thích.';
+          }
+        },
+      });
+  }
+
+  private loadRelatedProducts(value: Product): void {
+    this.catalog
+      .products('', value.category.id, 0, 7)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          if (this.currentProductId === value.id) {
+            this.relatedProducts = page.content
+              .filter((item) => item.id !== value.id)
+              .slice(0, 6);
+          }
+        },
+        error: () => {
+          if (this.currentProductId === value.id) {
+            this.relatedError = 'Chưa tải được sản phẩm liên quan.';
+          }
+        },
       });
   }
 

@@ -77,6 +77,7 @@ export class OrderDetailComponent implements OnInit {
         },
       });
   }
+
   readonly statusLabels = ORDER_STATUS_LABELS;
   readonly paymentLabels = PAYMENT_STATUS_LABELS;
   paying = false;
@@ -173,11 +174,13 @@ export class OrderDetailComponent implements OnInit {
         },
       });
   }
+
   get itemColumns(): string[] {
     return !this.adminMode && this.order?.status === 'COMPLETED'
       ? ['product', 'price', 'quantity', 'total', 'review']
       : ['product', 'price', 'quantity', 'total'];
   }
+
   private readonly route = inject(ActivatedRoute);
   private readonly orders = inject(OrderService);
   private readonly cart = inject(CartService);

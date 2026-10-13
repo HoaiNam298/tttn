@@ -10,9 +10,14 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  FormsModule,
+} from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import {
@@ -70,6 +75,7 @@ export class CategoryManagementComponent implements OnInit {
       this.editorRef?.close();
     });
   }
+
   readonly columns = ['id', 'name', 'actions'];
 
   changePage(event: PageEvent): void {
@@ -96,6 +102,7 @@ export class CategoryManagementComponent implements OnInit {
         }
       });
   }
+
   formError = '';
   message = '';
 

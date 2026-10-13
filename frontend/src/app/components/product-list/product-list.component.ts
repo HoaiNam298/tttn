@@ -7,10 +7,11 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   EMPTY,
+  Observable,
   Subject,
   catchError,
   combineLatest,
@@ -20,6 +21,7 @@ import {
 import { CatalogService } from '../../services/catalog.service';
 import { Category } from '../../models/category.model';
 import { Product } from '../../models/product.model';
+import { PageResponse } from '../../responses/page.response';
 import { ProductSort } from '../../models/product-filter.model';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -97,54 +99,7 @@ export class ProductListComponent implements OnInit {
       this.route.queryParamMap,
       this.refresh.pipe(startWith(undefined)),
     ])
-      .pipe(
-        switchMap(([params]) => {
-          const positive = (value: string | null): number | null => {
-            const number = Number(value);
-            return value !== null && Number.isFinite(number) && number >= 0
-              ? number
-              : null;
-          };
-          const sort = params.get('sort');
-          const category = positive(params.get('categoryId'));
-          this.form.reset({
-            keyword: params.get('keyword') ?? '',
-            categoryId:
-              category && Number.isInteger(category) ? category : null,
-            minPrice: positive(params.get('minPrice')),
-            maxPrice: positive(params.get('maxPrice')),
-            sort: sort === 'priceAsc' || sort === 'priceDesc' ? sort : 'newest',
-          });
-          const page = positive(params.get('page')) ?? 0;
-          this.loading = true;
-          this.error = '';
-          this.filterError = '';
-          const value = this.form.getRawValue();
-          return this.catalog
-            .products(
-              value.keyword ?? '',
-              value.categoryId ?? undefined,
-              Number.isInteger(page) ? page : 0,
-              this.pageSize,
-              {
-                minPrice: value.minPrice ?? undefined,
-                maxPrice: value.maxPrice ?? undefined,
-                sort: value.sort ?? 'newest',
-              },
-            )
-            .pipe(
-              catchError(() => {
-                this.error =
-                  'Không thể tải sản phẩm. Kiểm tra bộ lọc hoặc thử lại.';
-                this.products = [];
-                this.totalPages = 0;
-                this.totalElements = 0;
-                this.loading = false;
-                return EMPTY;
-              }),
-            );
-        }),
-      )
+      .pipe(switchMap(([params]) => this.loadProducts(params)))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => {
         this.products = value.content;
@@ -187,5 +142,51 @@ export class ProductListComponent implements OnInit {
 
   retry(): void {
     this.refresh.next();
+  }
+
+  private loadProducts(params: ParamMap): Observable<PageResponse<Product>> {
+    const sort = params.get('sort');
+    const category = this.parseNonNegativeNumber(params.get('categoryId'));
+    this.form.reset({
+      keyword: params.get('keyword') ?? '',
+      categoryId: category && Number.isInteger(category) ? category : null,
+      minPrice: this.parseNonNegativeNumber(params.get('minPrice')),
+      maxPrice: this.parseNonNegativeNumber(params.get('maxPrice')),
+      sort: sort === 'priceAsc' || sort === 'priceDesc' ? sort : 'newest',
+    });
+    const page = this.parseNonNegativeNumber(params.get('page')) ?? 0;
+    this.loading = true;
+    this.error = '';
+    this.filterError = '';
+    const value = this.form.getRawValue();
+    return this.catalog
+      .products(
+        value.keyword ?? '',
+        value.categoryId ?? undefined,
+        Number.isInteger(page) ? page : 0,
+        this.pageSize,
+        {
+          minPrice: value.minPrice ?? undefined,
+          maxPrice: value.maxPrice ?? undefined,
+          sort: value.sort ?? 'newest',
+        },
+      )
+      .pipe(
+        catchError(() => {
+          this.error = 'Không thể tải sản phẩm. Kiểm tra bộ lọc hoặc thử lại.';
+          this.products = [];
+          this.totalPages = 0;
+          this.totalElements = 0;
+          this.loading = false;
+          return EMPTY;
+        }),
+      );
+  }
+
+  private parseNonNegativeNumber(value: string | null): number | null {
+    const number = Number(value);
+    return value !== null && Number.isFinite(number) && number >= 0
+      ? number
+      : null;
   }
 }
