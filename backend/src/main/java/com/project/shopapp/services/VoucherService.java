@@ -1,8 +1,8 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.dtos.request.VoucherRequest;
+import com.project.shopapp.dtos.response.VoucherResponse;
 import com.project.shopapp.model.Voucher;
-import com.project.shopapp.responses.VoucherResponse;
 import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

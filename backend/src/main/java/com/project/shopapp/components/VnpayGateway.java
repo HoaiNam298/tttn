@@ -74,12 +74,10 @@ public class VnpayGateway {
         if (!properties.isEnabled()) {
             return false;
         }
-        if (params.entrySet().stream()
-                .anyMatch(
-                        entry ->
-                                entry.getKey().startsWith("vnp_")
-                                        && entry.getValue().size() != 1)) {
-            return false;
+        for (var entry : params.entrySet()) {
+            if (entry.getKey().startsWith("vnp_") && entry.getValue().size() != 1) {
+                return false;
+            }
         }
         String signature = params.getFirst("vnp_SecureHash");
         if (signature == null
@@ -95,29 +93,34 @@ public class VnpayGateway {
     public String sign(Map<String, String> params) {
         try {
             Mac mac = Mac.getInstance("HmacSHA512");
-            mac.init(
-                    new SecretKeySpec(
-                            properties.getHashSecret().getBytes(StandardCharsets.UTF_8),
-                            "HmacSHA512"));
-            return HexFormat.of()
-                    .formatHex(mac.doFinal(canonical(params).getBytes(StandardCharsets.UTF_8)));
+            byte[] secret = properties.getHashSecret().getBytes(StandardCharsets.UTF_8);
+            mac.init(new SecretKeySpec(secret, "HmacSHA512"));
+            byte[] payload = canonical(params).getBytes(StandardCharsets.UTF_8);
+            return HexFormat.of().formatHex(mac.doFinal(payload));
         } catch (GeneralSecurityException exception) {
             throw new IllegalStateException("Cannot sign VNPAY request", exception);
         }
     }
 
     private String canonical(Map<String, String> params) {
-        return new TreeMap<>(params)
-                .entrySet().stream()
-                        .filter(
-                                entry ->
-                                        entry.getKey().startsWith("vnp_")
-                                                && !entry.getKey().equals("vnp_SecureHash")
-                                                && !entry.getKey().equals("vnp_SecureHashType")
-                                                && entry.getValue() != null
-                                                && !entry.getValue().isEmpty())
-                        .map(entry -> encode(entry.getKey()) + "=" + encode(entry.getValue()))
-                        .collect(Collectors.joining("&"));
+        Map<String, String> sortedParams = new TreeMap<>(params);
+        return sortedParams.entrySet().stream()
+                .filter(this::isSignableParameter)
+                .map(this::encodeParameter)
+                .collect(Collectors.joining("&"));
+    }
+
+    private boolean isSignableParameter(Map.Entry<String, String> entry) {
+        String key = entry.getKey();
+        return key.startsWith("vnp_")
+                && !key.equals("vnp_SecureHash")
+                && !key.equals("vnp_SecureHashType")
+                && entry.getValue() != null
+                && !entry.getValue().isEmpty();
+    }
+
+    private String encodeParameter(Map.Entry<String, String> entry) {
+        return encode(entry.getKey()) + "=" + encode(entry.getValue());
     }
 
     private String encode(String value) {

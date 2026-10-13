@@ -1,7 +1,7 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.VoucherRequest;
-import com.project.shopapp.responses.VoucherResponse;
+import com.project.shopapp.dtos.request.VoucherRequest;
+import com.project.shopapp.dtos.response.VoucherResponse;
 import com.project.shopapp.services.VoucherService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;

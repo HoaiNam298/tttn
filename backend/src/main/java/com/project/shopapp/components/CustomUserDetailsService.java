@@ -1,7 +1,7 @@
 package com.project.shopapp.components;
 
-import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.UserRepository;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,12 +17,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String phoneNumber) throws UsernameNotFoundException {
-        User user =
+        var user =
                 repository
                         .findByPhoneNumber(phoneNumber)
                         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        return org.springframework.security.core.userdetails.User.withUsername(
-                        user.getPhoneNumber())
+        return User.withUsername(user.getPhoneNumber())
                 .password(user.getPassword())
                 .roles(user.getRole().getName())
                 .disabled(!user.isActive())

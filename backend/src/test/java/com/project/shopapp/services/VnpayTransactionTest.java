@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.project.shopapp.components.VnpayGateway;
-import com.project.shopapp.dtos.CreateOrderRequest;
-import com.project.shopapp.dtos.OrderItemRequest;
+import com.project.shopapp.dtos.request.CreateOrderRequest;
+import com.project.shopapp.dtos.request.OrderItemRequest;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.enums.PaymentStatus;
@@ -138,7 +138,7 @@ class VnpayTransactionTest {
     void persistsItemsAndStatusHistoryWithoutCascade() {
         CreateOrderRequest request = request(null);
         request.setPaymentMethod(PaymentMethod.COD);
-        Long orderId = orderService.create(phone, request).id();
+        Long orderId = orderService.create(phone, request).getId();
 
         assertEquals(
                 1L,
@@ -160,10 +160,10 @@ class VnpayTransactionTest {
         orderService.confirmReceipt(orderId, phone);
 
         var reloaded = orderService.findOwnedOrder(orderId, phone);
-        assertEquals(OrderStatus.COMPLETED, reloaded.status());
-        assertEquals(PaymentStatus.PAID, reloaded.paymentStatus());
-        assertEquals(1, reloaded.items().size());
-        assertEquals(5, reloaded.history().size());
+        assertEquals(OrderStatus.COMPLETED, reloaded.getStatus());
+        assertEquals(PaymentStatus.PAID, reloaded.getPaymentStatus());
+        assertEquals(1, reloaded.getItems().size());
+        assertEquals(5, reloaded.getHistory().size());
         assertEquals(
                 5L,
                 jdbc.queryForObject(
@@ -186,7 +186,7 @@ class VnpayTransactionTest {
 
     @Test
     void concurrentLinkAndIpnRequestsAreIdempotent() throws Exception {
-        Long id = orderService.create(phone, request(null)).id();
+        Long id = orderService.create(phone, request(null)).getId();
         var pool = Executors.newFixedThreadPool(2);
         try {
             var start = new CountDownLatch(1);
@@ -204,21 +204,21 @@ class VnpayTransactionTest {
                             });
             start.countDown();
             assertEquals(
-                    first.get(10, TimeUnit.SECONDS).paymentUrl(),
-                    second.get(10, TimeUnit.SECONDS).paymentUrl());
+                    first.get(10, TimeUnit.SECONDS).getPaymentUrl(),
+                    second.get(10, TimeUnit.SECONDS).getPaymentUrl());
             var result = callback(id);
             var notify = new CountDownLatch(1);
             var a =
                     pool.submit(
                             () -> {
                                 notify.await();
-                                return payments.receiveIpn(result).rspCode();
+                                return payments.receiveIpn(result).getRspCode();
                             });
             var b =
                     pool.submit(
                             () -> {
                                 notify.await();
-                                return payments.receiveIpn(result).rspCode();
+                                return payments.receiveIpn(result).getRspCode();
                             });
             notify.countDown();
             assertEquals(
@@ -233,7 +233,7 @@ class VnpayTransactionTest {
 
     @Test
     void expiredOrderRestoresStockExactlyOnce() {
-        Long id = orderService.create(phone, request(null)).id();
+        Long id = orderService.create(phone, request(null)).getId();
         jdbc.update(
                 "update orders set payment_expires_at = ? where id = ?",
                 java.sql.Timestamp.from(Instant.now().minusSeconds(5)),
@@ -246,7 +246,7 @@ class VnpayTransactionTest {
 
     @Test
     void concurrentExpiryJobsDoNotRestoreStockTwice() throws Exception {
-        Long id = orderService.create(phone, request(null)).id();
+        Long id = orderService.create(phone, request(null)).getId();
         jdbc.update(
                 "update orders set payment_expires_at = ? where id = ?",
                 java.sql.Timestamp.from(Instant.now().minusSeconds(5)),
@@ -279,10 +279,10 @@ class VnpayTransactionTest {
 
     @Test
     void lateSuccessAfterCancellationIsRecordedWithoutRestoringTheOrder() {
-        Long id = orderService.create(phone, request(null)).id();
+        Long id = orderService.create(phone, request(null)).getId();
         payments.createLink(id, phone, "127.0.0.1");
         orderService.cancelOwnedOrder(id, phone);
-        assertEquals("00", payments.receiveIpn(callback(id)).rspCode());
+        assertEquals("00", payments.receiveIpn(callback(id)).getRspCode());
         assertEquals(
                 PaymentStatus.REVIEW_REQUIRED,
                 orders.findById(id).orElseThrow().getPaymentStatus());

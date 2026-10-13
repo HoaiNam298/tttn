@@ -9,11 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
+
     List<OrderItem> findByOrderIdAndOrderUserPhoneNumberAndOrderStatus(
             Long orderId, String phoneNumber, OrderStatus status);
-
-    @Query(value = "SELECT * FROM order_items WHERE id = :id FOR UPDATE", nativeQuery = true)
-    Optional<OrderItem> lockById(Long id);
 
     @EntityGraph(attributePaths = {"product", "order", "order.user"})
     Optional<OrderItem>
@@ -28,4 +26,15 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
                     Long variantId,
                     String phoneNumber,
                     OrderStatus status);
+
+    @Query(
+            value =
+                    """
+                    SELECT *
+                    FROM order_items
+                    WHERE id = :id
+                    FOR UPDATE
+                    """,
+            nativeQuery = true)
+    Optional<OrderItem> lockById(Long id);
 }

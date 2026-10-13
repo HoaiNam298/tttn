@@ -10,29 +10,41 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ProductReviewRepository extends JpaRepository<ProductReview, Long> {
+
+    @Override
+    @EntityGraph(attributePaths = {"user", "product"})
+    Page<ProductReview> findAll(Pageable pageable);
+
     @EntityGraph(attributePaths = {"user", "product"})
     Page<ProductReview> findByProductId(Long productId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user", "product"})
     Page<ProductReview> findByProductIdAndRating(Long productId, int rating, Pageable pageable);
 
-    long countByProductId(Long productId);
-
-    @Override
-    @EntityGraph(attributePaths = {"user", "product"})
-    Page<ProductReview> findAll(Pageable pageable);
-
-    boolean existsByOrderItemId(Long orderItemId);
-
     @Query(
             value =
-                    "SELECT r.order_item_id FROM product_reviews r JOIN order_items i ON i.id = r.order_item_id JOIN users u ON u.id = r.user_id WHERE i.order_id = :orderId AND u.phone_number = :phoneNumber",
+                    """
+                    SELECT r.order_item_id
+                    FROM product_reviews r
+                    JOIN order_items i ON i.id = r.order_item_id
+                    JOIN users u ON u.id = r.user_id
+                    WHERE i.order_id = :orderId
+                      AND u.phone_number = :phoneNumber
+                    """,
             nativeQuery = true)
     Set<Long> reviewedItemIds(Long orderId, String phoneNumber);
 
+    long countByProductId(Long productId);
+
     @Query(
             value =
-                    "SELECT COALESCE(AVG(rating), 0) FROM product_reviews WHERE product_id = :productId",
+                    """
+                    SELECT COALESCE(AVG(rating), 0)
+                    FROM product_reviews
+                    WHERE product_id = :productId
+                    """,
             nativeQuery = true)
     double averageRating(@Param("productId") Long productId);
+
+    boolean existsByOrderItemId(Long orderItemId);
 }

@@ -76,10 +76,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> validation(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new LinkedHashMap<>();
-        exception
-                .getBindingResult()
-                .getFieldErrors()
-                .forEach(error -> errors.putIfAbsent(error.getField(), error.getDefaultMessage()));
+        var fieldErrors = exception.getBindingResult().getFieldErrors();
+        for (var error : fieldErrors) {
+            errors.putIfAbsent(error.getField(), error.getDefaultMessage());
+        }
         return build(HttpStatus.BAD_REQUEST, "Request validation failed", errors);
     }
 

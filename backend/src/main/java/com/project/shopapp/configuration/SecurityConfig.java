@@ -2,6 +2,9 @@ package com.project.shopapp.configuration;
 
 import com.project.shopapp.filters.JwtAuthenticationFilter;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -42,50 +47,47 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(
-                        errors ->
-                                errors.authenticationEntryPoint(
-                                        (request, response, exception) ->
-                                                response.sendError(
-                                                        HttpStatus.UNAUTHORIZED.value())))
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.dispatcherTypeMatchers(DispatcherType.ERROR)
-                                        .permitAll()
-                                        .requestMatchers(
-                                                "/api/v1/auth/register",
-                                                "/api/v1/auth/login",
-                                                "/api/v1/health",
-                                                "/actuator/health")
-                                        .permitAll()
-                                        .requestMatchers(
-                                                HttpMethod.GET,
-                                                "/api/v1/categories/**",
-                                                "/api/v1/products/**",
-                                                "/api/v1/media/**")
-                                        .permitAll()
-                                        .requestMatchers(
-                                                HttpMethod.GET,
-                                                "/api/v1/payments/methods",
-                                                "/api/v1/payments/vnpay/ipn",
-                                                "/api/v1/payments/vnpay/return")
-                                        .permitAll()
-                                        .requestMatchers(
-                                                HttpMethod.POST, "/api/v1/products/*/reviews")
-                                        .authenticated()
-                                        .requestMatchers(
-                                                "/api/v1/categories/**", "/api/v1/products/**")
-                                        .hasRole("ADMIN")
-                                        .requestMatchers("/api/v1/admin/**")
-                                        .hasRole("ADMIN")
-                                        .anyRequest()
-                                        .authenticated())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+        http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+        http.sessionManagement(
+                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.exceptionHandling(errors -> errors.authenticationEntryPoint(this::sendUnauthorized));
+        http.authorizeHttpRequests(
+                auth -> {
+                    auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
+                    auth.requestMatchers(
+                                    "/api/v1/auth/register", "/api/v1/auth/login",
+                                    "/api/v1/health", "/actuator/health")
+                            .permitAll();
+                    auth.requestMatchers(
+                                    HttpMethod.GET,
+                                    "/api/v1/categories/**",
+                                    "/api/v1/products/**",
+                                    "/api/v1/media/**")
+                            .permitAll();
+                    auth.requestMatchers(
+                                    HttpMethod.GET,
+                                    "/api/v1/payments/methods",
+                                    "/api/v1/payments/vnpay/ipn",
+                                    "/api/v1/payments/vnpay/return")
+                            .permitAll();
+                    auth.requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews")
+                            .authenticated();
+                    auth.requestMatchers("/api/v1/categories/**", "/api/v1/products/**")
+                            .hasRole("ADMIN");
+                    auth.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
+                    auth.anyRequest().authenticated();
+                });
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    private void sendUnauthorized(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException exception)
+            throws IOException {
+        response.sendError(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Bean

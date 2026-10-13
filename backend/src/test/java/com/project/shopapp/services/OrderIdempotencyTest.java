@@ -8,8 +8,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.CreateOrderRequest;
-import com.project.shopapp.dtos.OrderItemRequest;
+import com.project.shopapp.dtos.request.CreateOrderRequest;
+import com.project.shopapp.dtos.request.OrderItemRequest;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.Product;
@@ -85,8 +85,8 @@ class OrderIdempotencyTest {
                                     .thenReturn(Optional.of(saved));
                             return saved;
                         });
-        assertEquals(21L, service.create("0900000000", request("HCM")).id());
-        assertEquals(21L, service.create("0900000000", request("HCM")).id());
+        assertEquals(21L, service.create("0900000000", request("HCM")).getId());
+        assertEquals(21L, service.create("0900000000", request("HCM")).getId());
         assertEquals(98, product.getStock());
         verify(orders).save(any(Order.class));
     }

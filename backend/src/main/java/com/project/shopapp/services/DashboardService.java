@@ -1,6 +1,6 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.responses.DashboardResponse;
+import com.project.shopapp.dtos.response.DashboardResponse;
 import java.time.LocalDate;
 
 public interface DashboardService {

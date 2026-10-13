@@ -1,8 +1,9 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.dtos.response.NotificationResponse;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
+import com.project.shopapp.model.Notification;
 import com.project.shopapp.repositories.NotificationRepository;
-import com.project.shopapp.responses.NotificationResponse;
 import com.project.shopapp.services.NotificationService;
 import java.time.Instant;
 import org.springframework.data.domain.Page;
@@ -28,9 +29,8 @@ public class NotificationServiceImpl implements NotificationService {
                         pageable.getPageNumber(),
                         Math.min(50, pageable.getPageSize()),
                         Sort.by(Sort.Direction.DESC, "id"));
-        return repository
-                .findByUserPhoneNumber(phoneNumber, bounded)
-                .map(NotificationResponse::from);
+        Page<Notification> notifications = repository.findByUserPhoneNumber(phoneNumber, bounded);
+        return notifications.map(NotificationResponse::from);
     }
 
     @Override

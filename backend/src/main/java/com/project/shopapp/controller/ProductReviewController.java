@@ -1,8 +1,8 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.CreateProductReviewRequest;
-import com.project.shopapp.responses.ProductReviewOverviewResponse;
-import com.project.shopapp.responses.ProductReviewResponse;
+import com.project.shopapp.dtos.request.CreateProductReviewRequest;
+import com.project.shopapp.dtos.response.ProductReviewOverviewResponse;
+import com.project.shopapp.dtos.response.ProductReviewResponse;
 import com.project.shopapp.services.ProductReviewService;
 import com.project.shopapp.services.ReviewSubmissionService;
 import jakarta.validation.Valid;

@@ -1,7 +1,7 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.CategoryRequest;
-import com.project.shopapp.responses.CategoryResponse;
+import com.project.shopapp.dtos.request.CategoryRequest;
+import com.project.shopapp.dtos.response.CategoryResponse;
 import com.project.shopapp.services.CategoryService;
 import jakarta.validation.Valid;
 import java.util.List;

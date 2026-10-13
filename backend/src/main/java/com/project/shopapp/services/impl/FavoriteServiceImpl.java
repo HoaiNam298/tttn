@@ -1,12 +1,13 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.dtos.response.ProductResponse;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Favorite;
+import com.project.shopapp.model.Product;
 import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.FavoriteRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
-import com.project.shopapp.responses.ProductResponse;
 import com.project.shopapp.services.FavoriteService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,9 +37,8 @@ public class FavoriteServiceImpl implements FavoriteService {
                         pageable.getPageNumber(),
                         Math.min(pageable.getPageSize(), 50),
                         Sort.by(Sort.Direction.DESC, "id"));
-        return favorites
-                .findByUserPhoneNumber(phoneNumber, bounded)
-                .map(favorite -> ProductResponse.from(favorite.getProduct()));
+        Page<Favorite> page = favorites.findByUserPhoneNumber(phoneNumber, bounded);
+        return page.map(favorite -> ProductResponse.from(favorite.getProduct()));
     }
 
     @Override
@@ -51,14 +51,11 @@ public class FavoriteServiceImpl implements FavoriteService {
     public void add(String phoneNumber, Long productId) {
         User user = lockUser(phoneNumber);
         if (!favorites.existsByUserIdAndProductId(user.getId(), productId)) {
-            favorites.save(
-                    new Favorite(
-                            user,
-                            products.findById(productId)
-                                    .orElseThrow(
-                                            () ->
-                                                    new ResourceNotFoundException(
-                                                            "Product not found"))));
+            Product product =
+                    products.findById(productId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+            Favorite favorite = Favorite.builder().user(user).product(product).build();
+            favorites.save(favorite);
         }
     }
 

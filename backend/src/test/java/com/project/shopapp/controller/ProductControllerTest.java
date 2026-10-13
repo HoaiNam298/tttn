@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.dtos.response.CategoryResponse;
+import com.project.shopapp.dtos.response.ProductResponse;
 import com.project.shopapp.filters.JwtAuthenticationFilter;
-import com.project.shopapp.responses.CategoryResponse;
-import com.project.shopapp.responses.ProductResponse;
 import com.project.shopapp.services.ProductService;
 import java.math.BigDecimal;
 import java.time.Instant;

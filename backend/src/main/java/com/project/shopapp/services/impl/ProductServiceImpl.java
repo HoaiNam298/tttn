@@ -1,15 +1,15 @@
 package com.project.shopapp.services.impl;
 
-import com.project.shopapp.dtos.ProductInventoryRequest;
-import com.project.shopapp.dtos.ProductRequest;
+import com.project.shopapp.dtos.request.ProductInventoryRequest;
+import com.project.shopapp.dtos.request.ProductRequest;
+import com.project.shopapp.dtos.response.ProductDetailResponse;
+import com.project.shopapp.dtos.response.ProductResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductVariant;
 import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.ProductRepository;
-import com.project.shopapp.responses.ProductDetailResponse;
-import com.project.shopapp.responses.ProductResponse;
 import com.project.shopapp.services.CategoryService;
 import com.project.shopapp.services.ProductService;
 import jakarta.persistence.criteria.Predicate;
@@ -150,14 +150,7 @@ public class ProductServiceImpl implements ProductService {
                 if (!ids.add(input.getId())) {
                     throw new IllegalArgumentException("Duplicate variant ID");
                 }
-                variant =
-                        product.getVariants().stream()
-                                .filter(item -> input.getId().equals(item.getId()))
-                                .findFirst()
-                                .orElseThrow(
-                                        () ->
-                                                new IllegalArgumentException(
-                                                        "Variant does not belong to this product"));
+                variant = findVariant(product, input.getId());
             }
             variant.update(
                     input.getSku(),
@@ -185,12 +178,16 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse create(ProductRequest request) {
         Product product =
-                new Product(
-                        request.getName().trim(),
-                        request.getPrice(),
-                        request.getThumbnail(),
-                        request.getDescription() == null ? "" : request.getDescription().trim(),
-                        categoryService.getEntity(request.getCategoryId()));
+                Product.builder()
+                        .name(request.getName().trim())
+                        .price(request.getPrice())
+                        .thumbnail(request.getThumbnail())
+                        .description(
+                                request.getDescription() == null
+                                        ? ""
+                                        : request.getDescription().trim())
+                        .category(categoryService.getEntity(request.getCategoryId()))
+                        .build();
         return ProductResponse.from(repository.save(product));
     }
 
@@ -215,5 +212,17 @@ public class ProductServiceImpl implements ProductService {
         return repository
                 .findForUpdateById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+    }
+
+    private ProductVariant findVariant(Product product, Long variantId) {
+        ProductVariant variant =
+                product.getVariants().stream()
+                        .filter(item -> variantId.equals(item.getId()))
+                        .findFirst()
+                        .orElse(null);
+        if (variant == null) {
+            throw new IllegalArgumentException("Variant does not belong to this product");
+        }
+        return variant;
     }
 }

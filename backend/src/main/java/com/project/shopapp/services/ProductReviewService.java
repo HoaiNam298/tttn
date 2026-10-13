@@ -1,10 +1,10 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.dtos.CreateProductReviewRequest;
-import com.project.shopapp.dtos.ReviewReplyRequest;
-import com.project.shopapp.responses.OrderReviewStatusResponse;
-import com.project.shopapp.responses.ProductReviewOverviewResponse;
-import com.project.shopapp.responses.ProductReviewResponse;
+import com.project.shopapp.dtos.request.CreateProductReviewRequest;
+import com.project.shopapp.dtos.request.ReviewReplyRequest;
+import com.project.shopapp.dtos.response.OrderReviewStatusResponse;
+import com.project.shopapp.dtos.response.ProductReviewOverviewResponse;
+import com.project.shopapp.dtos.response.ProductReviewResponse;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

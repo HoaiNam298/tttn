@@ -1,9 +1,9 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.dtos.LoginRequest;
-import com.project.shopapp.dtos.RegisterRequest;
-import com.project.shopapp.responses.AuthResponse;
-import com.project.shopapp.responses.UserResponse;
+import com.project.shopapp.dtos.request.LoginRequest;
+import com.project.shopapp.dtos.request.RegisterRequest;
+import com.project.shopapp.dtos.response.AuthResponse;
+import com.project.shopapp.dtos.response.UserResponse;
 
 public interface AuthService {
     AuthResponse register(RegisterRequest request);

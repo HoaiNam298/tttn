@@ -1,6 +1,6 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.responses.NotificationResponse;
+import com.project.shopapp.dtos.response.NotificationResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

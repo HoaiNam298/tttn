@@ -1,8 +1,8 @@
 package com.project.shopapp.controller;
 
 import com.project.shopapp.configuration.VnpayProperties;
-import com.project.shopapp.responses.PaymentLinkResponse;
-import com.project.shopapp.responses.VnpayIpnResponse;
+import com.project.shopapp.dtos.response.PaymentLinkResponse;
+import com.project.shopapp.dtos.response.VnpayIpnResponse;
 import com.project.shopapp.services.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;

@@ -9,10 +9,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.dtos.response.OrderResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.filters.JwtAuthenticationFilter;
-import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.services.OrderService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -77,19 +77,20 @@ class AdminOrderControllerTest {
     }
 
     private OrderResponse order() {
-        return new OrderResponse(
-                21L,
-                UUID.randomUUID(),
-                "Nguyen Van A",
-                "0900000000",
-                "HCM",
-                "",
-                OrderStatus.CONFIRMED,
-                PaymentMethod.COD,
-                BigDecimal.TEN,
-                BigDecimal.ZERO,
-                BigDecimal.TEN,
-                Instant.now(),
-                List.of());
+        return OrderResponse.builder()
+                .id(21L)
+                .orderNumber(UUID.randomUUID())
+                .recipientName("Nguyen Van A")
+                .phoneNumber("0900000000")
+                .shippingAddress("HCM")
+                .note("")
+                .status(OrderStatus.CONFIRMED)
+                .paymentMethod(PaymentMethod.COD)
+                .subtotal(BigDecimal.TEN)
+                .shippingFee(BigDecimal.ZERO)
+                .total(BigDecimal.TEN)
+                .createdAt(Instant.now())
+                .items(List.of())
+                .build();
     }
 }

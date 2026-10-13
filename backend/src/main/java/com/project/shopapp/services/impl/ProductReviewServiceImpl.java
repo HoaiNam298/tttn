@@ -1,7 +1,10 @@
 package com.project.shopapp.services.impl;
 
-import com.project.shopapp.dtos.CreateProductReviewRequest;
-import com.project.shopapp.dtos.ReviewReplyRequest;
+import com.project.shopapp.dtos.request.CreateProductReviewRequest;
+import com.project.shopapp.dtos.request.ReviewReplyRequest;
+import com.project.shopapp.dtos.response.OrderReviewStatusResponse;
+import com.project.shopapp.dtos.response.ProductReviewOverviewResponse;
+import com.project.shopapp.dtos.response.ProductReviewResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
@@ -9,11 +12,10 @@ import com.project.shopapp.model.OrderItem;
 import com.project.shopapp.model.ProductReview;
 import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.ProductReviewRepository;
-import com.project.shopapp.responses.OrderReviewStatusResponse;
-import com.project.shopapp.responses.ProductReviewOverviewResponse;
-import com.project.shopapp.responses.ProductReviewResponse;
 import com.project.shopapp.services.ProductReviewService;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,12 +47,11 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
         pageable = bounded(pageable);
-        Page<ProductReviewResponse> reviews =
-                (rating == null
-                                ? reviewRepository.findByProductId(productId, pageable)
-                                : reviewRepository.findByProductIdAndRating(
-                                        productId, rating, pageable))
-                        .map(ProductReviewResponse::from);
+        Page<ProductReview> page =
+                rating == null
+                        ? reviewRepository.findByProductId(productId, pageable)
+                        : reviewRepository.findByProductIdAndRating(productId, rating, pageable);
+        Page<ProductReviewResponse> reviews = page.map(ProductReviewResponse::from);
         return new ProductReviewOverviewResponse(
                 reviewRepository.averageRating(productId),
                 reviewRepository.countByProductId(productId),
@@ -80,12 +81,13 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             throw new DuplicateResourceException("This order item has already been reviewed");
         }
         ProductReview review =
-                new ProductReview(
-                        orderItem.getProduct(),
-                        orderItem.getOrder().getUser(),
-                        orderItem,
-                        request.getRating(),
-                        request.getComment().trim());
+                ProductReview.builder()
+                        .product(orderItem.getProduct())
+                        .user(orderItem.getOrder().getUser())
+                        .orderItem(orderItem)
+                        .rating(request.getRating())
+                        .comment(request.getComment().trim())
+                        .build();
         review.attachImages(images);
         return ProductReviewResponse.from(reviewRepository.saveAndFlush(review));
     }
@@ -107,14 +109,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                 orderItemRepository.findByOrderIdAndOrderUserPhoneNumberAndOrderStatus(
                         orderId, phoneNumber, OrderStatus.COMPLETED);
         var reviewedIds = reviewRepository.reviewedItemIds(orderId, phoneNumber);
-        return items.stream()
-                .map(
-                        item ->
-                                new OrderReviewStatusResponse(
-                                        item.getProductId(),
-                                        item.getVariantId(),
-                                        reviewedIds.contains(item.getId())))
-                .toList();
+        return items.stream().map(item -> toOrderReviewStatusResponse(item, reviewedIds)).toList();
     }
 
     @Override
@@ -136,25 +131,35 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     }
 
     private OrderItem eligible(Long productId, String phoneNumber, Long orderId, Long variantId) {
-        OrderItem orderItem =
-                (variantId == null
-                                ? orderItemRepository
-                                        .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
-                                                orderId,
-                                                productId,
-                                                phoneNumber,
-                                                OrderStatus.COMPLETED)
-                                : orderItemRepository
-                                        .findByOrder_IdAndProduct_IdAndVariant_IdAndOrder_User_PhoneNumberAndOrder_Status(
-                                                orderId,
-                                                productId,
-                                                variantId,
-                                                phoneNumber,
-                                                OrderStatus.COMPLETED))
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "Completed order item not found for this product"));
+        Optional<OrderItem> result;
+        if (variantId == null) {
+            result =
+                    orderItemRepository
+                            .findFirstByOrder_IdAndProduct_IdAndOrder_User_PhoneNumberAndOrder_StatusOrderByIdAsc(
+                                    orderId, productId, phoneNumber, OrderStatus.COMPLETED);
+        } else {
+            result =
+                    orderItemRepository
+                            .findByOrder_IdAndProduct_IdAndVariant_IdAndOrder_User_PhoneNumberAndOrder_Status(
+                                    orderId,
+                                    productId,
+                                    variantId,
+                                    phoneNumber,
+                                    OrderStatus.COMPLETED);
+        }
+        OrderItem orderItem = result.orElse(null);
+        if (orderItem == null) {
+            throw new ResourceNotFoundException("Completed order item not found for this product");
+        }
         return orderItem;
+    }
+
+    private OrderReviewStatusResponse toOrderReviewStatusResponse(
+            OrderItem item, Set<Long> reviewedIds) {
+        return OrderReviewStatusResponse.builder()
+                .productId(item.getProductId())
+                .variantId(item.getVariantId())
+                .reviewed(reviewedIds.contains(item.getId()))
+                .build();
     }
 }

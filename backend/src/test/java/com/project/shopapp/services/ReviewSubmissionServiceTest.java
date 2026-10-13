@@ -6,7 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.CreateProductReviewRequest;
+import com.project.shopapp.dtos.request.CreateProductReviewRequest;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.services.impl.ReviewSubmissionServiceImpl;
 import java.io.IOException;

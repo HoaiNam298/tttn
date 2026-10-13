@@ -1,11 +1,11 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.dtos.CreateOrderRequest;
+import com.project.shopapp.dtos.request.CreateOrderRequest;
+import com.project.shopapp.dtos.response.CheckoutQuoteResponse;
+import com.project.shopapp.dtos.response.OrderResponse;
+import com.project.shopapp.dtos.response.OrderSummaryResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentStatus;
-import com.project.shopapp.responses.CheckoutQuoteResponse;
-import com.project.shopapp.responses.OrderResponse;
-import com.project.shopapp.responses.OrderSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

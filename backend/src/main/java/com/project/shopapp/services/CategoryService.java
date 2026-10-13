@@ -1,8 +1,8 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.dtos.CategoryRequest;
+import com.project.shopapp.dtos.request.CategoryRequest;
+import com.project.shopapp.dtos.response.CategoryResponse;
 import com.project.shopapp.model.Category;
-import com.project.shopapp.responses.CategoryResponse;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

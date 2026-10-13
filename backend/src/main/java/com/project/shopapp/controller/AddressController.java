@@ -1,7 +1,7 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.AddressRequest;
-import com.project.shopapp.responses.AddressResponse;
+import com.project.shopapp.dtos.request.AddressRequest;
+import com.project.shopapp.dtos.response.AddressResponse;
 import com.project.shopapp.services.AddressService;
 import jakarta.validation.Valid;
 import java.security.Principal;

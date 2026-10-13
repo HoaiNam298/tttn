@@ -102,11 +102,11 @@ class VnpayPaymentServiceTest {
     @Test
     void validIpnMarksPaidOnceAndDuplicateDoesNotOverwrite() {
         storedAttempt();
-        assertEquals("00", service.receiveIpn(callback("00")).rspCode());
+        assertEquals("00", service.receiveIpn(callback("00")).getRspCode());
         assertEquals(PaymentStatus.PAID, order.getPaymentStatus());
         assertEquals(OrderStatus.PENDING, order.getStatus());
-        assertEquals("02", service.receiveIpn(callback("00")).rspCode());
-        assertEquals("02", service.receiveIpn(callback("24")).rspCode());
+        assertEquals("02", service.receiveIpn(callback("00")).getRspCode());
+        assertEquals("02", service.receiveIpn(callback("24")).getRspCode());
         verify(orderService, never()).closeUnpaidPayment(any(), any());
         verify(attempts).flush();
     }
@@ -115,7 +115,7 @@ class VnpayPaymentServiceTest {
     void invalidSignatureDoesNotLookUpOrMutateOrder() {
         var params = callback("00");
         params.set("vnp_Amount", "100");
-        assertEquals("97", service.receiveIpn(params).rspCode());
+        assertEquals("97", service.receiveIpn(params).getRspCode());
         verify(attempts, never()).findByTxnRef(any());
         assertEquals(PaymentStatus.PENDING, order.getPaymentStatus());
     }
@@ -123,7 +123,7 @@ class VnpayPaymentServiceTest {
     @Test
     void suspiciousDebitedPaymentRequiresReviewInsteadOfDiscardingMoney() {
         storedAttempt();
-        assertEquals("00", service.receiveIpn(callback("07")).rspCode());
+        assertEquals("00", service.receiveIpn(callback("07")).getRspCode());
         assertEquals(PaymentStatus.REVIEW_REQUIRED, order.getPaymentStatus());
         assertEquals(PaymentStatus.REVIEW_REQUIRED, attempt.getStatus());
         verify(orderService).closeUnpaidPayment(7L, PaymentStatus.FAILED);
@@ -135,23 +135,23 @@ class VnpayPaymentServiceTest {
         var params = callback("00");
         params.set("vnp_Amount", "100");
         params.set("vnp_SecureHash", gateway.sign(params.toSingleValueMap()));
-        assertEquals("04", service.receiveIpn(params).rspCode());
+        assertEquals("04", service.receiveIpn(params).getRspCode());
         assertEquals(PaymentStatus.PENDING, order.getPaymentStatus());
     }
 
     @Test
     void failureClosesUnpaidOrderAndDuplicateIsAcknowledged() {
         storedAttempt();
-        assertEquals("00", service.receiveIpn(callback("24")).rspCode());
+        assertEquals("00", service.receiveIpn(callback("24")).getRspCode());
         verify(orderService).closeUnpaidPayment(7L, PaymentStatus.FAILED);
-        assertEquals("02", service.receiveIpn(callback("24")).rspCode());
+        assertEquals("02", service.receiveIpn(callback("24")).getRspCode());
     }
 
     @Test
     void paymentAfterCancellationRequiresReviewWithoutReopeningOrder() {
         storedAttempt();
         orderBusinessService.updateStatus(order, OrderStatus.CANCELLED, "CUSTOMER");
-        assertEquals("00", service.receiveIpn(callback("00")).rspCode());
+        assertEquals("00", service.receiveIpn(callback("00")).getRspCode());
         assertEquals(PaymentStatus.REVIEW_REQUIRED, order.getPaymentStatus());
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
         verify(orderService, never()).closeUnpaidPayment(any(), any());
@@ -162,7 +162,7 @@ class VnpayPaymentServiceTest {
         storedAttempt();
         orderBusinessService.updateStatus(order, OrderStatus.CANCELLED, "SYSTEM");
         attempt.finish(PaymentStatus.FAILED, null, "24", null);
-        assertEquals("00", service.receiveIpn(callback("00")).rspCode());
+        assertEquals("00", service.receiveIpn(callback("00")).getRspCode());
         assertEquals(PaymentStatus.REVIEW_REQUIRED, attempt.getStatus());
     }
 
@@ -182,7 +182,7 @@ class VnpayPaymentServiceTest {
         when(attempts.findByOrder_Id(7L)).thenReturn(Optional.of(attempt));
         assertEquals(
                 attempt.getPaymentUrl(),
-                service.createLink(7L, "0900000000", "127.0.0.1").paymentUrl());
+                service.createLink(7L, "0900000000", "127.0.0.1").getPaymentUrl());
         verify(attempts, never()).save(any());
     }
 
@@ -193,7 +193,7 @@ class VnpayPaymentServiceTest {
         when(attempts.save(any())).thenAnswer(call -> call.getArgument(0));
         var link = service.createLink(7L, "0900000000", "127.0.0.1");
         org.junit.jupiter.api.Assertions.assertTrue(
-                link.paymentUrl().contains("vnp_Amount=3000000"));
+                link.getPaymentUrl().contains("vnp_Amount=3000000"));
         verify(attempts).save(any());
     }
 

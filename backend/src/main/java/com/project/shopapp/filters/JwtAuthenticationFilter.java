@@ -2,6 +2,7 @@ package com.project.shopapp.filters;
 
 import com.project.shopapp.components.CustomUserDetailsService;
 import com.project.shopapp.components.JwtService;
+import com.project.shopapp.model.Token;
 import com.project.shopapp.repositories.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -46,13 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String username = jwtService.extractUsername(token);
             boolean activeToken =
-                    tokenRepository
-                            .findByToken(token)
-                            .filter(
-                                    saved ->
-                                            !saved.isRevoked()
-                                                    && saved.getExpiresAt().isAfter(Instant.now()))
-                            .isPresent();
+                    tokenRepository.findByToken(token).filter(this::isActiveToken).isPresent();
 
             if (activeToken && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails user = userDetailsService.loadUserByUsername(username);
@@ -70,5 +65,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isActiveToken(Token token) {
+        return !token.isRevoked() && token.getExpiresAt().isAfter(Instant.now());
     }
 }

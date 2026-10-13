@@ -1,6 +1,6 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.responses.NotificationResponse;
+import com.project.shopapp.dtos.response.NotificationResponse;
 import com.project.shopapp.services.NotificationService;
 import java.security.Principal;
 import org.springframework.data.domain.Page;

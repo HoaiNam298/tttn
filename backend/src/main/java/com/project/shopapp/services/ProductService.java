@@ -1,9 +1,9 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.dtos.ProductInventoryRequest;
-import com.project.shopapp.dtos.ProductRequest;
-import com.project.shopapp.responses.ProductDetailResponse;
-import com.project.shopapp.responses.ProductResponse;
+import com.project.shopapp.dtos.request.ProductInventoryRequest;
+import com.project.shopapp.dtos.request.ProductRequest;
+import com.project.shopapp.dtos.response.ProductDetailResponse;
+import com.project.shopapp.dtos.response.ProductResponse;
 import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

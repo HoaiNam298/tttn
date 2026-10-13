@@ -1,7 +1,7 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.responses.PaymentLinkResponse;
-import com.project.shopapp.responses.VnpayIpnResponse;
+import com.project.shopapp.dtos.response.PaymentLinkResponse;
+import com.project.shopapp.dtos.response.VnpayIpnResponse;
 import org.springframework.util.MultiValueMap;
 
 public interface PaymentService {

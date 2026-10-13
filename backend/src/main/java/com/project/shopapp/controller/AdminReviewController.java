@@ -1,7 +1,7 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.ReviewReplyRequest;
-import com.project.shopapp.responses.ProductReviewResponse;
+import com.project.shopapp.dtos.request.ReviewReplyRequest;
+import com.project.shopapp.dtos.response.ProductReviewResponse;
 import com.project.shopapp.services.ProductReviewService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;

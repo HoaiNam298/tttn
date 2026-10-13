@@ -1,9 +1,9 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.UpdateOrderStatusRequest;
+import com.project.shopapp.dtos.request.UpdateOrderStatusRequest;
+import com.project.shopapp.dtos.response.OrderResponse;
+import com.project.shopapp.dtos.response.OrderSummaryResponse;
 import com.project.shopapp.enums.OrderStatus;
-import com.project.shopapp.responses.OrderResponse;
-import com.project.shopapp.responses.OrderSummaryResponse;
 import com.project.shopapp.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;

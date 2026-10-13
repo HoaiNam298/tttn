@@ -1,9 +1,9 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.ProductInventoryRequest;
-import com.project.shopapp.dtos.ProductRequest;
-import com.project.shopapp.responses.ProductDetailResponse;
-import com.project.shopapp.responses.ProductResponse;
+import com.project.shopapp.dtos.request.ProductInventoryRequest;
+import com.project.shopapp.dtos.request.ProductRequest;
+import com.project.shopapp.dtos.response.ProductDetailResponse;
+import com.project.shopapp.dtos.response.ProductResponse;
 import com.project.shopapp.services.ProductService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;

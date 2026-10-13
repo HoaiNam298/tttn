@@ -6,8 +6,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.CreateOrderRequest;
-import com.project.shopapp.dtos.OrderItemRequest;
+import com.project.shopapp.dtos.request.CreateOrderRequest;
+import com.project.shopapp.dtos.request.OrderItemRequest;
+import com.project.shopapp.dtos.response.OrderResponse;
 import com.project.shopapp.exceptions.InsufficientStockException;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Order;
@@ -18,7 +19,6 @@ import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
-import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.OrderServiceImpl;
 import java.math.BigDecimal;
@@ -77,9 +77,9 @@ class OrderServiceImplTest {
                                                 .quantity(2)
                                                 .build())));
 
-        assertEquals(new BigDecimal("300000"), response.subtotal());
-        assertEquals(new BigDecimal("330000.00"), response.total());
-        assertEquals(3, response.items().get(0).quantity());
+        assertEquals(new BigDecimal("300000"), response.getSubtotal());
+        assertEquals(new BigDecimal("330000.00"), response.getTotal());
+        assertEquals(3, response.getItems().get(0).getQuantity());
     }
 
     @Test

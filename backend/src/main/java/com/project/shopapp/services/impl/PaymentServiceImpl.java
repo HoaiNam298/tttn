@@ -2,6 +2,8 @@ package com.project.shopapp.services.impl;
 
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
+import com.project.shopapp.dtos.response.PaymentLinkResponse;
+import com.project.shopapp.dtos.response.VnpayIpnResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.enums.PaymentStatus;
@@ -10,8 +12,6 @@ import com.project.shopapp.model.Order;
 import com.project.shopapp.model.PaymentAttempt;
 import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.PaymentAttemptRepository;
-import com.project.shopapp.responses.PaymentLinkResponse;
-import com.project.shopapp.responses.VnpayIpnResponse;
 import com.project.shopapp.services.OrderBusinessService;
 import com.project.shopapp.services.OrderService;
 import com.project.shopapp.services.PaymentService;
@@ -132,13 +132,12 @@ public class PaymentServiceImpl implements PaymentService {
         Instant paidAt = null;
         if (success || suspiciousDebit) {
             try {
-                paidAt =
-                        LocalDateTime.parse(
-                                        params.getFirst("vnp_PayDate"),
-                                        DateTimeFormatter.ofPattern("uuuuMMddHHmmss")
-                                                .withResolverStyle(ResolverStyle.STRICT))
-                                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
-                                .toInstant();
+                DateTimeFormatter formatter =
+                        DateTimeFormatter.ofPattern("uuuuMMddHHmmss")
+                                .withResolverStyle(ResolverStyle.STRICT);
+                LocalDateTime paymentDate =
+                        LocalDateTime.parse(params.getFirst("vnp_PayDate"), formatter);
+                paidAt = paymentDate.atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
             } catch (RuntimeException exception) {
                 return new VnpayIpnResponse("99", "Invalid payment date");
             }

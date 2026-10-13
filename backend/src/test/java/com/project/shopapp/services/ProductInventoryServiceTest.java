@@ -5,8 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.ProductInventoryRequest;
-import com.project.shopapp.dtos.ProductVariantRequest;
+import com.project.shopapp.dtos.request.ProductInventoryRequest;
+import com.project.shopapp.dtos.request.ProductVariantRequest;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.repositories.OrderRepository;

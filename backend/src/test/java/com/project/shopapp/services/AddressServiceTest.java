@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.AddressRequest;
+import com.project.shopapp.dtos.request.AddressRequest;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.User;
 import com.project.shopapp.model.UserAddress;
@@ -46,7 +46,7 @@ class AddressServiceTest {
                                 "0900000000",
                                 null,
                                 new AddressRequest("Customer", "0900000000", "HCM", false))
-                        .defaultAddress());
+                        .isDefaultAddress());
     }
 
     @Test

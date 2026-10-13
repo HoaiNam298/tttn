@@ -9,9 +9,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.CreateOrderRequest;
-import com.project.shopapp.dtos.OrderItemRequest;
-import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.dtos.request.CreateOrderRequest;
+import com.project.shopapp.dtos.request.OrderItemRequest;
+import com.project.shopapp.dtos.request.VoucherRequest;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.ShippingMethod;
 import com.project.shopapp.enums.VoucherType;
@@ -109,7 +109,7 @@ class OrderOperationsTest {
         when(vouchers.preview("SAVE10", 1L, new BigDecimal("100000")))
                 .thenReturn(new BigDecimal("10000"));
         var quote = service.quote("0900000000", request(null, ShippingMethod.EXPRESS, "SAVE10"));
-        assertEquals(new BigDecimal("140000.00"), quote.total());
+        assertEquals(new BigDecimal("140000.00"), quote.getTotal());
         assertEquals(100, product.getStock());
         verify(vouchers, never()).reserve(any(), any(), any());
         verify(orders, never()).save(any());
@@ -132,7 +132,7 @@ class OrderOperationsTest {
         var input = request(key, ShippingMethod.EXPRESS, "SAVE10");
         service.create("0900000000", input);
         var retry = service.create("0900000000", input);
-        assertEquals(new BigDecimal("140000.00"), retry.total());
+        assertEquals(new BigDecimal("140000.00"), retry.getTotal());
         assertEquals(99, product.getStock());
         verify(vouchers).reserve(eq("SAVE10"), eq(1L), any());
         assertThrows(

@@ -1,7 +1,7 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.responses.FavoriteStateResponse;
-import com.project.shopapp.responses.ProductResponse;
+import com.project.shopapp.dtos.response.FavoriteStateResponse;
+import com.project.shopapp.dtos.response.ProductResponse;
 import com.project.shopapp.services.FavoriteService;
 import java.security.Principal;
 import org.springframework.data.domain.Page;

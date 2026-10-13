@@ -1,13 +1,13 @@
 package com.project.shopapp.services.impl;
 
-import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.dtos.request.VoucherRequest;
+import com.project.shopapp.dtos.response.VoucherResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Voucher;
 import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.UserRepository;
 import com.project.shopapp.repositories.VoucherRepository;
-import com.project.shopapp.responses.VoucherResponse;
 import com.project.shopapp.services.VoucherService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -45,18 +45,17 @@ public class VoucherServiceImpl implements VoucherService {
         if (sort.getOrderFor("id") == null) {
             sort = sort.and(Sort.by("id"));
         }
-        return vouchers.findAll(
-                        PageRequest.of(
-                                pageable.getPageNumber(),
-                                Math.min(pageable.getPageSize(), 100),
-                                sort))
-                .map(VoucherResponse::from);
+        Pageable bounded =
+                PageRequest.of(
+                        pageable.getPageNumber(), Math.min(pageable.getPageSize(), 100), sort);
+        return vouchers.findAll(bounded).map(VoucherResponse::from);
     }
 
     @Transactional
     public VoucherResponse create(VoucherRequest request) {
         validateTarget(request.getTargetUserId());
-        return VoucherResponse.from(vouchers.saveAndFlush(new Voucher(request)));
+        Voucher voucher = new Voucher(request);
+        return VoucherResponse.from(vouchers.saveAndFlush(voucher));
     }
 
     @Transactional

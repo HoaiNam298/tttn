@@ -3,7 +3,7 @@ package com.project.shopapp.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.dtos.request.VoucherRequest;
 import com.project.shopapp.enums.VoucherType;
 import com.project.shopapp.model.Voucher;
 import java.math.BigDecimal;

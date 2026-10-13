@@ -5,7 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.CreateProductReviewRequest;
+import com.project.shopapp.dtos.request.CreateProductReviewRequest;
+import com.project.shopapp.dtos.response.ProductReviewResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
@@ -17,7 +18,6 @@ import com.project.shopapp.model.ProductReview;
 import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.OrderItemRepository;
 import com.project.shopapp.repositories.ProductReviewRepository;
-import com.project.shopapp.responses.ProductReviewResponse;
 import com.project.shopapp.services.impl.OrderBusinessServiceImpl;
 import com.project.shopapp.services.impl.ProductReviewServiceImpl;
 import java.math.BigDecimal;
@@ -77,8 +77,8 @@ class ProductReviewServiceImplTest {
                                 .comment("Great product")
                                 .build());
 
-        assertEquals(5, response.rating());
-        assertEquals("Great product", response.comment());
+        assertEquals(5, response.getRating());
+        assertEquals("Great product", response.getComment());
     }
 
     @Test
@@ -135,8 +135,8 @@ class ProductReviewServiceImplTest {
         var response =
                 service.findByProduct(
                         8L, 4, org.springframework.data.domain.PageRequest.of(0, 500));
-        assertEquals(10, response.totalReviews());
-        assertEquals(4.2, response.averageRating());
+        assertEquals(10, response.getTotalReviews());
+        assertEquals(4.2, response.getAverageRating());
     }
 
     @Test
@@ -164,7 +164,8 @@ class ProductReviewServiceImplTest {
                 () ->
                         service.reply(
                                 1L,
-                                new com.project.shopapp.dtos.ReviewReplyRequest("Thank you", 1L)));
+                                new com.project.shopapp.dtos.request.ReviewReplyRequest(
+                                        "Thank you", 1L)));
         assertEquals(null, review.getShopReply());
     }
 }

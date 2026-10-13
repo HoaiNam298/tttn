@@ -1,6 +1,6 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.responses.DashboardResponse;
+import com.project.shopapp.dtos.response.DashboardResponse;
 import com.project.shopapp.services.DashboardService;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;

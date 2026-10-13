@@ -2,8 +2,11 @@ package com.project.shopapp.services.impl;
 
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
-import com.project.shopapp.dtos.CreateOrderRequest;
-import com.project.shopapp.dtos.OrderItemRequest;
+import com.project.shopapp.dtos.request.CreateOrderRequest;
+import com.project.shopapp.dtos.request.OrderItemRequest;
+import com.project.shopapp.dtos.response.CheckoutQuoteResponse;
+import com.project.shopapp.dtos.response.OrderResponse;
+import com.project.shopapp.dtos.response.OrderSummaryResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.enums.PaymentStatus;
@@ -11,6 +14,7 @@ import com.project.shopapp.enums.ShippingMethod;
 import com.project.shopapp.exceptions.InsufficientStockException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Order;
+import com.project.shopapp.model.OrderItem;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductVariant;
 import com.project.shopapp.model.User;
@@ -19,9 +23,6 @@ import com.project.shopapp.repositories.OrderRepository;
 import com.project.shopapp.repositories.OrderStatusHistoryRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import com.project.shopapp.repositories.UserRepository;
-import com.project.shopapp.responses.CheckoutQuoteResponse;
-import com.project.shopapp.responses.OrderResponse;
-import com.project.shopapp.responses.OrderSummaryResponse;
 import com.project.shopapp.services.OrderBusinessService;
 import com.project.shopapp.services.OrderService;
 import com.project.shopapp.services.VoucherService;
@@ -86,11 +87,11 @@ public class OrderServiceImpl implements OrderService {
             }
             vnpay.requireEnabled();
         }
-        User user =
-                (request.getRequestId() == null
-                                ? userRepository.findByPhoneNumber(phoneNumber)
-                                : userRepository.findForUpdateByPhoneNumber(phoneNumber))
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        var matchedUser =
+                request.getRequestId() == null
+                        ? userRepository.findByPhoneNumber(phoneNumber)
+                        : userRepository.findForUpdateByPhoneNumber(phoneNumber);
+        User user = matchedUser.orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Map<OrderLineKey, Integer> quantities = aggregateItems(request.getItems());
         String fingerprint =
                 request.getRequestId() == null ? null : fingerprint(request, quantities);
@@ -133,16 +134,7 @@ public class OrderServiceImpl implements OrderService {
                     continue;
                 }
                 Long variantId = entry.getKey().variantId();
-                ProductVariant variant =
-                        variantId == null
-                                ? null
-                                : product.getVariants().stream()
-                                        .filter(item -> variantId.equals(item.getId()))
-                                        .findFirst()
-                                        .orElseThrow(
-                                                () ->
-                                                        new IllegalArgumentException(
-                                                                "Variant does not belong to the selected product"));
+                ProductVariant variant = findVariant(product, variantId);
                 int quantity = entry.getValue();
                 product.reserve(quantity, variant);
                 orderBusinessService.addItem(order, product, variant, quantity);
@@ -189,16 +181,7 @@ public class OrderServiceImpl implements OrderService {
                             .findFirst()
                             .orElseThrow();
             Long variantId = entry.getKey().variantId();
-            ProductVariant variant =
-                    variantId == null
-                            ? null
-                            : product.getVariants().stream()
-                                    .filter(item -> variantId.equals(item.getId()))
-                                    .findFirst()
-                                    .orElseThrow(
-                                            () ->
-                                                    new IllegalArgumentException(
-                                                            "Variant does not belong to the selected product"));
+            ProductVariant variant = findVariant(product, variantId);
             if ((variant == null && !product.getVariants().isEmpty())
                     || (variant != null && !variant.isActive())) {
                 throw new IllegalStateException("Select an available product variant");
@@ -218,13 +201,16 @@ public class OrderServiceImpl implements OrderService {
                 hasVoucher(request)
                         ? request.getVoucherCode().trim().toUpperCase(Locale.ROOT)
                         : null;
-        return new CheckoutQuoteResponse(
-                subtotal,
-                shipping(request),
-                shipping(request).getFee(),
-                code,
-                discount,
-                subtotal.add(shipping(request).getFee()).subtract(discount));
+        ShippingMethod shippingMethod = shipping(request);
+        BigDecimal shippingFee = shippingMethod.getFee();
+        return CheckoutQuoteResponse.builder()
+                .subtotal(subtotal)
+                .shippingMethod(shippingMethod)
+                .shippingFee(shippingFee)
+                .voucherCode(code)
+                .discount(discount)
+                .total(subtotal.add(shippingFee).subtract(discount))
+                .build();
     }
 
     private ShippingMethod shipping(CreateOrderRequest request) {
@@ -297,9 +283,7 @@ public class OrderServiceImpl implements OrderService {
 
     private void restoreStockAndVoucher(Order order) {
         var productIds =
-                order.getItems().stream()
-                        .map(item -> item.getProductId())
-                        .collect(Collectors.toSet());
+                order.getItems().stream().map(OrderItem::getProductId).collect(Collectors.toSet());
         productRepository.findAllByIdInOrderById(productIds);
         order.getItems()
                 .forEach(item -> item.getProduct().release(item.getQuantity(), item.getVariant()));
@@ -350,15 +334,14 @@ public class OrderServiceImpl implements OrderService {
             hashField(digest, request.getPhoneNumber().trim());
             hashField(digest, request.getShippingAddress().trim());
             hashField(digest, request.getNote() == null ? "" : request.getNote().trim());
-            new TreeMap<>(quantities)
-                    .forEach(
-                            (id, quantity) -> {
-                                hashField(digest, id.productId().toString());
-                                if (id.variantId() != null) {
-                                    hashField(digest, "variant:" + id.variantId());
-                                }
-                                hashField(digest, quantity.toString());
-                            });
+            for (var entry : new TreeMap<>(quantities).entrySet()) {
+                OrderLineKey id = entry.getKey();
+                hashField(digest, id.productId().toString());
+                if (id.variantId() != null) {
+                    hashField(digest, "variant:" + id.variantId());
+                }
+                hashField(digest, entry.getValue().toString());
+            }
             if (shipping(request) != ShippingMethod.STANDARD) {
                 hashField(digest, "shipping:" + shipping(request));
             }
@@ -429,6 +412,21 @@ public class OrderServiceImpl implements OrderService {
 
     private void changeStatus(Order order, OrderStatus status) {
         changeStatus(order, status, "ADMIN");
+    }
+
+    private ProductVariant findVariant(Product product, Long variantId) {
+        if (variantId == null) {
+            return null;
+        }
+        ProductVariant variant =
+                product.getVariants().stream()
+                        .filter(item -> variantId.equals(item.getId()))
+                        .findFirst()
+                        .orElse(null);
+        if (variant == null) {
+            throw new IllegalArgumentException("Variant does not belong to the selected product");
+        }
+        return variant;
     }
 
     private record OrderLineKey(Long productId, Long variantId)

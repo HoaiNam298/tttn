@@ -1,10 +1,10 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.dtos.LoginRequest;
-import com.project.shopapp.dtos.RegisterRequest;
+import com.project.shopapp.dtos.request.LoginRequest;
+import com.project.shopapp.dtos.request.RegisterRequest;
+import com.project.shopapp.dtos.response.AuthResponse;
+import com.project.shopapp.dtos.response.UserResponse;
 import com.project.shopapp.exceptions.InvalidCredentialsException;
-import com.project.shopapp.responses.AuthResponse;
-import com.project.shopapp.responses.UserResponse;
 import com.project.shopapp.services.AuthService;
 import jakarta.validation.Valid;
 import java.security.Principal;

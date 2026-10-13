@@ -16,28 +16,15 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    @Query(
-            value =
-                    "SELECT o.id FROM orders o WHERE o.payment_method = 'VNPAY' AND o.payment_status = 'PENDING' AND o.status = 'PENDING' AND o.payment_expires_at <= :now ORDER BY o.id",
-            nativeQuery = true)
-    List<Long> findExpiredPaymentIds(Instant now, Pageable pageable);
-
-    long countByVoucher_IdAndUser_IdAndStatusNot(Long voucherId, Long userId, OrderStatus status);
 
     @EntityGraph(attributePaths = {"items", "items.product"})
     Optional<Order> findByUserIdAndRequestId(Long userId, UUID requestId);
 
-    @Query(
-            value =
-                    "SELECT EXISTS (SELECT 1 FROM order_items i JOIN orders o ON o.id = i.order_id WHERE i.product_id = :productId AND i.variant_id IS NULL AND o.status IN (:statuses))",
-            nativeQuery = true)
-    boolean existsOpenLegacyItems(Long productId, Collection<OrderStatus> statuses);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<Order> findByIdAndUserPhoneNumber(Long id, String phoneNumber);
-
     @EntityGraph(attributePaths = {"items", "items.product"})
     Optional<Order> findWithItemsByIdAndUserPhoneNumber(Long id, String phoneNumber);
+
+    @EntityGraph(attributePaths = {"items", "items.product"})
+    Optional<Order> findDetailById(Long id);
 
     Page<Order> findAllByUserPhoneNumber(String phoneNumber, Pageable pageable);
 
@@ -46,8 +33,39 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Page<Order> findAllByStatus(OrderStatus status, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"items", "items.product"})
-    Optional<Order> findDetailById(Long id);
+    long countByVoucher_IdAndUser_IdAndStatusNot(Long voucherId, Long userId, OrderStatus status);
+
+    @Query(
+            value =
+                    """
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM order_items i
+                        JOIN orders o ON o.id = i.order_id
+                        WHERE i.product_id = :productId
+                          AND i.variant_id IS NULL
+                          AND o.status IN (:statuses)
+                    )
+                    """,
+            nativeQuery = true)
+    boolean existsOpenLegacyItems(Long productId, Collection<OrderStatus> statuses);
+
+    @Query(
+            value =
+                    """
+                    SELECT o.id
+                    FROM orders o
+                    WHERE o.payment_method = 'VNPAY'
+                      AND o.payment_status = 'PENDING'
+                      AND o.status = 'PENDING'
+                      AND o.payment_expires_at <= :now
+                    ORDER BY o.id
+                    """,
+            nativeQuery = true)
+    List<Long> findExpiredPaymentIds(Instant now, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Order> findByIdAndUserPhoneNumber(Long id, String phoneNumber);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Order> findWithItemsById(Long id);

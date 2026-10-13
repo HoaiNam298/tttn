@@ -2,8 +2,10 @@ package com.project.shopapp.services.impl;
 
 import com.project.shopapp.components.CustomUserDetailsService;
 import com.project.shopapp.components.JwtService;
-import com.project.shopapp.dtos.LoginRequest;
-import com.project.shopapp.dtos.RegisterRequest;
+import com.project.shopapp.dtos.request.LoginRequest;
+import com.project.shopapp.dtos.request.RegisterRequest;
+import com.project.shopapp.dtos.response.AuthResponse;
+import com.project.shopapp.dtos.response.UserResponse;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.InvalidCredentialsException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
@@ -13,8 +15,6 @@ import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.RoleRepository;
 import com.project.shopapp.repositories.TokenRepository;
 import com.project.shopapp.repositories.UserRepository;
-import com.project.shopapp.responses.AuthResponse;
-import com.project.shopapp.responses.UserResponse;
 import com.project.shopapp.services.AuthService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -57,23 +57,21 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new DuplicateResourceException("Phone number is already registered");
         }
-        Role role =
-                roleRepository
-                        .findByName("USER")
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "Default USER role was not found"));
+        Role role = roleRepository.findByName("USER").orElse(null);
+        if (role == null) {
+            throw new ResourceNotFoundException("Default USER role was not found");
+        }
+
         User user =
-                userRepository.save(
-                        new User(
-                                request.getFullName().trim(),
-                                request.getPhoneNumber().trim(),
-                                request.getAddress().trim(),
-                                passwordEncoder.encode(request.getPassword()),
-                                request.getDateOfBirth(),
-                                role));
-        return issueToken(user);
+                User.builder()
+                        .fullName(request.getFullName().trim())
+                        .phoneNumber(request.getPhoneNumber().trim())
+                        .address(request.getAddress().trim())
+                        .password(passwordEncoder.encode(request.getPassword()))
+                        .dateOfBirth(request.getDateOfBirth())
+                        .role(role)
+                        .build();
+        return issueToken(userRepository.save(user));
     }
 
     @Transactional
@@ -96,13 +94,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Transactional
     public void logout(String token) {
-        tokenRepository
-                .findByToken(token)
-                .ifPresent(
-                        saved -> {
-                            saved.revoke();
-                            tokenRepository.save(saved);
-                        });
+        tokenRepository.findByToken(token).ifPresent(this::revokeToken);
     }
 
     private AuthResponse issueToken(User user) {
@@ -117,6 +109,11 @@ public class AuthServiceImpl implements AuthService {
         var activeTokens = tokenRepository.findAllByUserIdAndRevokedFalse(userId);
         activeTokens.forEach(Token::revoke);
         tokenRepository.saveAll(activeTokens);
+    }
+
+    private void revokeToken(Token token) {
+        token.revoke();
+        tokenRepository.save(token);
     }
 
     private User findUser(String phoneNumber) {

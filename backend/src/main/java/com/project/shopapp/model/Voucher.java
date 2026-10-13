@@ -1,6 +1,6 @@
 package com.project.shopapp.model;
 
-import com.project.shopapp.dtos.VoucherRequest;
+import com.project.shopapp.dtos.request.VoucherRequest;
 import com.project.shopapp.enums.VoucherType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

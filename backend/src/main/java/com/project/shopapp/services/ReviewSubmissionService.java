@@ -1,7 +1,7 @@
 package com.project.shopapp.services;
 
-import com.project.shopapp.dtos.CreateProductReviewRequest;
-import com.project.shopapp.responses.ProductReviewResponse;
+import com.project.shopapp.dtos.request.CreateProductReviewRequest;
+import com.project.shopapp.dtos.response.ProductReviewResponse;
 import java.io.IOException;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;

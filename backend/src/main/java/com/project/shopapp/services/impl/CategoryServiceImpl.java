@@ -1,11 +1,11 @@
 package com.project.shopapp.services.impl;
 
-import com.project.shopapp.dtos.CategoryRequest;
+import com.project.shopapp.dtos.request.CategoryRequest;
+import com.project.shopapp.dtos.response.CategoryResponse;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.repositories.CategoryRepository;
-import com.project.shopapp.responses.CategoryResponse;
 import com.project.shopapp.services.CategoryService;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -40,13 +40,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
         String name = request.getName().trim();
-        repository
-                .findByNameIgnoreCase(name)
-                .ifPresent(
-                        item -> {
-                            throw new DuplicateResourceException(
-                                    "Category already exists: " + name);
-                        });
+        if (repository.findByNameIgnoreCase(name).isPresent()) {
+            throw new DuplicateResourceException("Category already exists: " + name);
+        }
         return CategoryResponse.from(repository.save(new Category(name)));
     }
 
@@ -54,14 +50,14 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = getEntity(id);
         String name = request.getName().trim();
-        repository
-                .findByNameIgnoreCase(name)
-                .filter(item -> !item.getId().equals(id))
-                .ifPresent(
-                        item -> {
-                            throw new DuplicateResourceException(
-                                    "Category already exists: " + name);
-                        });
+        boolean duplicate =
+                repository
+                        .findByNameIgnoreCase(name)
+                        .filter(item -> !item.getId().equals(id))
+                        .isPresent();
+        if (duplicate) {
+            throw new DuplicateResourceException("Category already exists: " + name);
+        }
         category.rename(name);
         return CategoryResponse.from(category);
     }

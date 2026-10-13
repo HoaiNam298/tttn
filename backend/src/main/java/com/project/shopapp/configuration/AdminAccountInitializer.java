@@ -47,13 +47,14 @@ public class AdminAccountInitializer implements ApplicationRunner {
                 roleRepository
                         .findByName(ADMIN_ROLE)
                         .orElseThrow(() -> new IllegalStateException("ADMIN role was not found"));
-        userRepository.save(
-                new User(
-                        ADMIN_NAME,
-                        phoneNumber.trim(),
-                        SYSTEM_SOURCE,
-                        passwordEncoder.encode(password),
-                        null,
-                        adminRole));
+        User admin =
+                User.builder()
+                        .fullName(ADMIN_NAME)
+                        .phoneNumber(phoneNumber.trim())
+                        .address(SYSTEM_SOURCE)
+                        .password(passwordEncoder.encode(password))
+                        .role(adminRole)
+                        .build();
+        userRepository.save(admin);
     }
 }

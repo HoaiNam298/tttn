@@ -1,6 +1,6 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.responses.OrderReviewStatusResponse;
+import com.project.shopapp.dtos.response.OrderReviewStatusResponse;
 import com.project.shopapp.services.ProductReviewService;
 import java.security.Principal;
 import java.util.List;

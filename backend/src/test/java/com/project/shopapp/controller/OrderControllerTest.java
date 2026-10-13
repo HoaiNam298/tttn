@@ -8,11 +8,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.dtos.response.OrderItemResponse;
+import com.project.shopapp.dtos.response.OrderResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.filters.JwtAuthenticationFilter;
-import com.project.shopapp.responses.OrderItemResponse;
-import com.project.shopapp.responses.OrderResponse;
 import com.project.shopapp.services.OrderService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -84,25 +84,28 @@ class OrderControllerTest {
     }
 
     private OrderResponse order() {
-        return new OrderResponse(
-                21L,
-                UUID.randomUUID(),
-                "Nguyen Van A",
-                "0900000000",
-                "1 Nguyen Hue, HCM",
-                "",
-                OrderStatus.PENDING,
-                PaymentMethod.COD,
-                new BigDecimal("200000"),
-                new BigDecimal("30000"),
-                new BigDecimal("230000"),
-                Instant.now(),
-                List.of(
-                        new OrderItemResponse(
-                                8L,
-                                "Phone",
-                                new BigDecimal("100000"),
-                                2,
-                                new BigDecimal("200000"))));
+        return OrderResponse.builder()
+                .id(21L)
+                .orderNumber(UUID.randomUUID())
+                .recipientName("Nguyen Van A")
+                .phoneNumber("0900000000")
+                .shippingAddress("1 Nguyen Hue, HCM")
+                .note("")
+                .status(OrderStatus.PENDING)
+                .paymentMethod(PaymentMethod.COD)
+                .subtotal(new BigDecimal("200000"))
+                .shippingFee(new BigDecimal("30000"))
+                .total(new BigDecimal("230000"))
+                .createdAt(Instant.now())
+                .items(
+                        List.of(
+                                OrderItemResponse.builder()
+                                        .productId(8L)
+                                        .productName("Phone")
+                                        .unitPrice(new BigDecimal("100000"))
+                                        .quantity(2)
+                                        .lineTotal(new BigDecimal("200000"))
+                                        .build()))
+                .build();
     }
 }

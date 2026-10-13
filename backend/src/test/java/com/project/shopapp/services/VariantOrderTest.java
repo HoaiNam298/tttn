@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.project.shopapp.dtos.CreateOrderRequest;
-import com.project.shopapp.dtos.OrderItemRequest;
+import com.project.shopapp.dtos.request.CreateOrderRequest;
+import com.project.shopapp.dtos.request.OrderItemRequest;
 import com.project.shopapp.exceptions.InsufficientStockException;
 import com.project.shopapp.model.Category;
 import com.project.shopapp.model.Order;
@@ -100,16 +100,16 @@ class VariantOrderTest {
                                         .quantity(1)
                                         .variantId(2L)
                                         .build()));
-        assertEquals(2, result.items().size());
-        assertEquals(new BigDecimal("400"), result.subtotal());
-        assertEquals("BLACK", result.items().get(0).sku());
-        assertEquals("Black 128GB", result.items().get(0).variantName());
+        assertEquals(2, result.getItems().size());
+        assertEquals(new BigDecimal("400"), result.getSubtotal());
+        assertEquals("BLACK", result.getItems().get(0).getSku());
+        assertEquals("Black 128GB", result.getItems().get(0).getVariantName());
         assertEquals(1, black.getStock());
         assertEquals(1, white.getStock());
         assertEquals(2, product.getStock());
         black.update("NEW", "Renamed", "", "", "", BigDecimal.valueOf(999), 1, "", true);
-        assertEquals(BigDecimal.valueOf(100), result.items().get(0).unitPrice());
-        assertEquals("BLACK", result.items().get(0).sku());
+        assertEquals(BigDecimal.valueOf(100), result.getItems().get(0).getUnitPrice());
+        assertEquals("BLACK", result.getItems().get(0).getSku());
     }
 
     @Test

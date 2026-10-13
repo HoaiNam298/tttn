@@ -1,6 +1,6 @@
 package com.project.shopapp.controller;
 
-import com.project.shopapp.responses.ImageUploadResponse;
+import com.project.shopapp.dtos.response.ImageUploadResponse;
 import com.project.shopapp.services.MediaService;
 import java.io.IOException;
 import java.time.Duration;

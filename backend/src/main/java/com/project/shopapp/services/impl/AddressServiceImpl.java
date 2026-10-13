@@ -1,12 +1,12 @@
 package com.project.shopapp.services.impl;
 
-import com.project.shopapp.dtos.AddressRequest;
+import com.project.shopapp.dtos.request.AddressRequest;
+import com.project.shopapp.dtos.response.AddressResponse;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.User;
 import com.project.shopapp.model.UserAddress;
 import com.project.shopapp.repositories.UserAddressRepository;
 import com.project.shopapp.repositories.UserRepository;
-import com.project.shopapp.responses.AddressResponse;
 import com.project.shopapp.services.AddressService;
 import java.util.List;
 import org.springframework.stereotype.Service;
