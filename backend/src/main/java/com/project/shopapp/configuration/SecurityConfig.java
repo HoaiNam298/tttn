@@ -1,6 +1,6 @@
 package com.project.shopapp.configuration;
 
-import com.project.shopapp.filters.JwtAuthenticationFilter;
+import com.project.shopapp.components.KeycloakAuthenticationConverter;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,16 +14,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,13 +30,16 @@ public class SecurityConfig {
     private static final List<String> ALLOWED_METHODS =
             List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
     private static final List<String> ALLOWED_HEADERS = List.of("Authorization", "Content-Type");
-    private final JwtAuthenticationFilter jwtFilter;
+    private final JwtDecoder decoder;
+    private final KeycloakAuthenticationConverter converter;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(
-            JwtAuthenticationFilter jwtFilter,
+            JwtDecoder decoder,
+            KeycloakAuthenticationConverter converter,
             @Value("${app.cors.allowed-origins}") String allowedOrigins) {
-        this.jwtFilter = jwtFilter;
+        this.decoder = decoder;
+        this.converter = converter;
         this.allowedOrigins =
                 Arrays.stream(allowedOrigins.split(","))
                         .map(String::trim)
@@ -59,32 +58,44 @@ public class SecurityConfig {
                         errors.authenticationEntryPoint(this::sendUnauthorized)
                                 .accessDeniedHandler(this::sendForbidden));
         http.authorizeHttpRequests(
-                auth -> {
-                    auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
-                    auth.requestMatchers(
-                                    "/api/v1/auth/register", "/api/v1/auth/login",
-                                    "/api/v1/health", "/actuator/health")
-                            .permitAll();
-                    auth.requestMatchers(
-                                    HttpMethod.GET,
-                                    "/api/v1/categories/**",
-                                    "/api/v1/products/**",
-                                    "/api/v1/media/**")
-                            .permitAll();
-                    auth.requestMatchers(
-                                    HttpMethod.GET,
-                                    "/api/v1/payments/methods",
-                                    "/api/v1/payments/vnpay/ipn",
-                                    "/api/v1/payments/vnpay/return")
-                            .permitAll();
-                    auth.requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews")
-                            .authenticated();
-                    auth.requestMatchers("/api/v1/categories/**", "/api/v1/products/**")
-                            .hasRole("ADMIN");
-                    auth.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
-                    auth.anyRequest().authenticated();
-                });
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                auth ->
+                        auth.dispatcherTypeMatchers(DispatcherType.ERROR)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/auth/register")
+                                .permitAll()
+                                .requestMatchers(
+                                        "/api/v1/auth/login",
+                                        "/api/v1/auth/refresh",
+                                        "/api/v1/auth/logout")
+                                .denyAll()
+                                .requestMatchers("/api/v1/health", "/actuator/health")
+                                .permitAll()
+                                .requestMatchers(
+                                        HttpMethod.GET,
+                                        "/api/v1/categories/**",
+                                        "/api/v1/products/**",
+                                        "/api/v1/media/**",
+                                        "/api/v1/payments/methods",
+                                        "/api/v1/payments/vnpay/ipn",
+                                        "/api/v1/payments/vnpay/return")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews")
+                                .hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(
+                                        "/api/v1/categories/**",
+                                        "/api/v1/products/**",
+                                        "/api/v1/admin/**")
+                                .hasRole("ADMIN")
+                                .anyRequest()
+                                .hasAnyRole("USER", "ADMIN"));
+        http.oauth2ResourceServer(
+                resource ->
+                        resource.jwt(
+                                        jwt ->
+                                                jwt.decoder(decoder)
+                                                        .jwtAuthenticationConverter(converter))
+                                .authenticationEntryPoint(this::sendUnauthorized)
+                                .accessDeniedHandler(this::sendForbidden));
         return http.build();
     }
 
@@ -107,24 +118,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
-            throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-
-    @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(ALLOWED_METHODS);
         configuration.setAllowedHeaders(ALLOWED_HEADERS);
         configuration.setExposedHeaders(List.of("X-Request-ID"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

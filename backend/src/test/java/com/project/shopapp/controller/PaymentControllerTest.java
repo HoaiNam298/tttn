@@ -10,14 +10,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.project.shopapp.components.CustomUserDetailsService;
-import com.project.shopapp.components.JwtService;
+import com.project.shopapp.components.KeycloakAuthenticationConverter;
 import com.project.shopapp.configuration.SecurityConfig;
 import com.project.shopapp.configuration.VnpayProperties;
 import com.project.shopapp.dtos.response.PaymentLinkResponse;
 import com.project.shopapp.dtos.response.VnpayIpnResponse;
-import com.project.shopapp.filters.JwtAuthenticationFilter;
-import com.project.shopapp.repositories.TokenRepository;
 import com.project.shopapp.services.PaymentService;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -25,17 +22,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PaymentController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import(SecurityConfig.class)
 class PaymentControllerTest {
     @Autowired MockMvc mvc;
     @MockBean PaymentService service;
+    @MockBean JwtDecoder jwtDecoder;
+    @MockBean KeycloakAuthenticationConverter keycloakConverter;
     @MockBean VnpayProperties properties;
-    @MockBean JwtService jwt;
-    @MockBean CustomUserDetailsService users;
-    @MockBean TokenRepository tokens;
 
     @Test
     void unsignedPublicIpnReturnsProtocolErrorNotLoginPage() throws Exception {

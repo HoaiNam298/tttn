@@ -82,7 +82,9 @@ export class RegisterComponent {
             this.returnUrl?.startsWith('/') && !this.returnUrl.startsWith('//')
               ? this.returnUrl
               : '/products';
-          void this.router.navigateByUrl(destination);
+          void this.router.navigate(['/login'], {
+            queryParams: { returnUrl: destination, registered: '1' },
+          });
         },
         error: (response) => {
           this.form.enable({ emitEvent: false });

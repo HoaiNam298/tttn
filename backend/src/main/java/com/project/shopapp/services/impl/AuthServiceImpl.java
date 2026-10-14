@@ -1,138 +1,81 @@
 package com.project.shopapp.services.impl;
 
-import com.project.shopapp.components.CustomUserDetailsService;
-import com.project.shopapp.components.JwtService;
-import com.project.shopapp.components.TransactionLog;
-import com.project.shopapp.dtos.request.LoginRequest;
 import com.project.shopapp.dtos.request.RegisterRequest;
-import com.project.shopapp.dtos.response.AuthResponse;
 import com.project.shopapp.dtos.response.UserResponse;
 import com.project.shopapp.exceptions.DuplicateResourceException;
-import com.project.shopapp.exceptions.InvalidCredentialsException;
+import com.project.shopapp.exceptions.IdentityProviderException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
-import com.project.shopapp.model.Role;
-import com.project.shopapp.model.Token;
 import com.project.shopapp.model.User;
-import com.project.shopapp.repositories.RoleRepository;
-import com.project.shopapp.repositories.TokenRepository;
 import com.project.shopapp.repositories.UserRepository;
 import com.project.shopapp.services.AuthService;
+import com.project.shopapp.services.KeycloakAccounts;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @Slf4j
-@Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final TokenRepository tokenRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final CustomUserDetailsService userDetailsService;
-    private final JwtService jwtService;
+    private final UserRepository users;
+    private final KeycloakAccounts accounts;
+    private final TransactionTemplate transaction;
 
     public AuthServiceImpl(
-            UserRepository userRepository,
-            RoleRepository roleRepository,
-            TokenRepository tokenRepository,
-            PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager,
-            CustomUserDetailsService userDetailsService,
-            JwtService jwtService) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.tokenRepository = tokenRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.userDetailsService = userDetailsService;
-        this.jwtService = jwtService;
+            UserRepository users, KeycloakAccounts accounts, PlatformTransactionManager manager) {
+        this.users = users;
+        this.accounts = accounts;
+        this.transaction = new TransactionTemplate(manager);
+        this.transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            log.debug("Registration rejected reason=account_already_exists");
+    @Override
+    public UserResponse register(RegisterRequest request) {
+        if (users.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new DuplicateResourceException("Phone number is already registered");
         }
-        Role role = roleRepository.findByName("USER").orElse(null);
-        if (role == null) {
-            throw new ResourceNotFoundException("Default USER role was not found");
-        }
-
-        User user =
-                User.builder()
-                        .fullName(request.getFullName().trim())
-                        .phoneNumber(request.getPhoneNumber().trim())
-                        .address(request.getAddress().trim())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .dateOfBirth(request.getDateOfBirth())
-                        .role(role)
-                        .build();
-        User saved = userRepository.save(user);
-        AuthResponse response = issueToken(saved);
-        TransactionLog.info(log, "User registered userId={}", saved.getId());
-        return response;
-    }
-
-    @Transactional
-    public AuthResponse login(LoginRequest request) {
+        String subject = accounts.createDisabled(request);
         try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getPhoneNumber(), request.getPassword()));
-        } catch (AuthenticationServiceException exception) {
-            throw exception;
-        } catch (AuthenticationException exception) {
-            log.warn("Login rejected reason=authentication_failed");
-            throw new InvalidCredentialsException("Phone number or password is incorrect");
+            return transaction.execute(
+                    status -> {
+                        User user = saveProfile(request, subject);
+                        accounts.enable(subject);
+                        return UserResponse.from(user, "USER");
+                    });
+        } catch (RuntimeException failure) {
+            deleteIncompleteAccount(subject);
+            throw failure;
         }
-        User user = findUser(request.getPhoneNumber());
-        revokeActiveTokens(user.getId());
-        AuthResponse response = issueToken(user);
-        TransactionLog.info(log, "User logged in userId={}", user.getId());
-        return response;
     }
 
-    public UserResponse currentUser(String phoneNumber) {
-        return UserResponse.from(findUser(phoneNumber));
+    private User saveProfile(RegisterRequest request, String subject) {
+        return users.saveAndFlush(
+                User.builder()
+                        .keycloakUserId(subject)
+                        .fullName(request.getFullName())
+                        .phoneNumber(request.getPhoneNumber())
+                        .address(request.getAddress())
+                        .dateOfBirth(request.getDateOfBirth())
+                        .build());
     }
 
-    @Transactional
-    public void logout(String token) {
-        tokenRepository.findByToken(token).ifPresent(this::revokeToken);
+    private void deleteIncompleteAccount(String subject) {
+        try {
+            accounts.delete(subject);
+        } catch (RuntimeException cleanupFailure) {
+            log.error("Keycloak registration compensation required subject={}", subject);
+            throw new IdentityProviderException();
+        }
     }
 
-    private AuthResponse issueToken(User user) {
-        UserDetails details = userDetailsService.loadUserByUsername(user.getPhoneNumber());
-        String value = jwtService.generateToken(details);
-        tokenRepository.save(new Token(value, jwtService.extractExpiration(value), user));
-        return new AuthResponse(
-                value, "Bearer", jwtService.getExpiration() / 1000, UserResponse.from(user));
-    }
-
-    private void revokeActiveTokens(Long userId) {
-        var activeTokens = tokenRepository.findAllByUserIdAndRevokedFalse(userId);
-        activeTokens.forEach(Token::revoke);
-        tokenRepository.saveAll(activeTokens);
-    }
-
-    private void revokeToken(Token token) {
-        token.revoke();
-        tokenRepository.save(token);
-        TransactionLog.info(log, "User logged out userId={}", token.getUser().getId());
-    }
-
-    private User findUser(String phoneNumber) {
-        return userRepository
-                .findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    @Transactional(readOnly = true)
+    @Override
+    public UserResponse currentUser(String subject, boolean admin) {
+        var user =
+                users.findByKeycloakUserId(subject)
+                        .orElseThrow(() -> new ResourceNotFoundException("User profile not found"));
+        return UserResponse.from(user, admin ? "ADMIN" : "USER");
     }
 }

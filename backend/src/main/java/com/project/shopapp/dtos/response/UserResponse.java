@@ -25,14 +25,14 @@ public class UserResponse {
 
     private String role;
 
-    public static UserResponse from(User user) {
+    public static UserResponse from(User user, String role) {
         return UserResponse.builder()
                 .id(user.getId())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
                 .address(user.getAddress())
                 .dateOfBirth(user.getDateOfBirth())
-                .role(user.getRole().getName())
+                .role(role)
                 .build();
     }
 }

@@ -54,7 +54,7 @@ class OrderIdempotencyTest {
                         mock(OrderItemRepository.class),
                         mock(OrderStatusHistoryRepository.class),
                         new OrderBusinessServiceImpl());
-        user = new User("Customer", "0900000000", "HCM", "password", null, null);
+        user = new User("Customer", "0900000000", "HCM", null, "test-subject");
         ReflectionTestUtils.setField(user, "id", 1L);
         when(users.findForUpdateByPhoneNumber("0900000000")).thenReturn(Optional.of(user));
     }

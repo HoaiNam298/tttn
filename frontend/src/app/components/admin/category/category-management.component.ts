@@ -2,9 +2,7 @@ import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.co
 import {
   Component,
   DestroyRef,
-  EventEmitter,
   OnInit,
-  Output,
   inject,
   ChangeDetectionStrategy,
   TemplateRef,
@@ -60,7 +58,6 @@ import { CatalogService } from '../../../services/catalog.service';
   templateUrl: './category-management.component.html',
 })
 export class CategoryManagementComponent implements OnInit {
-  private readonly confirmations = inject(MatDialog);
   private confirmationOpen = false;
 
   private readonly formBuilder = inject(FormBuilder);
@@ -114,8 +111,6 @@ export class CategoryManagementComponent implements OnInit {
     this.showEditor();
   }
 
-  @Output() readonly changed = new EventEmitter<void>();
-
   categories: Category[] = [];
   error = '';
   loading = false;
@@ -123,7 +118,6 @@ export class CategoryManagementComponent implements OnInit {
   editingId?: number;
   page = 0;
   pageSize = 10;
-  totalPages = 0;
   totalElements = 0;
   keyword = '';
   form = this.formBuilder.nonNullable.group({
@@ -156,7 +150,7 @@ export class CategoryManagementComponent implements OnInit {
           ? 'Đã cập nhật danh mục.'
           : 'Đã thêm danh mục.';
         this.cancelEdit();
-        this.afterChange();
+        this.load(this.page);
       },
       error: () => {
         this.saving = false;
@@ -189,7 +183,7 @@ export class CategoryManagementComponent implements OnInit {
 
   private deleteConfirmed(category: Category): void {
     this.catalog.deleteCategory(category.id).subscribe({
-      next: () => this.afterChange(),
+      next: () => this.load(this.page),
       error: () => {
         this.error = 'Không thể xóa danh mục đang có sản phẩm.';
       },
@@ -213,7 +207,6 @@ export class CategoryManagementComponent implements OnInit {
           }
           this.categories = response.content;
           this.page = response.number;
-          this.totalPages = response.totalPages;
           this.totalElements = response.totalElements;
           this.loading = false;
           this.error = '';
@@ -228,17 +221,12 @@ export class CategoryManagementComponent implements OnInit {
       });
   }
 
-  private afterChange(): void {
-    this.load(this.page);
-    this.changed.emit();
-  }
-
   delete(category: Category): void {
     if (this.confirmationOpen) {
       return;
     }
     this.confirmationOpen = true;
-    this.confirmations
+    this.dialog
       .open(ConfirmationDialogComponent, {
         data: `Xóa danh mục "${category.name}"?`,
         width: '440px',

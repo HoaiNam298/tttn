@@ -8,7 +8,7 @@ spring:
   datasource:
     url: ${SHOPAPP_DB_URL:jdbc:postgresql://127.0.0.1:5433/shopapp}
     username: ${SHOPAPP_DB_USERNAME:shopapp}
-    password: ${SHOPAPP_DB_PASSWORD:shopapp_dev_password}
+    password: ${SHOPAPP_DB_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -31,12 +31,15 @@ app:
     directory: ${SHOPAPP_UPLOAD_DIR:uploads}
   cors:
     allowed-origins: ${SHOPAPP_CORS_ALLOWED_ORIGINS:http://localhost:4200},${SHOPAPP_PUBLIC_BASE_URL:http://localhost:4200}
-  admin:
-    phone-number: ${SHOPAPP_ADMIN_PHONE:}
-    password: ${SHOPAPP_ADMIN_PASSWORD:}
   security:
-    jwt-secret: ${SHOPAPP_JWT_SECRET}
-    access-token-expiration: ${SHOPAPP_ACCESS_TOKEN_EXPIRATION:3600000}
+    keycloak:
+      issuer-uri: ${SHOPAPP_KEYCLOAK_ISSUER:http://localhost:8081/realms/shopapp}
+      jwk-set-uri: ${SHOPAPP_KEYCLOAK_JWKS:http://localhost:8081/realms/shopapp/protocol/openid-connect/certs}
+      audience: shopapp-api
+      admin-url: ${SHOPAPP_KEYCLOAK_ADMIN_URL:http://localhost:8081}
+      realm: shopapp
+      registration-client: shopapp-registration
+      registration-secret: ${SHOPAPP_KEYCLOAK_SERVICE_SECRET:}
 
 server:
   port: ${SERVER_PORT:8088}

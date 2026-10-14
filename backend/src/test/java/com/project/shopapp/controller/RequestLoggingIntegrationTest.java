@@ -8,12 +8,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import com.project.shopapp.components.CustomUserDetailsService;
-import com.project.shopapp.components.JwtService;
+import com.project.shopapp.components.KeycloakAuthenticationConverter;
 import com.project.shopapp.configuration.SecurityConfig;
-import com.project.shopapp.filters.JwtAuthenticationFilter;
 import com.project.shopapp.filters.RequestLoggingFilter;
-import com.project.shopapp.repositories.TokenRepository;
 import com.project.shopapp.services.CategoryService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -23,17 +20,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(CategoryController.class)
-@Import({SecurityConfig.class, RequestLoggingFilter.class, JwtAuthenticationFilter.class})
+@Import({SecurityConfig.class, RequestLoggingFilter.class})
 class RequestLoggingIntegrationTest {
     @Autowired MockMvc mvc;
     @MockBean CategoryService service;
-    @MockBean JwtService jwtService;
-    @MockBean CustomUserDetailsService userDetails;
-    @MockBean TokenRepository tokens;
+    @MockBean JwtDecoder jwtDecoder;
+    @MockBean KeycloakAuthenticationConverter keycloakConverter;
 
     @Test
     void requestIdMatchesBusinessLogAndQueryDoesNotAppearInRequestLog() throws Exception {

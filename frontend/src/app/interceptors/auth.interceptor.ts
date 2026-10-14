@@ -1,20 +1,57 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  const ownApi = request.url.startsWith(`${environment.apiUrl}/`);
+  const registration = /\/auth\/register(?:\?|$)/.test(request.url);
+  if (!ownApi || registration) {
+    return next(request);
+  }
   const auth = inject(AuthService);
   const router = inject(Router);
+  const initialUserId = auth.session()?.user.id ?? null;
+  const sameAccount = () => (auth.session()?.user.id ?? null) === initialUserId;
   const token = auth.token();
-  const authenticatedRequest = token
-    ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : request;
+  const send = (accessToken: string | null) =>
+    next(
+      accessToken
+        ? request.clone({
+            setHeaders: { Authorization: `Bearer ${accessToken}` },
+          })
+        : request,
+    );
+  const initial =
+    !token && auth.session()
+      ? auth.refresh().pipe(switchMap((session) => send(session.accessToken)))
+      : send(token).pipe(
+          catchError((error: HttpErrorResponse) => {
+            if (error.status !== 401 || !auth.session() || !sameAccount()) {
+              return throwError(() => error);
+            }
+            const latest = auth.token();
+            if (latest && latest !== token) {
+              return send(latest);
+            }
+            return auth
+              .refresh()
+              .pipe(switchMap((session) => send(session.accessToken)));
+          }),
+        );
 
-  return next(authenticatedRequest).pipe(
-    catchError((error: { status?: number }) => {
-      if (error.status === 401 && !request.url.includes('/auth/login')) {
+  return initial.pipe(
+    catchError((error: HttpErrorResponse) => {
+      const expiredRefresh =
+        [400, 403].includes(error.status) &&
+        initialUserId !== null &&
+        !auth.session();
+      if (
+        (error.status === 401 || expiredRefresh) &&
+        (sameAccount() || !auth.session())
+      ) {
         auth.clearSession();
         void router.navigate(['/login'], {
           queryParams: { returnUrl: router.url },

@@ -7,14 +7,44 @@ import { AuthService } from './auth.service';
 import { signal } from '@angular/core';
 import { Order } from '../models/order.model';
 
+describe('Keycloak cart storage', () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('ignores legacy guest/account carts even when the numeric user ID is reused', () => {
+    const userId = signal<number | null>(101);
+    const oldCart = JSON.stringify([{ productId: 999, quantity: 4 }]);
+    localStorage.setItem('shopapp_cart', oldCart);
+    localStorage.setItem('shopapp_cart_user_101', oldCart);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AuthService, useValue: { userId } },
+        { provide: CatalogService, useValue: {} },
+      ],
+    });
+    const cart = TestBed.inject(CartService);
+    expect(cart.items()).toEqual([]);
+    cart.add(8, 2);
+    expect(
+      JSON.parse(localStorage.getItem('shopapp_kc_v1_cart_user_101') ?? '[]'),
+    ).toEqual([{ productId: 8, quantity: 2, selected: true }]);
+    expect(localStorage.getItem('shopapp_cart_user_101')).toBe(oldCart);
+    userId.set(102);
+    expect(cart.items()).toEqual([]);
+    userId.set(101);
+    expect(cart.items()).toEqual([{ productId: 8, quantity: 2 }]);
+  });
+});
+
 describe('CartService', () => {
   let service: CartService;
   const userId = signal<number | null>(null);
 
   beforeEach(() => {
-    localStorage.removeItem('shopapp_cart');
-    localStorage.removeItem('shopapp_cart_user_101');
-    localStorage.removeItem('shopapp_cart_user_102');
+    localStorage.removeItem('shopapp_kc_v1_cart');
+    localStorage.removeItem('shopapp_kc_v1_cart_user_101');
+    localStorage.removeItem('shopapp_kc_v1_cart_user_102');
     userId.set(null);
     TestBed.configureTestingModule({
       providers: [
@@ -33,9 +63,9 @@ describe('CartService', () => {
 
   afterEach(() => {
     for (const key of [
-      'shopapp_cart',
-      'shopapp_cart_user_101',
-      'shopapp_cart_user_102',
+      'shopapp_kc_v1_cart',
+      'shopapp_kc_v1_cart_user_101',
+      'shopapp_kc_v1_cart_user_102',
     ]) {
       localStorage.removeItem(key);
     }

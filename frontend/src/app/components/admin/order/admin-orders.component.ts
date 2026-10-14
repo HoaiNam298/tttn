@@ -97,7 +97,6 @@ export class AdminOrdersComponent implements OnInit {
     this.load(event.pageIndex);
   }
 
-  totalPages = 0;
   loading = false;
   error = '';
 
@@ -127,7 +126,6 @@ export class AdminOrdersComponent implements OnInit {
           }
           this.items = response.content;
           this.page = response.number;
-          this.totalPages = response.totalPages;
           this.totalElements = response.totalElements;
           this.loading = false;
         },

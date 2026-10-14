@@ -17,10 +17,11 @@ interface StoredCartItem {
 export class CartService {
   private readonly auth = inject(AuthService);
   private readonly revision = signal(0);
+  private readonly guestKey = 'shopapp_kc_v1_cart';
   private readonly storageKey = computed(() =>
     this.auth.userId() == null
-      ? 'shopapp_cart'
-      : `shopapp_cart_user_${this.auth.userId()}`,
+      ? this.guestKey
+      : `${this.guestKey}_user_${this.auth.userId()}`,
   );
   private readonly catalog = inject(CatalogService);
   private readonly state = computed(() => {
@@ -30,7 +31,7 @@ export class CartService {
       return own;
     }
     const merged = own.map((item) => ({ ...item }));
-    for (const guest of this.read('shopapp_cart')) {
+    for (const guest of this.read(this.guestKey)) {
       const existing = merged.find(
         (item) =>
           item.productId === guest.productId &&
@@ -51,7 +52,7 @@ export class CartService {
 
   constructor() {
     effect(() => {
-      if (this.auth.userId() != null && this.read('shopapp_cart').length > 0) {
+      if (this.auth.userId() != null && this.read(this.guestKey).length > 0) {
         this.save(this.state());
       }
     });
@@ -246,7 +247,7 @@ export class CartService {
   private save(items: StoredCartItem[]): void {
     localStorage.setItem(this.storageKey(), JSON.stringify(items));
     if (this.auth.userId() != null) {
-      localStorage.removeItem('shopapp_cart');
+      localStorage.removeItem(this.guestKey);
     }
     this.revision.update((value) => value + 1);
   }

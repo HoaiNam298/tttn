@@ -47,9 +47,6 @@ class ResponseJsonContractTest {
                                 "phoneNumber",
                                 "shippingAddress",
                                 "defaultAddress")),
-                Arguments.of(
-                        AuthResponse.class,
-                        Set.of("accessToken", "tokenType", "expiresIn", "user")),
                 Arguments.of(CategoryResponse.class, Set.of("id", "name")),
                 Arguments.of(
                         CheckoutQuoteResponse.class,

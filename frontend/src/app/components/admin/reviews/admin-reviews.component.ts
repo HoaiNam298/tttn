@@ -93,7 +93,6 @@ export class AdminReviewsComponent implements OnInit {
     this.load(event.pageIndex);
   }
 
-  totalPages = 0;
   loading = false;
   saving = false;
   error = '';
@@ -121,7 +120,6 @@ export class AdminReviewsComponent implements OnInit {
           }
           this.reviews = result.content;
           this.page = result.number;
-          this.totalPages = result.totalPages;
           this.totalElements = result.totalElements;
           this.loading = false;
         },

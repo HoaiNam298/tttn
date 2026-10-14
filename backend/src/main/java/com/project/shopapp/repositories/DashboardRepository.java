@@ -13,7 +13,7 @@ public interface DashboardRepository extends Repository<Order, Long> {
     @Query(
             value =
                     """
-                    SELECT (completed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS day,
+                    SELECT CAST(completed_at AT TIME ZONE 'Asia/Ho_Chi_Minh' AS date) AS day,
                            COUNT(*) AS orders,
                            SUM(subtotal - discount) AS revenue
                     FROM orders

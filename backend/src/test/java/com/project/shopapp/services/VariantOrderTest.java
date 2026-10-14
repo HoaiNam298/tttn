@@ -62,7 +62,8 @@ class VariantOrderTest {
                         new OrderBusinessServiceImpl());
         when(users.findByPhoneNumber("0900000000"))
                 .thenReturn(
-                        Optional.of(new User("Customer", "0900000000", "HCM", "pw", null, null)));
+                        Optional.of(
+                                new User("Customer", "0900000000", "HCM", null, "test-subject")));
         when(products.findAllByIdInOrderById(any())).thenReturn(List.of(product));
     }
 

@@ -43,7 +43,6 @@ import { AddressService } from '../../../services/address.service';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AddressesComponent implements OnInit {
-  private readonly confirmations = inject(MatDialog);
   private confirmationOpen = false;
 
   private readonly service = inject(AddressService);
@@ -177,7 +176,7 @@ export class AddressesComponent implements OnInit {
       return;
     }
     this.confirmationOpen = true;
-    this.confirmations
+    this.dialog
       .open(ConfirmationDialogComponent, {
         data: 'Xóa địa chỉ này?',
         width: '440px',

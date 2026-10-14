@@ -5,3 +5,5 @@
 /backend/logs/
 /backend/uploads/
 /uploads/
+/.local-backups/
+**/__pycache__/

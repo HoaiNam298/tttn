@@ -66,7 +66,6 @@ import { ProductInventoryEditorComponent } from './product-inventory-editor.comp
   templateUrl: './admin-catalog.component.html',
 })
 export class AdminCatalogComponent implements OnInit {
-  private readonly confirmations = inject(MatDialog);
   private confirmationOpen = false;
 
   private readonly fb = inject(FormBuilder);
@@ -116,7 +115,6 @@ export class AdminCatalogComponent implements OnInit {
   error = '';
   page = 0;
   pageSize = 10;
-  totalPages = 0;
   totalElements = 0;
   keyword = '';
   categoryId?: number;
@@ -173,7 +171,6 @@ export class AdminCatalogComponent implements OnInit {
           }
           this.products = value.content;
           this.page = value.number;
-          this.totalPages = value.totalPages;
           this.totalElements = value.totalElements;
           this.loading = false;
         },
@@ -268,7 +265,7 @@ export class AdminCatalogComponent implements OnInit {
       return;
     }
     this.confirmationOpen = true;
-    this.confirmations
+    this.dialog
       .open(ConfirmationDialogComponent, {
         data: `Xóa sản phẩm "${product.name}"?`,
         width: '440px',

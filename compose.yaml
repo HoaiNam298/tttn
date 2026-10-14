@@ -17,19 +17,44 @@ services:
       timeout: 5s
       retries: 10
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    container_name: shopapp-keycloak
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${SHOPAPP_KEYCLOAK_ADMIN_PASSWORD:?Set Keycloak admin password}
+      KC_DB: dev-file
+      KC_HOSTNAME: http://localhost:8081
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      SHOPAPP_KEYCLOAK_SERVICE_SECRET: ${SHOPAPP_KEYCLOAK_SERVICE_SECRET:?Set service account secret}
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - shopapp_keycloak_data:/opt/keycloak/data
+      - ./keycloak/shopapp-realm.json:/opt/keycloak/data/import/shopapp-realm.json:ro
+    healthcheck:
+      test: ["CMD", "bash", "-c", "{ printf 'HEAD /health/ready HTTP/1.0\\r\\n\\r\\n' >&0; grep '200'; } 0<>/dev/tcp/localhost/9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
   backend:
     build:
       context: ./backend
     container_name: shopapp-backend
     restart: unless-stopped
     environment:
-      SHOPAPP_DB_URL: jdbc:postgresql://postgres:5432/${SHOPAPP_POSTGRES_DB:-shopapp}
+      SHOPAPP_DB_URL: jdbc:postgresql://postgres:5432/${SHOPAPP_APP_DB:-${SHOPAPP_POSTGRES_DB:-shopapp}}
       SHOPAPP_DB_USERNAME: ${SHOPAPP_DB_USERNAME:-shopapp}
       SHOPAPP_DB_PASSWORD: ${SHOPAPP_DB_PASSWORD}
-      SHOPAPP_JWT_SECRET: ${SHOPAPP_JWT_SECRET}
-      SHOPAPP_ACCESS_TOKEN_EXPIRATION: ${SHOPAPP_ACCESS_TOKEN_EXPIRATION:-3600000}
-      SHOPAPP_ADMIN_PHONE: ${SHOPAPP_ADMIN_PHONE:-}
-      SHOPAPP_ADMIN_PASSWORD: ${SHOPAPP_ADMIN_PASSWORD:-}
+      SHOPAPP_KEYCLOAK_ISSUER: http://localhost:8081/realms/shopapp
+      SHOPAPP_KEYCLOAK_JWKS: http://keycloak:8080/realms/shopapp/protocol/openid-connect/certs
+      SHOPAPP_KEYCLOAK_ADMIN_URL: http://keycloak:8080
+      SHOPAPP_KEYCLOAK_SERVICE_SECRET: ${SHOPAPP_KEYCLOAK_SERVICE_SECRET}
       SHOPAPP_CORS_ALLOWED_ORIGINS: ${SHOPAPP_CORS_ALLOWED_ORIGINS:-http://localhost:4200}
       SERVER_PORT: 8088
       SHOPAPP_UPLOAD_DIR: /app/uploads
@@ -68,6 +93,7 @@ services:
       retries: 5
 
 volumes:
+  shopapp_keycloak_data:
   shopapp_postgres_data:
   shopapp_uploads:
   shopapp_logs:
