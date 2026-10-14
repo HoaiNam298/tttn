@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.components.KeycloakAuthenticationConverter;
 import com.project.shopapp.dtos.response.CategoryResponse;
 import com.project.shopapp.dtos.response.ProductResponse;
-import com.project.shopapp.filters.JwtAuthenticationFilter;
 import com.project.shopapp.services.ProductService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ProductController.class)
@@ -32,7 +33,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class ProductControllerTest {
     @Autowired MockMvc mockMvc;
     @MockBean ProductService service;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean JwtDecoder jwtDecoder;
+    @MockBean KeycloakAuthenticationConverter keycloakConverter;
 
     @Test
     void searchesProducts() throws Exception {

@@ -23,16 +23,6 @@ public interface ProductRepository
     @EntityGraph(attributePaths = {"category", "images"})
     Optional<Product> findDetailById(Long id);
 
-    @EntityGraph(attributePaths = {"category"})
-    Page<Product> findByNameContainingIgnoreCase(String keyword, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"category"})
-    Page<Product> findByCategoryId(Long categoryId, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"category"})
-    Page<Product> findByNameContainingIgnoreCaseAndCategoryId(
-            String keyword, Long categoryId, Pageable pageable);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Product> findForUpdateById(Long id);
 

@@ -8,6 +8,17 @@
     @if (loading) {
       <mat-progress-bar mode="indeterminate" aria-label="Đang đăng nhập" />
     }
+    @if (registered) {
+      <p class="auth-success" role="status">
+        Đăng ký thành công. Bạn có thể đăng nhập ngay.
+      </p>
+    }
+    @if (idleExpired) {
+      <p class="auth-error" role="alert">
+        Bạn đã được đăng xuất sau 30 phút không hoạt động. Vui lòng đăng nhập
+        lại.
+      </p>
+    }
     <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
       <mat-form-field appearance="outline"
         ><mat-label>Số điện thoại</mat-label

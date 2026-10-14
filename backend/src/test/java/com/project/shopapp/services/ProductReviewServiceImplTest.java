@@ -43,7 +43,7 @@ class ProductReviewServiceImplTest {
         service = new ProductReviewServiceImpl(reviewRepository, orderItemRepository);
         Product product = new Product("Phone", BigDecimal.TEN, "", "", new Category("Phone"));
         ReflectionTestUtils.setField(product, "id", 8L);
-        User user = new User("Customer", "0900000000", "HCM", "password", null, null);
+        User user = new User("Customer", "0900000000", "HCM", null, "test-subject");
         Order order =
                 orderBusinessService.createOrder(
                         user, "Customer", "0900000000", "HCM", "", BigDecimal.ZERO);

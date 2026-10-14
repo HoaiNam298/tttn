@@ -121,9 +121,7 @@
           <h2>Giao hàng & thanh toán</h2>
           <mat-form-field appearance="outline"
             ><mat-label>Giao hàng (phí demo)</mat-label>
-            <mat-select
-              formControlName="shippingMethod"
-              (selectionChange)="refreshQuote()"
+            <mat-select formControlName="shippingMethod"
               ><mat-option value="STANDARD">Tiêu chuẩn</mat-option
               ><mat-option value="EXPRESS">Nhanh</mat-option></mat-select
             >
@@ -154,18 +152,31 @@
               @if (form.controls.voucherCode.invalid) {
                 <mat-error>Mã gồm 3–40 chữ, số, dấu _ hoặc -.</mat-error>
               }
+              <mat-hint
+                >Nhấn Áp mã để sử dụng; để trống và áp lại để bỏ mã.</mat-hint
+              >
             </mat-form-field>
             <button
               mat-stroked-button
               type="button"
               [disabled]="quoting || submitting || !!pending"
-              (click)="refreshQuote()"
+              (click)="applyVoucher()"
             >
-              Tính tổng tiền
+              Áp mã
             </button>
           </div>
           @if (quoteError) {
             <p class="error-notice" role="alert">{{ quoteError }}</p>
+            @if (!quote) {
+              <button
+                mat-button
+                type="button"
+                [disabled]="quoting || submitting || !!pending"
+                (click)="refreshQuote()"
+              >
+                Thử lại tổng tiền
+              </button>
+            }
           }
         </mat-card-content>
       </mat-card>
@@ -238,8 +249,8 @@
             }
           } @else {
             <p class="summary-note">
-              Nhấn tính tổng tiền để xác nhận phí giao hàng và giảm giá từ hệ
-              thống.
+              Điền thông tin nhận hàng để hệ thống cập nhật tổng tiền. Nếu có mã
+              giảm giá, nhấn Áp mã để sử dụng.
             </p>
           }
           <p class="summary-note">
@@ -250,7 +261,7 @@
             class="submit-order"
             type="submit"
             [disabled]="
-              form.invalid || submitting || (!pending && (!quote || quoting))
+              checkoutInvalid || submitting || (!pending && (!quote || quoting))
             "
           >
             {{

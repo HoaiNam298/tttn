@@ -10,7 +10,7 @@ import { OrderService } from '../../services/order.service';
 import { CheckoutComponent } from './checkout.component';
 
 describe('Checkout request recovery', () => {
-  const key = 'shopapp_checkout_attempt_901';
+  const key = 'shopapp_kc_v1_checkout_attempt_901';
   const cart = { lines: vi.fn(), removePurchased: vi.fn() };
   const orders = { create: vi.fn(), quote: vi.fn(), paymentMethods: vi.fn() };
   const catalog = { product: vi.fn() };
@@ -68,7 +68,34 @@ describe('Checkout request recovery', () => {
     });
   });
 
-  afterEach(() => sessionStorage.removeItem(key));
+  afterEach(() => {
+    sessionStorage.removeItem(key);
+    sessionStorage.removeItem('shopapp_checkout_attempt_901');
+  });
+
+  it('does not restore a legacy checkout attempt after switching to Keycloak', () => {
+    sessionStorage.setItem(
+      'shopapp_checkout_attempt_901',
+      JSON.stringify({
+        source: 'buy:8:2',
+        payload: {
+          recipientName: 'Legacy customer',
+          phoneNumber: '0900000000',
+          shippingAddress: 'Legacy address',
+          requestId: crypto.randomUUID(),
+          items: [{ productId: 8, quantity: 2 }],
+        },
+      }),
+    );
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    expect(component.pending).toBeUndefined();
+    expect(
+      sessionStorage.getItem('shopapp_checkout_attempt_901'),
+    ).not.toBeNull();
+  });
 
   it('sends VNPAY and navigates to the persisted order instead of COD success', () => {
     orders.paymentMethods.mockReturnValue(of({ vnpayEnabled: true }));
@@ -78,7 +105,8 @@ describe('Checkout request recovery', () => {
     );
     component.ngOnInit();
     component.form.controls.paymentMethod.setValue('VNPAY');
-    component.refreshQuote();
+    expect(orders.quote).toHaveBeenCalledTimes(1);
+    expect(component.quote).toBeDefined();
     component.submit();
     expect(orders.create.mock.calls[0][0].paymentMethod).toBe('VNPAY');
     expect(orders.create.mock.calls[0][0].requestId).toBeTruthy();
@@ -198,7 +226,7 @@ describe('Checkout request recovery', () => {
       shippingMethod: 'EXPRESS',
       voucherCode: 'SAVE10',
     });
-    component.refreshQuote();
+    component.applyVoucher();
     expect(component.quote?.total).toBe(50150);
     component.submit();
     const first = orders.create.mock.calls[0][0];
@@ -248,26 +276,32 @@ describe('Checkout request recovery', () => {
     expect(sessionStorage.getItem(key)).toBeNull();
   });
 
-  it('invalidates an old quote when recipient details change', () => {
+  it('keeps the quote when recipient details change and submits the new address', () => {
+    orders.create.mockReturnValue(of({ id: 31 }));
     const component = TestBed.runInInjectionContext(
       () => new CheckoutComponent(),
     );
     component.ngOnInit();
     expect(component.quote).toBeDefined();
     component.form.controls.shippingAddress.setValue('New delivery address');
-    expect(component.quote).toBeUndefined();
-    component.refreshQuote();
     expect(component.quote).toBeDefined();
+    expect(orders.quote).toHaveBeenCalledTimes(1);
+    component.submit();
+    expect(orders.create.mock.calls[0][0].shippingAddress).toBe(
+      'New delivery address',
+    );
   });
 
   it('ignores a quote response for details that have since changed', () => {
     const response = new Subject<CheckoutQuote>();
-    orders.quote.mockReturnValue(response);
+    orders.quote
+      .mockReturnValueOnce(response)
+      .mockReturnValue(new Subject<CheckoutQuote>());
     const component = TestBed.runInInjectionContext(
       () => new CheckoutComponent(),
     );
     component.ngOnInit();
-    component.form.controls.shippingAddress.setValue('Changed address');
+    component.form.controls.shippingMethod.setValue('EXPRESS');
     response.next({
       subtotal: 200,
       shippingMethod: 'STANDARD',
@@ -277,7 +311,33 @@ describe('Checkout request recovery', () => {
       total: 30200,
     });
     expect(component.quote).toBeUndefined();
-    expect(component.quoting).toBe(false);
+    expect(component.quoting).toBe(true);
+  });
+
+  it('only uses a voucher after applying it, ignoring later draft edits', () => {
+    orders.create.mockReturnValue(of({ id: 31 }));
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    component.form.controls.voucherCode.setValue('SAVE10');
+    expect(orders.quote).toHaveBeenCalledTimes(1);
+    component.applyVoucher();
+    expect(orders.quote.mock.calls[1][0].voucherCode).toBe('SAVE10');
+    component.form.controls.voucherCode.setValue('x');
+    component.submit();
+    expect(orders.create.mock.calls[0][0].voucherCode).toBe('SAVE10');
+  });
+
+  it('automatically recalculates shipping without applying the draft voucher', () => {
+    const component = TestBed.runInInjectionContext(
+      () => new CheckoutComponent(),
+    );
+    component.ngOnInit();
+    component.form.controls.voucherCode.setValue('SAVE10');
+    component.form.controls.shippingMethod.setValue('EXPRESS');
+    expect(orders.quote.mock.calls[1][0].shippingMethod).toBe('EXPRESS');
+    expect(orders.quote.mock.calls[1][0].voucherCode).toBe('');
   });
 
   it('blocks duplicate submissions and freezes the pending request', () => {

@@ -3,6 +3,7 @@ import {
   inject,
   ChangeDetectionStrategy,
   DestroyRef,
+  OnInit,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -30,7 +31,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   showPassword = false;
@@ -38,9 +39,20 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+  readonly registered =
+    this.route.snapshot.queryParamMap.get('registered') === '1';
+  readonly idleExpired =
+    this.route.snapshot.queryParamMap.get('reason') === 'idle';
 
   loading = false;
   error = '';
+  ngOnInit(): void {
+    if (this.auth.session()) {
+      void this.router.navigateByUrl(
+        this.destination(this.auth.isAdmin() ? 'ADMIN' : 'USER'),
+      );
+    }
+  }
   form = this.fb.nonNullable.group({
     phoneNumber: ['', Validators.required],
     password: ['', Validators.required],
@@ -65,12 +77,7 @@ export class LoginComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (value) => {
-          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-          const destination =
-            (returnUrl?.startsWith('/') && !returnUrl.startsWith('//')
-              ? returnUrl
-              : null) ?? (value.user.role === 'ADMIN' ? '/admin' : '/products');
-          void this.router.navigateByUrl(destination);
+          void this.router.navigateByUrl(this.destination(value.user.role));
         },
         error: () => {
           this.form.enable({ emitEvent: false });
@@ -78,5 +85,20 @@ export class LoginComponent {
           this.loading = false;
         },
       });
+  }
+
+  private destination(role: string): string {
+    const path = this.returnUrl;
+    if (path?.startsWith('/') && !path.startsWith('//')) {
+      try {
+        const url = new URL(path, window.location.origin);
+        if (url.origin === window.location.origin) {
+          return `${url.pathname}${url.search}`;
+        }
+      } catch {
+        // Malformed return URLs use the normal account destination.
+      }
+    }
+    return role === 'ADMIN' ? '/admin' : '/products';
   }
 }

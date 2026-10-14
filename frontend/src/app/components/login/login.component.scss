@@ -28,6 +28,13 @@ h1 {
   font-size: 14px;
   line-height: 1.6;
 }
+.auth-success {
+  background: #f0fdfa;
+  color: #115e59;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+}
 .auth-form {
   display: flex;
   flex-direction: column;

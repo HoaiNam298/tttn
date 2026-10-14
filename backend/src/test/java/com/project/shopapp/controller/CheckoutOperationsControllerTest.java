@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.project.shopapp.filters.JwtAuthenticationFilter;
+import com.project.shopapp.components.KeycloakAuthenticationConverter;
 import com.project.shopapp.services.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(OrderController.class)
@@ -21,7 +22,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class CheckoutOperationsControllerTest {
     @Autowired MockMvc mvc;
     @MockBean OrderService service;
-    @MockBean JwtAuthenticationFilter filter;
+    @MockBean JwtDecoder jwtDecoder;
+    @MockBean KeycloakAuthenticationConverter keycloakConverter;
 
     @Test
     void quoteAndCancelUseAuthenticatedPrincipal() throws Exception {

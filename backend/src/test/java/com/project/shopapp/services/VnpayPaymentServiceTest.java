@@ -61,7 +61,7 @@ class VnpayPaymentServiceTest {
                         new OrderBusinessServiceImpl());
         order =
                 orderBusinessService.createOrder(
-                        new User("Customer", "0900000000", "HCM", "hash", null, null),
+                        new User("Customer", "0900000000", "HCM", null, "test-subject"),
                         "Customer",
                         "0900000000",
                         "HCM",

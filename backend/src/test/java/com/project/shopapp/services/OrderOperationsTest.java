@@ -63,7 +63,7 @@ class OrderOperationsTest {
                         mock(OrderItemRepository.class),
                         mock(OrderStatusHistoryRepository.class),
                         new OrderBusinessServiceImpl());
-        user = new User("Customer", "0900000000", "HCM", "pw", null, null);
+        user = new User("Customer", "0900000000", "HCM", null, "test-subject");
         ReflectionTestUtils.setField(user, "id", 1L);
         product = new Product("Phone", new BigDecimal("100000"), "", "", new Category("Phones"));
         ReflectionTestUtils.setField(product, "id", 8L);

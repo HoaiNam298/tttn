@@ -77,6 +77,6 @@ class AdminOrderServiceTest {
     }
 
     private User user() {
-        return new User("Customer", "0900000000", "HCM", "password", null, null);
+        return new User("Customer", "0900000000", "HCM", null, "test-subject");
     }
 }

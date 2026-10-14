@@ -36,7 +36,7 @@ class FavoriteServiceTest {
     }
 
     private void user() {
-        User user = new User("Buyer", "0900000000", "HCM", "password", null, null);
+        User user = new User("Buyer", "0900000000", "HCM", null, "test-subject");
         ReflectionTestUtils.setField(user, "id", 7L);
         when(users.findForUpdateByPhoneNumber("0900000000")).thenReturn(Optional.of(user));
     }

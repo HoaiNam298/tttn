@@ -57,6 +57,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(IdentityProviderException.class)
+    ResponseEntity<ApiError> identityProvider(IdentityProviderException exception) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(DuplicateResourceException.class)
     ResponseEntity<ApiError> conflict(DuplicateResourceException exception) {
         return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
@@ -70,11 +75,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     ResponseEntity<ApiError> invalidState(IllegalStateException exception) {
         return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
-    }
-
-    @ExceptionHandler(InvalidCredentialsException.class)
-    ResponseEntity<ApiError> unauthorized(InvalidCredentialsException exception) {
-        return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

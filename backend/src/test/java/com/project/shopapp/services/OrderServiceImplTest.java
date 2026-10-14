@@ -109,6 +109,6 @@ class OrderServiceImplTest {
     }
 
     private User user() {
-        return new User("Nguyen Van A", "0900000000", "HCM", "password", null, null);
+        return new User("Nguyen Van A", "0900000000", "HCM", null, "test-subject");
     }
 }

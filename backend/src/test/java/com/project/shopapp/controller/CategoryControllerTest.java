@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.project.shopapp.components.KeycloakAuthenticationConverter;
 import com.project.shopapp.dtos.response.CategoryResponse;
-import com.project.shopapp.filters.JwtAuthenticationFilter;
 import com.project.shopapp.services.CategoryService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(CategoryController.class)
@@ -29,7 +30,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class CategoryControllerTest {
     @Autowired MockMvc mockMvc;
     @MockBean CategoryService service;
-    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean JwtDecoder jwtDecoder;
+    @MockBean KeycloakAuthenticationConverter keycloakConverter;
 
     @Test
     void returnsCategories() throws Exception {

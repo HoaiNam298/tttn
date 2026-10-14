@@ -64,12 +64,13 @@ export class CheckoutComponent implements OnInit {
   quoting = false;
   quoteError = '';
   private quoteRevision = 0;
+  private appliedVoucherCode = '';
   addresses: Address[] = [];
   addressError = '';
   pending?: CheckoutAttempt;
   buyNow = false;
   private source = '';
-  private readonly attemptKey = `shopapp_checkout_attempt_${this.auth.session()?.user.id}`;
+  private readonly attemptKey = `shopapp_kc_v1_checkout_attempt_${this.auth.session()?.user.id}`;
 
   selectAddress(id: number): void {
     if (this.submitting || this.pending) {
@@ -112,6 +113,12 @@ export class CheckoutComponent implements OnInit {
 
   get subtotal(): number {
     return this.lines.reduce((total, line) => total + line.lineTotal, 0);
+  }
+
+  get checkoutInvalid(): boolean {
+    return Object.entries(this.form.controls).some(
+      ([name, control]) => name !== 'voucherCode' && control.invalid,
+    );
   }
 
   ngOnInit(): void {
@@ -178,10 +185,18 @@ export class CheckoutComponent implements OnInit {
     this.form.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        if (!this.pending) {
-          this.invalidateQuote();
+        if (
+          !this.pending &&
+          !this.quote &&
+          !this.quoting &&
+          !this.checkoutInvalid
+        ) {
+          this.refreshQuote();
         }
       });
+    this.form.controls.shippingMethod.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refreshQuote());
     if (this.pending) {
       this.form.disable({ emitEvent: false });
     }
@@ -238,7 +253,7 @@ export class CheckoutComponent implements OnInit {
       return;
     }
     if (
-      this.form.invalid ||
+      this.checkoutInvalid ||
       this.loading ||
       (!this.pending && this.lines.length === 0) ||
       this.submitting
@@ -312,31 +327,49 @@ export class CheckoutComponent implements OnInit {
     this.quoting = false;
   }
 
-  refreshQuote(): void {
+  applyVoucher(): void {
+    if (this.form.controls.voucherCode.invalid) {
+      this.form.controls.voucherCode.markAsTouched();
+      return;
+    }
+    this.refreshQuote(
+      this.form.controls.voucherCode.value.trim().toUpperCase(),
+    );
+  }
+
+  refreshQuote(voucherCode = this.appliedVoucherCode): void {
     if (this.pending || this.lines.length === 0) {
       return;
     }
+    const previousQuote = this.quote;
     this.invalidateQuote();
     this.quoteError = '';
-    if (this.form.invalid) {
+    if (this.checkoutInvalid) {
       this.quoteError =
-        'Nhập thông tin nhận hàng và mã voucher hợp lệ để tính tổng tiền.';
+        'Nhập thông tin nhận hàng hợp lệ để cập nhật tổng tiền.';
       return;
     }
     const revision = this.quoteRevision;
     this.quoting = true;
     this.orders
-      .quote(this.quotePayload())
+      .quote({ ...this.quotePayload(), voucherCode })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (quote) => {
           if (revision === this.quoteRevision) {
             this.quote = quote;
+            this.appliedVoucherCode = voucherCode;
             this.quoting = false;
           }
         },
         error: (response) => {
           if (revision === this.quoteRevision) {
+            if (
+              previousQuote?.shippingMethod ===
+              this.form.controls.shippingMethod.value
+            ) {
+              this.quote = previousQuote;
+            }
             this.quoteError =
               response.error?.message ??
               'Không tính được tổng tiền. Hãy kiểm tra voucher và thử lại.';
@@ -352,7 +385,7 @@ export class CheckoutComponent implements OnInit {
       ...value,
       recipientName: value.recipientName.trim(),
       shippingAddress: value.shippingAddress.trim(),
-      voucherCode: value.voucherCode.trim().toUpperCase(),
+      voucherCode: this.appliedVoucherCode,
       items: this.lines.map((line) => ({
         productId: line.product.id,
         quantity: line.quantity,

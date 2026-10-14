@@ -8,6 +8,7 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-account',
@@ -25,6 +26,7 @@ import { AuthService } from '../../services/auth.service';
 export class AccountComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly snack = inject(MatSnackBar);
   loggingOut = false;
 
   logout(): void {
@@ -32,8 +34,19 @@ export class AccountComponent {
       return;
     }
     this.loggingOut = true;
-    this.auth.logout().subscribe(() => {
-      void this.router.navigate(['/login']);
+    this.auth.logout().subscribe({
+      next: () => {
+        void this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.loggingOut = false;
+        void this.router.navigate(['/login']);
+        this.snack.open(
+          'Đã xóa phiên trên trình duyệt nhưng chưa thể xác nhận kết thúc phiên trên máy chủ.',
+          'Đóng',
+          { duration: 5000 },
+        );
+      },
     });
   }
 }

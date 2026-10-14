@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import {
   ActivatedRoute,
+  Router,
   convertToParamMap,
   provideRouter,
 } from '@angular/router';
@@ -35,6 +36,20 @@ describe('RegisterComponent', () => {
       confirmPassword: 'password123',
     });
   }
+
+  it('returns to the Angular login after registration without collecting another session', () => {
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockResolvedValue(true);
+    const component =
+      TestBed.createComponent(RegisterComponent).componentInstance;
+    validForm(component);
+    component.submit();
+    response.next({ id: 42 });
+    expect(navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { returnUrl: '/products', registered: '1' },
+    });
+  });
 
   it('rejects password mismatch without calling the API', () => {
     const component =

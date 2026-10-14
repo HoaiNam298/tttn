@@ -59,7 +59,6 @@ class VnpayTransactionTest {
     @Autowired ProductRepository products;
     @Autowired CategoryRepository categories;
     @Autowired UserRepository users;
-    @Autowired com.project.shopapp.repositories.RoleRepository roles;
     @Autowired OrderRepository orders;
     @Autowired PaymentAttemptRepository attempts;
     @Autowired PlatformTransactionManager transactionManager;
@@ -80,16 +79,8 @@ class VnpayTransactionTest {
         new TransactionTemplate(transactionManager)
                 .executeWithoutResult(
                         status -> {
-                            jdbc.update(
-                                    "insert into roles(name) select 'USER' where not exists (select 1 from roles where name = 'USER')");
                             users.save(
-                                    new User(
-                                            "Customer",
-                                            phone,
-                                            "HCM",
-                                            "test-password-hash",
-                                            null,
-                                            roles.findByName("USER").orElseThrow()));
+                                    new User("Customer", phone, "HCM", null, "vnpay-" + requestId));
                             Category category = categories.save(new Category("VNPAY-" + requestId));
                             productId =
                                     products.save(

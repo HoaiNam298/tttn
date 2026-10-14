@@ -34,6 +34,33 @@ describe('LoginComponent', () => {
     });
   });
 
+  it('renders the Angular credentials form and registration link without a redirect step', () => {
+    TestBed.overrideProvider(AuthService, {
+      useValue: { login, session: () => null },
+    });
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('input[type="tel"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('input[type="password"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('a[href^="/register"]'),
+    ).not.toBeNull();
+    fixture.nativeElement
+      .querySelector('button[aria-label="Hiện mật khẩu"]')
+      .click();
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector(
+        'input[autocomplete="current-password"]',
+      ).type,
+    ).toBe('text');
+    expect(login).not.toHaveBeenCalled();
+  });
+
   it('marks invalid fields without calling the API', () => {
     const component = TestBed.createComponent(LoginComponent).componentInstance;
     component.submit();
