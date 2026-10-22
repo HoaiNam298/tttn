@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
@@ -8,6 +9,7 @@ import com.project.shopapp.dtos.response.VnpayIpnResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.enums.PaymentStatus;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.PaymentAttempt;
@@ -62,13 +64,13 @@ public class PaymentServiceImpl implements PaymentService {
         properties.requireEnabled();
         Order order =
                 orders.findByIdAndUserPhoneNumber(orderId, phoneNumber)
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.ORDER_NOT_FOUND));
         if (order.getPaymentMethod() != PaymentMethod.VNPAY
                 || order.getStatus() != OrderStatus.PENDING
                 || order.getPaymentStatus() != PaymentStatus.PENDING
                 || !order.getPaymentExpiresAt().isAfter(Instant.now())) {
-            throw new IllegalStateException(
-                    "Order is no longer available for payment. Check the order status");
+            throw new LocalizedStateException(MessageKeys.PAYMENT_ORDER_UNAVAILABLE);
         }
         PaymentAttempt attempt = attempts.findByOrder_Id(orderId).orElse(null);
         if (attempt == null) {
@@ -82,7 +84,7 @@ public class PaymentServiceImpl implements PaymentService {
                     log, "Created VNPAY Sandbox attempt for order {} ref {}", orderId, ref);
         }
         if (attempt.getStatus() != PaymentStatus.PENDING) {
-            throw new IllegalStateException("Payment attempt is already processed");
+            throw new LocalizedStateException(MessageKeys.PAYMENT_ALREADY_PROCESSED);
         }
         return new PaymentLinkResponse(orderId, attempt.getPaymentUrl(), attempt.getExpiresAt());
     }

@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.CategoryRequest;
 import com.project.shopapp.dtos.response.CategoryResponse;
@@ -44,7 +45,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse create(CategoryRequest request) {
         String name = request.getName().trim();
         if (repository.findByNameIgnoreCase(name).isPresent()) {
-            throw new DuplicateResourceException("Category already exists: " + name);
+            throw new DuplicateResourceException(MessageKeys.CATEGORY_ALREADY_EXISTS, name);
         }
         Category saved = repository.save(new Category(name));
         TransactionLog.info(log, "Category created categoryId={}", saved.getId());
@@ -61,7 +62,7 @@ public class CategoryServiceImpl implements CategoryService {
                         .filter(item -> !item.getId().equals(id))
                         .isPresent();
         if (duplicate) {
-            throw new DuplicateResourceException("Category already exists: " + name);
+            throw new DuplicateResourceException(MessageKeys.CATEGORY_ALREADY_EXISTS, name);
         }
         category.rename(name);
         TransactionLog.info(log, "Category updated categoryId={}", id);
@@ -77,6 +78,7 @@ public class CategoryServiceImpl implements CategoryService {
     public Category getEntity(Long id) {
         return repository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + id));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(MessageKeys.CATEGORY_NOT_FOUND, id));
     }
 }

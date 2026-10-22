@@ -1,7 +1,8 @@
 <main class="container">
-  <nav class="breadcrumb" aria-label="Đường dẫn">
-    <a routerLink="/">Trang chủ</a><span>/</span
-    ><a routerLink="/products">Sản phẩm</a>
+  <nav class="breadcrumb" [attr.aria-label]="'common.breadcrumb' | translate">
+    <a routerLink="/">{{ "catalog.home" | translate }}</a
+    ><span>/</span
+    ><a routerLink="/products">{{ "common.products" | translate }}</a>
     @if (product; as value) {
       <span>/</span
       ><a
@@ -23,7 +24,7 @@
           class="detail-image gallery-open"
           (click)="openImage()"
           [disabled]="!selectedImage"
-          aria-label="Phóng to ảnh sản phẩm"
+          [attr.aria-label]="'catalog.enlargeProductImage' | translate"
         >
           @if (selectedImage) {
             <img
@@ -35,7 +36,7 @@
             <span>ShopApp</span>
           }
         </button>
-        <small>Bấm vào ảnh để phóng to</small>
+        <small>{{ "catalog.clickTheImageToEnlarge" | translate }}</small>
         <div class="thumbnail-list">
           @for (image of images; track image) {
             @if (image) {
@@ -68,26 +69,35 @@
             [attr.aria-pressed]="favorite"
             (click)="toggleFavorite()"
           >
-            {{ favorite ? "♥ Đã yêu thích" : "♡ Yêu thích" }}
+            {{
+              favorite
+                ? ("catalog.savedToFavorites" | translate)
+                : ("catalog.addToFavorites" | translate)
+            }}
           </button>
           @if (favoriteError) {
             <p class="error">{{ favoriteError }}</p>
           }
         </div>
         <div class="rating-summary">
-          <strong>{{ averageRating | number: "1.1-1" }}</strong
+          <strong>{{ averageRating | shopNumber: "1.1-1" }}</strong
           ><span class="stars">{{ starText(averageRating) }}</span
-          ><span>{{ totalReviews }} đánh giá</span>
+          ><span>{{
+            "catalog.reviews" | translate: { p0: totalReviews }
+          }}</span>
         </div>
         <p class="price">
           @if (value.variants?.length && !selectedVariant) {
-            Từ
+            {{ "catalog.from" | translate }}
           }
-          {{ purchasePrice | currency: "VND" : "symbol" : "1.0-0" }}
+          {{ purchasePrice | shopMoney }}
         </p>
         @if (value.variants?.length) {
-          <div class="variant-options" aria-label="Chọn phân loại">
-            <strong>Phân loại</strong>
+          <div
+            class="variant-options"
+            [attr.aria-label]="'catalog.chooseAVariant' | translate"
+          >
+            <strong>{{ "catalog.variant2" | translate }}</strong>
             <div class="actions">
               @for (variant of availableVariants; track variant.id) {
                 <button
@@ -99,26 +109,30 @@
                 >
                   {{ variant.name }}
                   @if (!variant.stock) {
-                    · Hết hàng
+                    · {{ "catalog.outOfStock" | translate }}
                   }
                 </button>
               }
             </div>
             @if (!selectedVariant) {
-              <small>Vui lòng chọn phân loại để xem giá và tồn kho.</small>
+              <small>{{
+                "catalog.chooseAVariantToViewItsPriceAndStock" | translate
+              }}</small>
             } @else {
               <small>SKU: {{ selectedVariant.sku }}</small>
             }
           </div>
         }
         <p class="stock">
-          Còn {{ purchaseStock }} sản phẩm
+          {{
+            "catalog.productsAvailable" | translate: { count: purchaseStock }
+          }}
           @if (selectedVariant) {
             · {{ selectedVariant.name }}
           }
         </p>
         <div class="quantity-control">
-          <span>Số lượng</span
+          <span>{{ "common.quantityOf" | translate }}</span
           ><button
             mat-stroked-button
             type="button"
@@ -143,44 +157,53 @@
             [disabled]="purchaseStock < quantity"
             (click)="addToCart()"
           >
-            Thêm vào giỏ hàng</button
+            {{ "catalog.addToCart" | translate }}</button
           ><button
             mat-stroked-button
             type="button"
             [disabled]="purchaseStock < quantity"
             (click)="buyNow()"
           >
-            Mua ngay
+            {{ "catalog.buyNow" | translate }}
           </button>
         </div>
         @if (added) {
-          <p class="success">Đã thêm sản phẩm vào giỏ hàng.</p>
+          <p class="success">
+            {{ "catalog.productAddedToYourCart" | translate }}
+          </p>
         }
       </section>
     </mat-card>
     <mat-card appearance="outlined" class="panel product-description">
-      <h2>Chi tiết sản phẩm</h2>
+      <h2>{{ "catalog.productDetails" | translate }}</h2>
       <div class="spec-row">
-        <span>Danh mục</span><strong>{{ value.category.name }}</strong>
+        <span>{{ "catalog.category" | translate }}</span
+        ><strong>{{ value.category.name }}</strong>
       </div>
       <div class="spec-row">
-        <span>Tình trạng</span
-        ><strong>{{ value.stock ? "Còn hàng" : "Hết hàng" }}</strong>
+        <span>{{ "catalog.availability" | translate }}</span
+        ><strong>{{
+          value.stock
+            ? ("catalog.inStock" | translate)
+            : ("catalog.outOfStock" | translate)
+        }}</strong>
       </div>
-      <h2>Mô tả sản phẩm</h2>
+      <h2>{{ "catalog.productDescription" | translate }}</h2>
       <p class="description">
-        {{ value.description || "Sản phẩm chưa có mô tả." }}
+        {{
+          value.description || ("catalog.noProductDescriptionYet" | translate)
+        }}
       </p>
     </mat-card>
     <mat-card appearance="outlined" id="reviews" class="panel reviews-section">
-      <h2>Đánh giá sản phẩm</h2>
+      <h2>{{ "catalog.productReviews" | translate }}</h2>
       @if (reviewLoadError) {
         <p class="error" role="alert">{{ reviewLoadError }}</p>
       }
       <div class="review-overview">
-        <strong>{{ averageRating | number: "1.1-1" }}/5</strong
+        <strong>{{ averageRating | shopNumber: "1.1-1" }}/5</strong
         ><span class="stars">{{ starText(averageRating) }}</span
-        ><span>{{ totalReviews }} lượt đánh giá</span>
+        ><span>{{ "catalog.reviews2" | translate: { p0: totalReviews } }}</span>
       </div>
       <div class="actions review-filters">
         <button
@@ -188,7 +211,7 @@
           [attr.aria-pressed]="reviewRating === undefined"
           (click)="filterReviews()"
         >
-          Tất cả
+          {{ "common.all" | translate }}
         </button>
         @for (rating of ratingFilters; track rating) {
           <button
@@ -196,15 +219,24 @@
             [attr.aria-pressed]="reviewRating === rating"
             (click)="filterReviews(rating)"
           >
-            {{ rating }} sao
+            {{
+              (rating === 1 ? "catalog.oneStar" : "catalog.manyStars")
+                | translate: { count: rating }
+            }}
           </button>
         }
       </div>
       @if (eligibilityLoading) {
-        <p class="state">Đang kiểm tra quyền đánh giá...</p>
+        <p class="state">
+          {{ "catalog.checkingReviewEligibility" | translate }}
+        </p>
       }
       @if (alreadyReviewed) {
-        <p class="success">Bạn đã đánh giá sản phẩm trong đơn này.</p>
+        <p class="success">
+          {{
+            "catalog.youHaveAlreadyReviewedThisItemFromThisOrder" | translate
+          }}
+        </p>
       }
       @if (orderId && canReview) {
         <form
@@ -212,28 +244,40 @@
           [formGroup]="reviewForm"
           (ngSubmit)="submitReview()"
         >
-          <h3>Đánh giá sản phẩm đã mua</h3>
+          <h3>{{ "catalog.reviewYourPurchase" | translate }}</h3>
           <mat-form-field appearance="outline"
-            ><mat-label>Số sao</mat-label
+            ><mat-label>{{ "catalog.rating" | translate }}</mat-label
             ><mat-select formControlName="rating">
-              <mat-option [value]="5">5 sao</mat-option>
-              <mat-option [value]="4">4 sao</mat-option>
-              <mat-option [value]="3">3 sao</mat-option>
-              <mat-option [value]="2">2 sao</mat-option>
-              <mat-option [value]="1">1 sao</mat-option> </mat-select
-            ><mat-error>Vui lòng nhập số sao hợp lệ.</mat-error></mat-form-field
+              <mat-option [value]="5">{{
+                "catalog.manyStars" | translate: { count: 5 }
+              }}</mat-option>
+              <mat-option [value]="4">{{
+                "catalog.manyStars" | translate: { count: 4 }
+              }}</mat-option>
+              <mat-option [value]="3">{{
+                "catalog.manyStars" | translate: { count: 3 }
+              }}</mat-option>
+              <mat-option [value]="2">{{
+                "catalog.manyStars" | translate: { count: 2 }
+              }}</mat-option>
+              <mat-option [value]="1">{{
+                "catalog.oneStar" | translate: { count: 1 }
+              }}</mat-option> </mat-select
+            ><mat-error>{{
+              "catalog.pleaseEnterAValidRating" | translate
+            }}</mat-error></mat-form-field
           >
           <mat-form-field appearance="outline"
-            ><mat-label>Nhận xét</mat-label
+            ><mat-label>{{ "catalog.comment" | translate }}</mat-label
             ><textarea
               matInput
               rows="4"
               formControlName="comment"
-              placeholder="Chia sẻ trải nghiệm của bạn"
+              [placeholder]="'catalog.shareYourExperience' | translate"
             ></textarea>
-            <mat-error
-              >Vui lòng nhập nhận xét hợp lệ.</mat-error
-            ></mat-form-field
+            <mat-error>{{
+              "catalog.pleaseEnterAValidComment" | translate
+            }}</mat-error></mat-form-field
           >
           <button
             mat-stroked-button
@@ -241,7 +285,7 @@
             [disabled]="reviewSaving"
             (click)="reviewUpload.click()"
           >
-            Thêm ảnh thực tế (tối đa 5 ảnh)</button
+            {{ "catalog.addPhotosUpTo5" | translate }}</button
           ><input
             #reviewUpload
             hidden
@@ -260,7 +304,7 @@
                 [disabled]="reviewSaving"
                 (click)="removeReviewFile($index)"
               >
-                Bỏ ảnh
+                {{ "catalog.removePhoto" | translate }}
               </button>
             </div>
           }
@@ -269,7 +313,11 @@
             type="submit"
             [disabled]="reviewSaving || reviewForm.invalid"
           >
-            {{ reviewSaving ? "Đang gửi..." : "Gửi đánh giá" }}
+            {{
+              reviewSaving
+                ? ("catalog.submitting" | translate)
+                : ("catalog.submitReview" | translate)
+            }}
           </button>
         </form>
       }
@@ -286,14 +334,14 @@
               <strong>{{ review.reviewerName }}</strong
               ><span class="stars">{{ starText(review.rating) }}</span>
             </div>
-            <small>{{ review.createdAt | date: "dd/MM/yyyy HH:mm" }}</small>
+            <small>{{ review.createdAt | shopDate }}</small>
             <p>{{ review.comment }}</p>
             <div class="review-photos">
               @for (image of review.images; track image) {
                 <a [href]="image" target="_blank" rel="noopener"
                   ><img
                     [src]="image"
-                    alt="Ảnh đánh giá của người mua"
+                    [attr.alt]="'catalog.buyerReviewPhoto' | translate"
                     width="100"
                     height="100"
                     loading="lazy"
@@ -303,15 +351,17 @@
             </div>
             @if (review.shopReply) {
               <blockquote class="shop-reply">
-                <strong>Phản hồi của cửa hàng</strong>
+                <strong>{{ "catalog.storeReply" | translate }}</strong>
                 <p>{{ review.shopReply }}</p>
-                <small>{{ review.repliedAt | date: "dd/MM/yyyy HH:mm" }}</small>
+                <small>{{ review.repliedAt | shopDate }}</small>
               </blockquote>
             }
           </article>
         } @empty {
           @if (!reviewLoadError) {
-            <p class="state">Chưa có đánh giá phù hợp với bộ lọc.</p>
+            <p class="state">
+              {{ "catalog.noReviewsMatchTheSelectedFilter" | translate }}
+            </p>
           }
         }
       </div>
@@ -323,17 +373,17 @@
           [hidePageSize]="true"
           [showFirstLastButtons]="true"
           (page)="loadReviews(value.id, $event.pageIndex)"
-          aria-label="Phân trang đánh giá"
+          [attr.aria-label]="'catalog.reviewPagination' | translate"
         />
       }
     </mat-card>
     <section class="related-products">
       <div class="section-heading">
-        <h2>Có thể bạn cũng thích</h2>
+        <h2>{{ "catalog.youMayAlsoLike" | translate }}</h2>
         <a
           routerLink="/products"
           [queryParams]="{ categoryId: value.category.id }"
-          >Xem cùng danh mục →</a
+          >{{ "catalog.viewCategory" | translate }}</a
         >
       </div>
       @if (relatedError) {
@@ -353,9 +403,9 @@
             mat-stroked-button
             type="button"
             (click)="closeImage()"
-            aria-label="Đóng ảnh"
+            [attr.aria-label]="'catalog.closeImage' | translate"
           >
-            Đóng ×
+            {{ "catalog.close2" | translate }}
           </button>
         </div>
         <img
@@ -365,11 +415,14 @@
         />
         @if (images.length > 1) {
           <div class="pagination">
-            <button mat-stroked-button (click)="moveImage(-1)">Ảnh trước</button
+            <button mat-stroked-button (click)="moveImage(-1)">
+              {{ "catalog.previousImage" | translate }}</button
             ><span
               >{{ images.indexOf(selectedImage) + 1 }} /
               {{ images.length }}</span
-            ><button mat-stroked-button (click)="moveImage(1)">Ảnh sau</button>
+            ><button mat-stroked-button (click)="moveImage(1)">
+              {{ "catalog.nextImage" | translate }}
+            </button>
           </div>
         }
       </div></ng-template

@@ -1,24 +1,27 @@
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Khách hàng</p>
-    <h1>Đánh giá sản phẩm</h1>
+    <p class="eyebrow">{{ "orders.customer" | translate }}</p>
+    <h1>{{ "catalog.productReviews" | translate }}</h1>
   </div>
   <button mat-stroked-button [disabled]="loading" (click)="load(page)">
-    Làm mới
+    {{ "account.refresh" | translate }}
   </button>
 </div>
 @if (error) {
   <p class="error" role="alert">{{ error }}</p>
 }
 @if (loading) {
-  <mat-progress-bar mode="indeterminate" aria-label="Đang tải đánh giá" />
+  <mat-progress-bar
+    mode="indeterminate"
+    [attr.aria-label]="'admin.loadingReviews' | translate"
+  />
 }
 <mat-card
   appearance="outlined"
   class="management-card"
   [attr.aria-busy]="loading"
 >
-  <h2>Đánh giá ({{ totalElements }})</h2>
+  <h2>{{ "admin.reviews" | translate: { p0: totalElements } }}</h2>
   @for (review of reviews; track review.id) {
     <article class="review-item">
       <h3>
@@ -29,7 +32,7 @@
       <p>
         <strong>{{ review.reviewerName }}</strong> ·
         <span class="review-rating">{{ review.rating }}/5 ★</span> ·
-        {{ review.createdAt | date: "dd/MM/yyyy HH:mm" }}
+        {{ review.createdAt | shopDate }}
       </p>
       <p class="review-comment">{{ review.comment }}</p>
       <div class="review-photos">
@@ -37,7 +40,7 @@
           <a [href]="image" target="_blank" rel="noopener"
             ><img
               [src]="image"
-              alt="Ảnh đánh giá"
+              [attr.alt]="'admin.reviewImage' | translate"
               width="100"
               height="100"
               loading="lazy"
@@ -52,12 +55,20 @@
         [disabled]="saving || loading"
         (click)="open(review)"
       >
-        {{ review.shopReply ? "Sửa phản hồi" : "Phản hồi" }}
+        {{
+          review.shopReply
+            ? ("admin.editReply" | translate)
+            : ("admin.reply" | translate)
+        }}
       </button>
     </article>
   } @empty {
     <p class="state">
-      {{ loading ? "Đang tải đánh giá..." : "Chưa có đánh giá." }}
+      {{
+        loading
+          ? ("admin.loadingReviews2" | translate)
+          : ("admin.noReviewsYet" | translate)
+      }}
     </p>
   }
   <mat-paginator
@@ -68,16 +79,16 @@
     [showFirstLastButtons]="true"
     [disabled]="loading"
     (page)="changePage($event)"
-    aria-label="Phân trang đánh giá"
+    [attr.aria-label]="'catalog.reviewPagination' | translate"
   />
 </mat-card>
 <ng-template #replyDialog>
-  <h2 mat-dialog-title>Phản hồi đánh giá</h2>
+  <h2 mat-dialog-title>{{ "admin.replyToReview" | translate }}</h2>
   <form [formGroup]="form" (ngSubmit)="save()">
     <mat-dialog-content>
       <p class="review-comment">{{ selected?.comment }}</p>
       <mat-form-field appearance="outline" class="full-field"
-        ><mat-label>Phản hồi cửa hàng</mat-label
+        ><mat-label>{{ "admin.storeReply" | translate }}</mat-label
         ><textarea
           matInput
           rows="5"
@@ -87,9 +98,9 @@
         ></textarea
         ><mat-hint align="end"
           >{{ form.controls.reply.value.length }}/1000</mat-hint
-        ><mat-error
-          >Phản hồi bắt buộc, tối đa 1000 ký tự.</mat-error
-        ></mat-form-field
+        ><mat-error>{{
+          "admin.replyIsRequiredUpTo1000Characters" | translate
+        }}</mat-error></mat-form-field
       >
       @if (replyError) {
         <p class="error" role="alert">{{ replyError }}</p>
@@ -97,13 +108,17 @@
     </mat-dialog-content>
     <mat-dialog-actions align="end"
       ><button mat-button type="button" [disabled]="saving" (click)="close()">
-        Hủy</button
+        {{ "account.cancel" | translate }}</button
       ><button
         mat-flat-button
         type="submit"
         [disabled]="saving || form.invalid"
       >
-        {{ saving ? "Đang lưu..." : "Lưu phản hồi" }}
+        {{
+          saving
+            ? ("account.saving" | translate)
+            : ("admin.saveReply" | translate)
+        }}
       </button></mat-dialog-actions
     >
   </form>

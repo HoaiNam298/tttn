@@ -1,3 +1,5 @@
+import { ErrorMessageService } from '../../services/error-message.service';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,6 +20,7 @@ import { ProductCardComponent } from '../shared/product-card.component';
 @Component({
   selector: 'app-home',
   imports: [
+    TranslatePipe,
     RouterLink,
     ProductCardComponent,
     MatButtonModule,
@@ -29,6 +32,7 @@ import { ProductCardComponent } from '../shared/product-card.component';
   styleUrl: './home.component.scss',
 })
 export class HomeComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly catalog = inject(CatalogService);
   private readonly destroyRef = inject(DestroyRef);
   categories: Category[] = [];
@@ -45,8 +49,11 @@ export class HomeComponent implements OnInit {
         next: (value) => {
           this.categories = value;
         },
-        error: () => {
-          this.categoryError = 'Chưa tải được danh mục.';
+        error: (response) => {
+          this.categoryError = this.errorMessages.message(
+            response,
+            'home.categoriesCouldNotBeLoaded',
+          );
         },
       });
     this.catalog
@@ -57,8 +64,11 @@ export class HomeComponent implements OnInit {
           this.products = value.content;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Không thể tải sản phẩm. Vui lòng thử lại sau.';
+        error: (response) => {
+          this.error = this.errorMessages.message(
+            response,
+            'home.cannotLoadProductsPleaseTryAgainLater',
+          );
           this.loading = false;
         },
       });

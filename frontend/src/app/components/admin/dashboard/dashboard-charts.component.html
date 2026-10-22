@@ -4,11 +4,16 @@
     class="chart-card revenue-chart"
     aria-labelledby="revenue-chart-title"
   >
-    <h2 id="revenue-chart-title">Xu hướng doanh thu</h2>
+    <h2 id="revenue-chart-title">{{ "admin.revenueTrend" | translate }}</h2>
     <p class="chart-caption">
-      {{ report.from | date: "dd/MM/yyyy" }} –
-      {{ report.to | date: "dd/MM/yyyy" }} · Tiền hàng sau voucher, không gồm
-      phí vận chuyển.
+      {{
+        "admin.merchandiseAfterVouchersExcludingShipping"
+          | translate
+            : {
+                p0: (report.from | shopDate: "date"),
+                p1: (report.to | shopDate: "date"),
+              }
+      }}
     </p>
     @if (hasRevenueData) {
       <div class="chart-viewport">
@@ -16,7 +21,9 @@
           class="plot"
           viewBox="0 0 640 290"
           role="img"
-          aria-label="Biểu đồ đường doanh thu theo ngày hoàn thành đơn, đơn vị đồng"
+          [attr.aria-label]="
+            'admin.lineChartOfRevenueByOrderCompletionDateIn' | translate
+          "
         >
           <text x="80" y="22" class="axis-label">VND</text>
           @for (tick of revenueTicks; track tick.position) {
@@ -62,13 +69,12 @@
           }
         </svg>
       </div>
-      <small class="chart-hint"
-        >Di chuột hoặc dùng Tab vào điểm để xem số liệu. Bảng doanh thu chi tiết
-        ở bên dưới.</small
-      >
+      <small class="chart-hint">{{
+        "admin.hoverOrTabToAPointToViewIts" | translate
+      }}</small>
     } @else {
       <p class="chart-empty">
-        Chưa có đơn hoàn thành trong khoảng ngày đã chọn.
+        {{ "admin.noCompletedOrdersInTheSelectedPeriod" | translate }}
       </p>
     }
   </mat-card>
@@ -77,9 +83,11 @@
     class="chart-card"
     aria-labelledby="products-chart-title"
   >
-    <h2 id="products-chart-title">Top 5 sản phẩm bán chạy</h2>
+    <h2 id="products-chart-title">
+      {{ "admin.top5BestSellingProducts" | translate }}
+    </h2>
     <p class="chart-caption">
-      Theo số lượng trong đơn hoàn thành · Khoảng ngày đã chọn.
+      {{ "admin.byQuantityInCompletedOrdersSelectedPeriod" | translate }}
     </p>
     @if (bars.length) {
       <div class="chart-viewport">
@@ -87,9 +95,13 @@
           class="plot"
           viewBox="0 0 640 290"
           role="img"
-          aria-label="Biểu đồ cột số lượng sản phẩm bán chạy"
+          [attr.aria-label]="
+            'admin.barChartOfBestSellingProductQuantities' | translate
+          "
         >
-          <text x="80" y="24" class="axis-label">Số lượng</text>
+          <text x="80" y="24" class="axis-label">
+            {{ "common.quantityOf" | translate }}
+          </text>
           @for (tick of quantityTicks; track tick.position) {
             <line
               x1="80"
@@ -144,12 +156,14 @@
         @for (bar of bars; track bar.productId) {
           <li>
             <a [routerLink]="['/products', bar.productId]">{{ bar.name }}</a
-            ><strong>{{ bar.quantity | number }}</strong>
+            ><strong>{{ bar.quantity | shopNumber }}</strong>
           </li>
         }
       </ol>
     } @else {
-      <p class="chart-empty">Chưa có sản phẩm bán trong khoảng ngày đã chọn.</p>
+      <p class="chart-empty">
+        {{ "admin.noProductsSoldInTheSelectedPeriod" | translate }}
+      </p>
     }
   </mat-card>
   <mat-card
@@ -157,9 +171,9 @@
     class="chart-card"
     aria-labelledby="status-chart-title"
   >
-    <h2 id="status-chart-title">Trạng thái đơn hàng</h2>
+    <h2 id="status-chart-title">{{ "admin.orderStatuses" | translate }}</h2>
     <p class="chart-caption">
-      Tất cả thời gian · Không áp dụng khoảng ngày doanh thu.
+      {{ "admin.allTimeRevenueDateFilterDoesNotApply" | translate }}
     </p>
     @if (totalOrders) {
       <svg
@@ -167,7 +181,7 @@
         viewBox="0 0 200 200"
         role="img"
         [attr.aria-label]="
-          'Phân bố trạng thái của ' + totalOrders + ' đơn hàng'
+          'admin.statusDistribution' | translate: { count: totalOrders }
         "
       >
         <circle cx="100" cy="100" r="72" class="donut-track" />
@@ -185,18 +199,24 @@
               transform="rotate(-90 100 100)"
             >
               <title>
-                {{ segment.label }}: {{ segment.count }} đơn ({{
-                  segment.percentage | number: "1.1-1"
-                }}%)
+                {{
+                  "admin.orders2"
+                    | translate
+                      : {
+                          p0: segment.label,
+                          p1: segment.count,
+                          p2: (segment.percentage | shopNumber: "1.1-1"),
+                        }
+                }}
               </title>
             </circle>
           }
         }
         <text x="100" y="100" text-anchor="middle" class="donut-total">
-          {{ totalOrders | number }}
+          {{ totalOrders | shopNumber }}
         </text>
         <text x="100" y="122" text-anchor="middle" class="donut-caption">
-          đơn hàng
+          {{ "admin.orders" | translate }}
         </text>
       </svg>
       <ul class="status-legend">
@@ -211,16 +231,18 @@
                 >{{ segment.label }}</a
               ></span
             ><strong
-              >{{ segment.count | number }}
+              >{{ segment.count | shopNumber }}
               <small
-                >({{ segment.percentage | number: "1.1-1" }}%)</small
+                >({{ segment.percentage | shopNumber: "1.1-1" }}%)</small
               ></strong
             >
           </li>
         }
       </ul>
     } @else {
-      <p class="chart-empty">Chưa có đơn hàng để thống kê trạng thái.</p>
+      <p class="chart-empty">
+        {{ "admin.noOrdersAvailableForStatusStatistics" | translate }}
+      </p>
     }
   </mat-card>
 </div>

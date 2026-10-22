@@ -1,3 +1,5 @@
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   MatPaginatorIntl,
   MatPaginatorModule,
@@ -26,6 +28,7 @@ import { ProductCardComponent } from '../../shared/product-card.component';
   ],
   selector: 'app-favorites',
   imports: [
+    TranslatePipe,
     CommonModule,
     ProductCardComponent,
     MatButtonModule,
@@ -37,6 +40,7 @@ import { ProductCardComponent } from '../../shared/product-card.component';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class FavoritesComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly service = inject(FavoriteService);
   private readonly destroyRef = inject(DestroyRef);
   private revision = 0;
@@ -73,10 +77,12 @@ export class FavoritesComponent implements OnInit {
             this.load(page - 1);
           }
         },
-        error: () => {
+        error: (response) => {
           if (revision === this.revision) {
-            this.error =
-              'Không tải được danh sách yêu thích. Vui lòng thử lại.';
+            this.error = this.errorMessages.message(
+              response,
+              'account.cannotLoadFavoritesPleaseTryAgain',
+            );
             this.loading = false;
           }
         },
@@ -96,9 +102,12 @@ export class FavoritesComponent implements OnInit {
           this.removingId = undefined;
           this.load(this.page);
         },
-        error: () => {
+        error: (response) => {
           this.removingId = undefined;
-          this.error = 'Không xóa được sản phẩm yêu thích.';
+          this.error = this.errorMessages.message(
+            response,
+            'account.cannotRemoveThisFavorite',
+          );
         },
       });
   }

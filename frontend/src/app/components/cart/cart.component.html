@@ -1,14 +1,21 @@
 <main class="container cart-page">
   <div class="page-heading">
     <div>
-      <p class="eyebrow">Giỏ hàng</p>
-      <h1>Sản phẩm đã chọn</h1>
+      <p class="eyebrow">{{ "common.customerCart" | translate }}</p>
+      <h1>{{ "cart.selectedProducts" | translate }}</h1>
     </div>
-    <a mat-stroked-button routerLink="/products">Tiếp tục mua hàng</a>
+    <a mat-stroked-button routerLink="/products">{{
+      "cart.continueShopping" | translate
+    }}</a>
   </div>
   @if (loading) {
-    <mat-progress-bar mode="indeterminate" aria-label="Đang tải giỏ hàng" />
-    <p class="state" aria-live="polite">Đang tải giỏ hàng...</p>
+    <mat-progress-bar
+      mode="indeterminate"
+      [attr.aria-label]="'cart.loadingCart' | translate"
+    />
+    <p class="state" aria-live="polite">
+      {{ "cart.loadingCart2" | translate }}
+    </p>
   }
   @if (error) {
     <mat-card appearance="outlined" class="cart-error">
@@ -20,7 +27,7 @@
           [disabled]="loading"
           (click)="load()"
         >
-          Tải lại giỏ hàng
+          {{ "cart.reloadCart" | translate }}
         </button>
       </mat-card-content>
     </mat-card>
@@ -28,9 +35,13 @@
   @if (!loading && !error && lines.length === 0) {
     <mat-card appearance="outlined" class="empty-state">
       <mat-card-content>
-        <h2>Giỏ hàng của bạn đang trống</h2>
-        <p>Khám phá cửa hàng và thêm những sản phẩm bạn yêu thích.</p>
-        <a mat-flat-button routerLink="/products">Khám phá sản phẩm</a>
+        <h2>{{ "cart.yourCartIsEmpty" | translate }}</h2>
+        <p>
+          {{ "cart.exploreTheStoreAndAddTheProductsYouLike" | translate }}
+        </p>
+        <a mat-flat-button routerLink="/products">{{
+          "cart.exploreProducts" | translate
+        }}</a>
       </mat-card-content>
     </mat-card>
   } @else if (lines.length > 0) {
@@ -42,9 +53,13 @@
             [indeterminate]="partiallySelected"
             [disabled]="loading"
             (change)="cart.selectAll($event.checked)"
-            >Chọn tất cả ({{ lines.length }})</mat-checkbox
+            >{{
+              "cart.selectAll" | translate: { p0: lines.length }
+            }}</mat-checkbox
           >
-          <span>{{ selectedCount }} sản phẩm đã chọn</span>
+          <span>{{
+            "cart.productsSelected" | translate: { p0: selectedCount }
+          }}</span>
         </div>
         <mat-divider />
         @for (
@@ -54,7 +69,9 @@
           <article class="cart-item">
             <mat-checkbox
               class="item-checkbox"
-              [aria-label]="'Chọn ' + line.product.name"
+              [aria-label]="
+                'cart.selectProduct' | translate: { name: line.product.name }
+              "
               [checked]="cart.isSelected(line.product.id, line.variantId)"
               [disabled]="loading"
               (change)="
@@ -64,7 +81,9 @@
             <a
               class="item-image"
               [routerLink]="['/products', line.product.id]"
-              [attr.aria-label]="'Xem ' + line.product.name"
+              [attr.aria-label]="
+                'cart.viewProduct' | translate: { name: line.product.name }
+              "
             >
               @if (line.product.thumbnail) {
                 <img
@@ -84,33 +103,46 @@
                 >{{ line.product.name }}</a
               >
               @if (line.variantName) {
-                <p class="variant-name">Phân loại: {{ line.variantName }}</p>
+                <p class="variant-name">
+                  {{ "cart.variant" | translate: { p0: line.variantName } }}
+                </p>
               }
               <p class="unit-price">
-                {{ line.product.price | currency: "VND" : "symbol" : "1.0-0" }}
+                {{ line.product.price | shopMoney }}
               </p>
               @if ((line.product.stock ?? 0) < line.quantity) {
                 <p class="stock-error">
-                  Không đủ tồn kho. Còn {{ line.product.stock ?? 0 }} sản phẩm.
+                  {{
+                    "cart.insufficientStockProductsAvailable"
+                      | translate: { p0: line.product.stock ?? 0 }
+                  }}
                 </p>
               }
               @if (line.quantity > maxQuantity) {
                 <p class="stock-error">
-                  Giảm số lượng xuống tối đa {{ maxQuantity }} sản phẩm để đặt
-                  hàng.
+                  {{
+                    "cart.reduceTheQuantityToAtMostToPlaceAn"
+                      | translate: { p0: maxQuantity }
+                  }}
                 </p>
               }
               <div class="item-bottom">
                 <div
                   class="quantity-picker"
                   role="group"
-                  [attr.aria-label]="'Số lượng ' + line.product.name"
+                  [attr.aria-label]="
+                    'cart.quantityProduct'
+                      | translate: { name: line.product.name }
+                  "
                 >
                   <button
                     mat-button
                     type="button"
                     [disabled]="loading || line.quantity <= 1"
-                    [attr.aria-label]="'Giảm số lượng ' + line.product.name"
+                    [attr.aria-label]="
+                      'cart.decreaseProduct'
+                        | translate: { name: line.product.name }
+                    "
                     (click)="update(line, line.quantity - 1)"
                   >
                     −
@@ -124,7 +156,10 @@
                       line.quantity >= maxQuantity ||
                       line.quantity >= (line.product.stock ?? 0)
                     "
-                    [attr.aria-label]="'Tăng số lượng ' + line.product.name"
+                    [attr.aria-label]="
+                      'cart.increaseProduct'
+                        | translate: { name: line.product.name }
+                    "
                     (click)="update(line, line.quantity + 1)"
                   >
                     +
@@ -136,40 +171,38 @@
                   type="button"
                   [disabled]="loading"
                   [attr.aria-label]="
-                    'Xóa ' + line.product.name + ' khỏi giỏ hàng'
+                    'cart.removeProduct'
+                      | translate: { name: line.product.name }
                   "
                   (click)="remove(line.product.id, line.variantId)"
                 >
-                  Xóa
+                  {{ "common.remove" | translate }}
                 </button>
               </div>
             </div>
-            <strong class="line-total">{{
-              line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
-            }}</strong>
+            <strong class="line-total">{{ line.lineTotal | shopMoney }}</strong>
           </article>
         }
       </mat-card>
       <mat-card appearance="outlined" class="summary-card">
         <mat-card-content>
-          <h2>Tóm tắt giỏ hàng</h2>
+          <h2>{{ "cart.cartSummary" | translate }}</h2>
           <div class="cost-row">
-            <span>Sản phẩm đã chọn</span><strong>{{ selectedCount }}</strong>
+            <span>{{ "cart.selectedProducts" | translate }}</span
+            ><strong>{{ selectedCount }}</strong>
           </div>
           <mat-divider />
           <div class="cost-row total-row">
-            <span>Tạm tính</span
-            ><strong>{{
-              subtotal | currency: "VND" : "symbol" : "1.0-0"
-            }}</strong>
+            <span>{{ "common.subtotal" | translate }}</span
+            ><strong>{{ subtotal | shopMoney }}</strong>
           </div>
           <p class="shipping-note">
-            Phí giao hàng và khuyến mãi được xác nhận ở bước thanh toán.
+            {{ "cart.shippingAndDiscountsAreConfirmedAtCheckout" | translate }}
           </p>
           @if (canCheckout) {
-            <a mat-flat-button class="checkout-button" routerLink="/checkout"
-              >Tiến hành đặt hàng</a
-            >
+            <a mat-flat-button class="checkout-button" routerLink="/checkout">{{
+              "cart.proceedToCheckout" | translate
+            }}</a>
           } @else {
             <button
               mat-flat-button
@@ -177,13 +210,14 @@
               type="button"
               disabled
             >
-              Tiến hành đặt hàng
+              {{ "cart.proceedToCheckout" | translate }}
             </button>
             <p class="checkout-hint">
               {{
                 loading
-                  ? "Đang kiểm tra giỏ hàng…"
-                  : "Chọn sản phẩm còn đủ hàng và tải lại nếu có lỗi."
+                  ? ("cart.checkingCart" | translate)
+                  : ("cart.chooseProductsWithSufficientStockAndReloadIfAn"
+                    | translate)
               }}
             </p>
           }

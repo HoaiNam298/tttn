@@ -1,12 +1,17 @@
 package com.project.shopapp.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.shopapp.components.I18nMessages;
 import com.project.shopapp.components.KeycloakAuthenticationConverter;
+import com.project.shopapp.components.MessageKeys;
+import com.project.shopapp.exceptions.ApiError;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,17 +34,27 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     private static final List<String> ALLOWED_METHODS =
             List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-    private static final List<String> ALLOWED_HEADERS = List.of("Authorization", "Content-Type");
+    private static final List<String> ALLOWED_HEADERS =
+            List.of("Authorization", "Content-Type", "Accept-Language");
     private final JwtDecoder decoder;
     private final KeycloakAuthenticationConverter converter;
     private final List<String> allowedOrigins;
+    private final I18nMessages messages;
+    private final ShopAppLocaleResolver localeResolver;
+    private final ObjectMapper objectMapper;
 
     public SecurityConfig(
             JwtDecoder decoder,
             KeycloakAuthenticationConverter converter,
+            I18nMessages messages,
+            ShopAppLocaleResolver localeResolver,
+            ObjectMapper objectMapper,
             @Value("${app.cors.allowed-origins}") String allowedOrigins) {
         this.decoder = decoder;
         this.converter = converter;
+        this.messages = messages;
+        this.localeResolver = localeResolver;
+        this.objectMapper = objectMapper;
         this.allowedOrigins =
                 Arrays.stream(allowedOrigins.split(","))
                         .map(String::trim)
@@ -104,7 +119,11 @@ public class SecurityConfig {
             HttpServletResponse response,
             AuthenticationException exception)
             throws IOException {
-        response.sendError(HttpStatus.UNAUTHORIZED.value());
+        writeSecurityError(
+                request,
+                response,
+                HttpStatus.UNAUTHORIZED,
+                MessageKeys.SECURITY_AUTHENTICATION_REQUIRED);
         log.debug("Access rejected reason=authentication_required");
     }
 
@@ -114,7 +133,20 @@ public class SecurityConfig {
             AccessDeniedException exception)
             throws IOException {
         log.warn("Access rejected reason=insufficient_permission");
-        response.sendError(HttpStatus.FORBIDDEN.value());
+        writeSecurityError(
+                request, response, HttpStatus.FORBIDDEN, MessageKeys.SECURITY_ACCESS_DENIED);
+    }
+
+    private void writeSecurityError(
+            HttpServletRequest request, HttpServletResponse response, HttpStatus status, String key)
+            throws IOException {
+        response.setStatus(status.value());
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.addHeader("Vary", "Accept-Language");
+        String message = messages.getForLocale(localeResolver.resolveLocale(request), key);
+        objectMapper.writeValue(
+                response.getOutputStream(), ApiError.of(status, key, message, Map.of()));
     }
 
     @Bean

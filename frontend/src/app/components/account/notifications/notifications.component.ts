@@ -1,3 +1,6 @@
+import { ShopDatePipe } from '../../shared/shop-date.pipe';
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   MatPaginatorIntl,
   MatPaginatorModule,
@@ -13,7 +16,8 @@ import {
   Component,
   DestroyRef,
   inject,
-  OnInit,
+  effect,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -27,6 +31,8 @@ import { ShopNotification } from '../../../models/notification.model';
   ],
   selector: 'app-notifications',
   imports: [
+    ShopDatePipe,
+    TranslatePipe,
     CommonModule,
     MatButtonModule,
     MatCardModule,
@@ -36,7 +42,8 @@ import { ShopNotification } from '../../../models/notification.model';
   templateUrl: './notifications.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
-export class NotificationsComponent implements OnInit {
+export class NotificationsComponent {
+  private readonly errorMessages = inject(ErrorMessageService);
   readonly service = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -49,8 +56,15 @@ export class NotificationsComponent implements OnInit {
   updating = false;
   error = '';
 
-  ngOnInit(): void {
-    this.load();
+  constructor() {
+    const translate = inject(TranslateService);
+    effect(() => {
+      translate.currentLang();
+      untracked(() => {
+        this.notifications = [];
+        this.load(this.page);
+      });
+    });
   }
 
   load(page = 0): void {
@@ -71,9 +85,12 @@ export class NotificationsComponent implements OnInit {
           this.totalElements = result.totalElements;
           this.loading = false;
         },
-        error: () => {
+        error: (response) => {
           if (revision === this.revision) {
-            this.error = 'Không tải được thông báo. Vui lòng thử lại.';
+            this.error = this.errorMessages.message(
+              response,
+              'account.cannotLoadNotificationsPleaseTryAgain',
+            );
             this.loading = false;
           }
         },
@@ -103,9 +120,12 @@ export class NotificationsComponent implements OnInit {
             void this.router.navigateByUrl(notification.link);
           }
         },
-        error: () => {
+        error: (response) => {
           this.updating = false;
-          this.error = 'Không cập nhật được thông báo.';
+          this.error = this.errorMessages.message(
+            response,
+            'account.cannotUpdateTheNotification',
+          );
         },
       });
   }
@@ -127,9 +147,12 @@ export class NotificationsComponent implements OnInit {
           this.service.unread.set(count);
           this.load(this.page);
         },
-        error: () => {
+        error: (response) => {
           this.updating = false;
-          this.error = 'Không cập nhật được thông báo.';
+          this.error = this.errorMessages.message(
+            response,
+            'account.cannotUpdateTheNotification',
+          );
         },
       });
   }

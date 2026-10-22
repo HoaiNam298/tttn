@@ -1,21 +1,26 @@
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Khuyến mãi</p>
-    <h1>Voucher</h1>
+    <p class="eyebrow">{{ "admin.promotions" | translate }}</p>
+    <h1>{{ "admin.vouchers" | translate }}</h1>
   </div>
   <button mat-flat-button [disabled]="saving" (click)="open()">
-    Tạo voucher
+    {{ "admin.createVoucher" | translate }}
   </button>
 </div>
 <p class="report-note">
-  Đơn hủy được hoàn lượt sử dụng. Giảm giá áp dụng trên tiền hàng, không giảm
-  phí giao hàng.
+  {{
+    "admin.cancelledOrdersRestoreVoucherUsageDiscountsApplyToMerchandise"
+      | translate
+  }}
 </p>
 @if (error) {
   <p class="error" role="alert">{{ error }}</p>
 }
 @if (loading) {
-  <mat-progress-bar mode="indeterminate" aria-label="Đang tải voucher" />
+  <mat-progress-bar
+    mode="indeterminate"
+    [attr.aria-label]="'admin.loadingVouchers' | translate"
+  />
 }
 <mat-card
   appearance="outlined"
@@ -23,65 +28,90 @@
   [attr.aria-busy]="loading"
 >
   <div class="page-heading">
-    <h2>Voucher ({{ result?.totalElements || 0 }})</h2>
+    <h2>
+      {{
+        "admin.voucherCount" | translate: { count: result?.totalElements || 0 }
+      }}
+    </h2>
     <button mat-stroked-button [disabled]="loading" (click)="load()">
-      Làm mới
+      {{ "account.refresh" | translate }}
     </button>
   </div>
   <div class="table-wrap">
     <table mat-table [dataSource]="result?.content || []">
       <ng-container matColumnDef="code"
-        ><th mat-header-cell *matHeaderCellDef>Mã</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.code" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           <strong>{{ row.code }}</strong
           ><small>{{
             row.targetUserId
-              ? "Dành cho user #" + row.targetUserId
-              : "Mọi khách hàng"
+              ? ("admin.forUser" | translate) + row.targetUserId
+              : ("admin.allCustomers" | translate)
           }}</small>
         </td></ng-container
       >
       <ng-container matColumnDef="discount"
-        ><th mat-header-cell *matHeaderCellDef>Giảm</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.discount" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.amount | number }} {{ row.type === "PERCENT" ? "%" : "đ" }}
+          {{ row.amount | shopNumber }}
+          {{ row.type === "PERCENT" ? "%" : ("catalog.label" | translate) }}
         </td></ng-container
       >
       <ng-container matColumnDef="minimum"
-        ><th mat-header-cell *matHeaderCellDef>Đơn tối thiểu</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.minimumOrder" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.minimumSubtotal | currency: "VND" : "symbol" : "1.0-0" }}
+          {{ row.minimumSubtotal | shopMoney }}
         </td></ng-container
       >
       <ng-container matColumnDef="usage"
-        ><th mat-header-cell *matHeaderCellDef>Lượt</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.uses" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           {{ row.usedCount }}/{{ row.usageLimit
-          }}<small>{{ row.perUserLimit }}/khách</small>
+          }}<small>{{
+            "admin.perCustomer" | translate: { p0: row.perUserLimit }
+          }}</small>
         </td></ng-container
       >
       <ng-container matColumnDef="expiry"
-        ><th mat-header-cell *matHeaderCellDef>Hết hạn</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.expires" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.endsAt | date: "dd/MM/yyyy HH:mm" }}
+          {{ row.endsAt | shopDate }}
         </td></ng-container
       >
       <ng-container matColumnDef="active"
-        ><th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.status" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           <span
             class="status-badge"
             [class.voucher-active]="row.active"
             [class.voucher-inactive]="!row.active"
-            >{{ row.active ? "Đang bật" : "Đã tắt" }}</span
+            >{{
+              row.active
+                ? ("admin.enabled" | translate)
+                : ("admin.disabled" | translate)
+            }}</span
           >
         </td></ng-container
       >
       <ng-container matColumnDef="actions"
-        ><th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.actions" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           <button mat-button [disabled]="saving || loading" (click)="open(row)">
-            Sửa
+            {{ "account.edit" | translate }}
           </button>
         </td></ng-container
       >
@@ -89,7 +119,11 @@
       <tr mat-row *matRowDef="let row; columns: columns"></tr>
       <tr *matNoDataRow>
         <td colspan="7" class="state">
-          {{ loading ? "Đang tải voucher..." : "Chưa có voucher." }}
+          {{
+            loading
+              ? ("admin.loadingVouchers2" | translate)
+              : ("admin.noVouchersYet" | translate)
+          }}
         </td>
       </tr>
     </table>
@@ -102,11 +136,17 @@
     [showFirstLastButtons]="true"
     [disabled]="loading"
     (page)="changePage($event)"
-    aria-label="Phân trang voucher"
+    [attr.aria-label]="'admin.voucherPagination' | translate"
   />
 </mat-card>
 <ng-template #editor>
-  <h2 mat-dialog-title>{{ editing ? "Sửa voucher" : "Tạo voucher" }}</h2>
+  <h2 mat-dialog-title>
+    {{
+      editing
+        ? ("admin.editVoucher" | translate)
+        : ("admin.createVoucher" | translate)
+    }}
+  </h2>
   <form [formGroup]="form" (ngSubmit)="save()">
     <mat-dialog-content>
       @if (editorError) {
@@ -114,26 +154,32 @@
       }
       <div class="editor-grid">
         <mat-form-field appearance="outline"
-          ><mat-label>Mã (không đổi sau khi tạo)</mat-label
+          ><mat-label>{{
+            "admin.codeCannotChangeAfterCreation" | translate
+          }}</mat-label
           ><input
             matInput
             type="text"
             formControlName="code"
             maxlength="40"
             [readOnly]="saving || !!editing"
-          /><mat-error
-            >Vui lòng nhập mã (không đổi sau khi tạo) hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidCodeCannotChangeAfterCreation" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Loại giảm</mat-label
+          ><mat-label>{{ "admin.discountType" | translate }}</mat-label
           ><mat-select formControlName="type"
-            ><mat-option value="FIXED">Số tiền cố định</mat-option
-            ><mat-option value="PERCENT">Phần trăm</mat-option></mat-select
+            ><mat-option value="FIXED">{{
+              "admin.fixedAmount" | translate
+            }}</mat-option
+            ><mat-option value="PERCENT">{{
+              "admin.percentage" | translate
+            }}</mat-option></mat-select
           ></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Giá trị giảm</mat-label
+          ><mat-label>{{ "admin.discountValue" | translate }}</mat-label
           ><input
             matInput
             type="number"
@@ -141,12 +187,12 @@
             min="0.01"
             step="0.01"
             [readOnly]="saving"
-          /><mat-error
-            >Vui lòng nhập giá trị giảm hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidDiscountValue" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Đơn tối thiểu (đ)</mat-label
+          ><mat-label>{{ "admin.minimumOrderVnd" | translate }}</mat-label
           ><input
             matInput
             type="number"
@@ -154,12 +200,12 @@
             min="0"
             step="0.01"
             [readOnly]="saving"
-          /><mat-error
-            >Vui lòng nhập đơn tối thiểu (đ) hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidMinimumOrderVnd" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Giảm tối đa (đ)</mat-label
+          ><mat-label>{{ "admin.maximumDiscountVnd" | translate }}</mat-label
           ><input
             matInput
             type="number"
@@ -167,32 +213,34 @@
             min="0.01"
             step="0.01"
             [readOnly]="saving"
-          /><mat-error
-            >Vui lòng nhập giảm tối đa (đ) hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidMaximumDiscountVnd" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Bắt đầu</mat-label
+          ><mat-label>{{ "admin.start" | translate }}</mat-label
           ><input
             matInput
             type="datetime-local"
             formControlName="startsAt"
             [readOnly]="saving"
-          /><mat-error>Vui lòng nhập bắt đầu hợp lệ.</mat-error></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidStartDate" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Kết thúc</mat-label
+          ><mat-label>{{ "admin.end" | translate }}</mat-label
           ><input
             matInput
             type="datetime-local"
             formControlName="endsAt"
             [readOnly]="saving"
-          /><mat-error
-            >Vui lòng nhập kết thúc hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidEndDate" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Tổng lượt</mat-label
+          ><mat-label>{{ "admin.totalUses" | translate }}</mat-label
           ><input
             matInput
             type="number"
@@ -200,12 +248,12 @@
             min="1"
             step="1"
             [readOnly]="saving"
-          /><mat-error
-            >Vui lòng nhập tổng lượt hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidTotalUsageLimit" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>Lượt mỗi khách</mat-label
+          ><mat-label>{{ "admin.usesPerCustomer" | translate }}</mat-label
           ><input
             matInput
             type="number"
@@ -213,12 +261,14 @@
             min="1"
             step="1"
             [readOnly]="saving"
-          /><mat-error
-            >Vui lòng nhập lượt mỗi khách hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidPerCustomerLimit" | translate
+          }}</mat-error></mat-form-field
         >
         <mat-form-field appearance="outline"
-          ><mat-label>User ID (trống: mọi khách)</mat-label
+          ><mat-label>{{
+            "admin.userIdBlankAllCustomers" | translate
+          }}</mat-label
           ><input
             matInput
             type="number"
@@ -226,22 +276,28 @@
             min="1"
             step="1"
             [readOnly]="saving"
-          /><mat-error
-            >Vui lòng nhập user id (trống: mọi khách) hợp lệ.</mat-error
-          ></mat-form-field
+          /><mat-error>{{
+            "admin.pleaseEnterAValidUserIdBlankAllCustomers" | translate
+          }}</mat-error></mat-form-field
         >
       </div>
-      <mat-checkbox formControlName="active">Đang hoạt động</mat-checkbox>
+      <mat-checkbox formControlName="active">{{
+        "admin.active" | translate
+      }}</mat-checkbox>
     </mat-dialog-content>
     <mat-dialog-actions align="end"
       ><button mat-button type="button" [disabled]="saving" (click)="close()">
-        Hủy</button
+        {{ "account.cancel" | translate }}</button
       ><button
         mat-flat-button
         type="submit"
         [disabled]="saving || form.invalid"
       >
-        {{ saving ? "Đang lưu..." : "Lưu voucher" }}
+        {{
+          saving
+            ? ("account.saving" | translate)
+            : ("admin.saveVoucher" | translate)
+        }}
       </button></mat-dialog-actions
     >
   </form>

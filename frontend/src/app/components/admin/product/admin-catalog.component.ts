@@ -1,3 +1,6 @@
+import { ShopMoneyPipe } from '../../shared/shop-money.pipe';
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.component';
 import { CommonModule } from '@angular/common';
 import {
@@ -48,6 +51,8 @@ import { ProductInventoryEditorComponent } from './product-inventory-editor.comp
   ],
   styleUrl: './admin-catalog.component.scss',
   imports: [
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -66,6 +71,8 @@ import { ProductInventoryEditorComponent } from './product-inventory-editor.comp
   templateUrl: './admin-catalog.component.html',
 })
 export class AdminCatalogComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private confirmationOpen = false;
 
   private readonly fb = inject(FormBuilder);
@@ -146,8 +153,11 @@ export class AdminCatalogComponent implements OnInit {
       next: (value) => {
         this.categories = value;
       },
-      error: () => {
-        this.error = 'Không thể tải danh mục.';
+      error: (error) => {
+        this.error = this.errorMessages.message(
+          error,
+          'admin.cannotLoadCategories',
+        );
       },
     });
     this.load();
@@ -174,11 +184,14 @@ export class AdminCatalogComponent implements OnInit {
           this.totalElements = value.totalElements;
           this.loading = false;
         },
-        error: () => {
+        error: (error) => {
           if (revision !== this.loadRevision) {
             return;
           }
-          this.error = 'Không thể tải sản phẩm.';
+          this.error = this.errorMessages.message(
+            error,
+            'admin.cannotLoadProducts',
+          );
           this.loading = false;
         },
       });
@@ -204,16 +217,18 @@ export class AdminCatalogComponent implements OnInit {
         this.saving = false;
         this.productForm.enable({ emitEvent: false });
         this.message = this.editingId
-          ? 'Đã cập nhật sản phẩm.'
-          : 'Đã tạo sản phẩm.';
+          ? this.translate.instant('admin.productUpdated')
+          : this.translate.instant('admin.productCreated');
         this.cancelEdit();
         this.load(this.page);
       },
-      error: () => {
+      error: (error) => {
         this.saving = false;
         this.productForm.enable({ emitEvent: false });
-        this.formError =
-          'Không thể lưu sản phẩm. Vui lòng kiểm tra dữ liệu và thử lại.';
+        this.formError = this.errorMessages.message(
+          error,
+          'admin.cannotSaveProductPleaseCheckTheDataAndTry',
+        );
       },
     });
   }
@@ -254,8 +269,11 @@ export class AdminCatalogComponent implements OnInit {
   private deleteProductConfirmed(product: Product): void {
     this.catalog.deleteProduct(product.id).subscribe({
       next: () => this.load(this.page),
-      error: () => {
-        this.error = 'Không thể xóa sản phẩm.';
+      error: (error) => {
+        this.error = this.errorMessages.message(
+          error,
+          'admin.cannotDeleteProduct',
+        );
       },
     });
   }
@@ -267,7 +285,9 @@ export class AdminCatalogComponent implements OnInit {
     this.confirmationOpen = true;
     this.dialog
       .open(ConfirmationDialogComponent, {
-        data: `Xóa sản phẩm "${product.name}"?`,
+        data: this.translate.instant('admin.deleteProduct', {
+          p0: product.name,
+        }),
         width: '440px',
         maxWidth: 'calc(100vw - 32px)',
       })

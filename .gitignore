@@ -7,3 +7,10 @@
 /uploads/
 /.local-backups/
 **/__pycache__/
+
+# Keep backend/frontend tests and test-only helpers on the local machine.
+/backend/src/test/
+/frontend/src/**/*.spec.ts
+/frontend/src/**/*.test.ts
+/frontend/src/testing/
+/frontend/tsconfig.spec.json

@@ -1,36 +1,50 @@
 <main class="container home">
   <section class="home-banner">
     <div>
-      <p class="eyebrow">ShopApp · Công nghệ mỗi ngày</p>
-      <h1>Khám phá công nghệ.<br />Chọn điều bạn thích.</h1>
-      <p>
-        Điện thoại, máy tính và phụ kiện — tìm sản phẩm phù hợp với nhu cầu của
-        bạn.
+      <p class="eyebrow">
+        {{ "home.shopappEverydayTechnology" | translate }}
       </p>
-      <a mat-flat-button routerLink="/products">Khám phá cửa hàng →</a>
+      <h1>
+        {{ "home.exploreTechnology" | translate }}<br />{{
+          "home.chooseWhatYouLove" | translate
+        }}
+      </h1>
+      <p>
+        {{
+          "home.phonesComputersAndAccessoriesFindProductsThatMeetYour"
+            | translate
+        }}
+      </p>
+      <a mat-flat-button routerLink="/products">{{
+        "home.exploreTheStore" | translate
+      }}</a>
     </div>
     <div class="banner-visual">
       <span class="banner-mark">SHOP<br />APP.</span>
-      <p>Một nơi cho mọi lựa chọn công nghệ</p>
+      <p>{{ "home.onePlaceForAllYourTechnologyChoices" | translate }}</p>
     </div>
   </section>
-  <section class="shopping-benefits" aria-label="Trải nghiệm mua sắm">
+  <section
+    class="shopping-benefits"
+    [attr.aria-label]="'home.shoppingExperience' | translate"
+  >
     <div>
-      <strong>Khám phá dễ dàng</strong
-      ><span>Tìm theo danh mục và ngân sách</span>
+      <strong>{{ "home.easyDiscovery" | translate }}</strong
+      ><span>{{ "home.searchByCategoryAndBudget" | translate }}</span>
     </div>
     <div>
-      <strong>Thanh toán COD</strong><span>Thanh toán khi nhận hàng</span>
+      <strong>{{ "home.codPayment" | translate }}</strong
+      ><span>{{ "home.payOnDelivery" | translate }}</span>
     </div>
     <div>
-      <strong>Theo dõi đơn mua</strong
-      ><span>Cập nhật trạng thái trong tài khoản</span>
+      <strong>{{ "home.trackYourOrders" | translate }}</strong
+      ><span>{{ "home.viewStatusUpdatesInYourAccount" | translate }}</span>
     </div>
   </section>
   <mat-card appearance="outlined" class="panel">
     <div class="section-heading">
-      <h2>Mua sắm theo danh mục</h2>
-      <a routerLink="/products">Xem tất cả →</a>
+      <h2>{{ "home.shopByCategory" | translate }}</h2>
+      <a routerLink="/products">{{ "home.viewAll" | translate }}</a>
     </div>
     @if (categoryError) {
       <p class="error" role="alert">{{ categoryError }}</p>
@@ -50,14 +64,17 @@
   <section class="home-products">
     <div class="section-heading">
       <div>
-        <p class="eyebrow">Gợi ý khám phá</p>
-        <h2>Sản phẩm mới lên kệ</h2>
+        <p class="eyebrow">{{ "home.discoverMore" | translate }}</p>
+        <h2>{{ "home.newArrivals" | translate }}</h2>
       </div>
-      <a routerLink="/products">Xem thêm →</a>
+      <a routerLink="/products">{{ "home.seeMore" | translate }}</a>
     </div>
     @if (loading) {
-      <mat-progress-bar mode="indeterminate" aria-label="Đang tải dữ liệu" />
-      <p class="state">Đang tải sản phẩm...</p>
+      <mat-progress-bar
+        mode="indeterminate"
+        [attr.aria-label]="'common.loadingData' | translate"
+      />
+      <p class="state">{{ "common.loadingProducts" | translate }}</p>
     } @else if (error) {
       <p class="state error" role="alert">{{ error }}</p>
     } @else {
@@ -65,7 +82,7 @@
         @for (product of products; track product.id) {
           <app-product-card [product]="product" />
         } @empty {
-          <p>Chưa có sản phẩm.</p>
+          <p>{{ "home.noProductsYet" | translate }}</p>
         }
       </div>
     }

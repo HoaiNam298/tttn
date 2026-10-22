@@ -1,3 +1,8 @@
+import { ShopDatePipe } from '../../shared/shop-date.pipe';
+import { ShopNumberPipe } from '../../shared/shop-number.pipe';
+import { ShopMoneyPipe } from '../../shared/shop-money.pipe';
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -40,6 +45,10 @@ import { PageResponse } from '../../../responses/page.response';
   ],
   styleUrl: './admin-vouchers.component.scss',
   imports: [
+    ShopDatePipe,
+    ShopNumberPipe,
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -57,6 +66,8 @@ import { PageResponse } from '../../../responses/page.response';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AdminVouchersComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly service = inject(VoucherService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
@@ -174,8 +185,11 @@ export class AdminVouchersComponent implements OnInit {
           this.page = result.number;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Không tải được voucher.';
+        error: (error) => {
+          this.error = this.errorMessages.message(
+            error,
+            'admin.cannotLoadVouchers',
+          );
           this.loading = false;
         },
       });
@@ -226,8 +240,9 @@ export class AdminVouchersComponent implements OnInit {
       end <= start ||
       (value.type === 'PERCENT' && value.amount > 100)
     ) {
-      this.editorError =
-        'Ngày kết thúc phải sau ngày bắt đầu; phần trăm không vượt quá 100.';
+      this.editorError = this.translate.instant(
+        'admin.endDateMustBeAfterTheStartDatePercentage',
+      );
       return;
     }
     this.saving = true;
@@ -255,9 +270,10 @@ export class AdminVouchersComponent implements OnInit {
         error: (response) => {
           this.saving = false;
           this.form.enable({ emitEvent: false });
-          this.editorError =
-            response.error?.message ??
-            'Không lưu được voucher. Nếu dữ liệu thay đổi, tải lại trước khi sửa.';
+          this.editorError = this.errorMessages.message(
+            response,
+            'admin.cannotSaveVoucherIfTheDataHasChangedReload',
+          );
         },
       });
   }

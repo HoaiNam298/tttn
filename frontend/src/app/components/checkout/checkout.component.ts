@@ -1,3 +1,6 @@
+import { ShopMoneyPipe } from '../shared/shop-money.pipe';
+import { ErrorMessageService } from '../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -34,6 +37,8 @@ import { MatDividerModule } from '@angular/material/divider';
 @Component({
   selector: 'app-checkout',
   imports: [
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
@@ -50,6 +55,8 @@ import { MatDividerModule } from '@angular/material/divider';
   styleUrl: './checkout.component.scss',
 })
 export class CheckoutComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly cart = inject(CartService);
@@ -153,7 +160,7 @@ export class CheckoutComponent implements OnInit {
         quantity > 100 ||
         (variantId != null && (!Number.isInteger(variantId) || variantId < 1)))
     ) {
-      this.error = 'Thông tin mua ngay không hợp lệ.';
+      this.error = this.translate.instant('checkout.invalidBuyNowInformation');
       this.loading = false;
       return;
     }
@@ -215,9 +222,11 @@ export class CheckoutComponent implements OnInit {
             });
           }
         },
-        error: () => {
-          this.addressError =
-            'Không thể tải sổ địa chỉ. Bạn vẫn có thể nhập địa chỉ trực tiếp.';
+        error: (response) => {
+          this.addressError = this.errorMessages.message(
+            response,
+            'checkout.cannotLoadSavedAddressesYouCanStillEnterAn',
+          );
         },
       });
     const request = this.loadCheckoutLines(productId, quantity, variantId);
@@ -232,12 +241,16 @@ export class CheckoutComponent implements OnInit {
           !this.pending &&
           lines.some((line) => (line.product.stock ?? 0) < line.quantity)
         ) {
-          this.error =
-            'Sản phẩm không đủ tồn kho. Vui lòng điều chỉnh số lượng.';
+          this.error = this.translate.instant(
+            'checkout.insufficientStockPleaseAdjustTheQuantity',
+          );
         }
       },
-      error: () => {
-        this.error = 'Không thể tải giỏ hàng.';
+      error: (response) => {
+        this.error = this.errorMessages.message(
+          response,
+          'checkout.cannotLoadTheCart',
+        );
         this.loading = false;
       },
     });
@@ -249,7 +262,9 @@ export class CheckoutComponent implements OnInit {
       this.form.controls.paymentMethod.value === 'VNPAY' &&
       !this.vnpayEnabled
     ) {
-      this.error = 'VNPAY Sandbox chưa được cấu hình. Vui lòng chọn COD.';
+      this.error = this.translate.instant(
+        'checkout.vnpaySandboxIsNotConfiguredPleaseChooseCod',
+      );
       return;
     }
     if (
@@ -265,7 +280,7 @@ export class CheckoutComponent implements OnInit {
       !this.pending &&
       this.lines.some((line) => (line.product.stock ?? 0) < line.quantity)
     ) {
-      this.error = 'Sản phẩm không đủ tồn kho.';
+      this.error = this.translate.instant('checkout.insufficientStock');
       return;
     }
     if (!this.pending) {
@@ -304,8 +319,10 @@ export class CheckoutComponent implements OnInit {
           }
         },
         error: (response) => {
-          this.error =
-            response.error?.message ?? 'Đặt hàng thất bại. Vui lòng thử lại.';
+          this.error = this.errorMessages.message(
+            response,
+            'checkout.couldNotPlaceTheOrderPleaseTryAgain',
+          );
           this.submitting = false;
           if (
             response.status >= 400 &&
@@ -345,8 +362,9 @@ export class CheckoutComponent implements OnInit {
     this.invalidateQuote();
     this.quoteError = '';
     if (this.checkoutInvalid) {
-      this.quoteError =
-        'Nhập thông tin nhận hàng hợp lệ để cập nhật tổng tiền.';
+      this.quoteError = this.translate.instant(
+        'checkout.enterValidDeliveryInformationToUpdateTheTotal',
+      );
       return;
     }
     const revision = this.quoteRevision;
@@ -370,9 +388,10 @@ export class CheckoutComponent implements OnInit {
             ) {
               this.quote = previousQuote;
             }
-            this.quoteError =
-              response.error?.message ??
-              'Không tính được tổng tiền. Hãy kiểm tra voucher và thử lại.';
+            this.quoteError = this.errorMessages.message(
+              response,
+              'checkout.cannotCalculateTheTotalCheckTheVoucherAndTry',
+            );
             this.quoting = false;
           }
         },

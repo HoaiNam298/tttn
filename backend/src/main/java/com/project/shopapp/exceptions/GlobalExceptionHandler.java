@@ -1,7 +1,8 @@
 package com.project.shopapp.exceptions;
 
+import com.project.shopapp.components.I18nMessages;
+import com.project.shopapp.components.MessageKeys;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -24,57 +25,64 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    private final I18nMessages messages;
+
+    public GlobalExceptionHandler(I18nMessages messages) {
+        this.messages = messages;
+    }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<ApiError> unreadableRequest(Exception exception) {
-        return build(HttpStatus.BAD_REQUEST, "Invalid request JSON or enum value", Map.of());
+        return build(HttpStatus.BAD_REQUEST, MessageKeys.INVALID_REQUEST, Map.of());
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     ResponseEntity<ApiError> concurrentUpdate(Exception exception) {
-        return build(HttpStatus.CONFLICT, "Data changed concurrently. Reload and retry", Map.of());
+        return build(HttpStatus.CONFLICT, MessageKeys.REQUEST_CONCURRENT_UPDATE, Map.of());
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     ResponseEntity<ApiError> uploadTooLarge(Exception exception) {
-        return build(
-                HttpStatus.PAYLOAD_TOO_LARGE, "Image upload exceeds the allowed size", Map.of());
+        return build(HttpStatus.PAYLOAD_TOO_LARGE, MessageKeys.UPLOAD_TOO_LARGE, Map.of());
     }
 
     @ExceptionHandler(IOException.class)
     ResponseEntity<ApiError> storageFailure(IOException exception) {
         log.error("Image storage operation failed", exception);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Image storage is unavailable", Map.of());
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, MessageKeys.STORAGE_UNAVAILABLE, Map.of());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ApiError> invalidArgument(IllegalArgumentException exception) {
-        return build(HttpStatus.BAD_REQUEST, exception.getMessage(), Map.of());
+        return business(HttpStatus.BAD_REQUEST, exception, MessageKeys.REQUEST_INVALID_ARGUMENT);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<ApiError> notFound(ResourceNotFoundException exception) {
-        return build(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
+        return business(HttpStatus.NOT_FOUND, exception, MessageKeys.RESOURCE_NOT_FOUND);
     }
 
     @ExceptionHandler(IdentityProviderException.class)
     ResponseEntity<ApiError> identityProvider(IdentityProviderException exception) {
-        return build(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), Map.of());
+        return business(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                exception,
+                MessageKeys.IDENTITY_PROVIDER_UNAVAILABLE);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
     ResponseEntity<ApiError> conflict(DuplicateResourceException exception) {
-        return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+        return business(HttpStatus.CONFLICT, exception, MessageKeys.RESOURCE_CONFLICT);
     }
 
     @ExceptionHandler(InsufficientStockException.class)
     ResponseEntity<ApiError> insufficientStock(InsufficientStockException exception) {
-        return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+        return business(HttpStatus.CONFLICT, exception, MessageKeys.STOCK_INSUFFICIENT);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     ResponseEntity<ApiError> invalidState(IllegalStateException exception) {
-        return build(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+        return business(HttpStatus.CONFLICT, exception, MessageKeys.REQUEST_INVALID_STATE);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -84,20 +92,17 @@ public class GlobalExceptionHandler {
         for (var error : fieldErrors) {
             errors.putIfAbsent(error.getField(), error.getDefaultMessage());
         }
-        return build(HttpStatus.BAD_REQUEST, "Request validation failed", errors);
+        return build(HttpStatus.BAD_REQUEST, MessageKeys.VALIDATION_FAILED, errors);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<ApiError> dataIntegrity(DataIntegrityViolationException exception) {
-        return build(
-                HttpStatus.CONFLICT,
-                "The resource is referenced by other data or violates a unique constraint",
-                Map.of());
+        return build(HttpStatus.CONFLICT, MessageKeys.RESOURCE_CONFLICT, Map.of());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ApiError> accessDenied(AccessDeniedException exception) {
-        return build(HttpStatus.FORBIDDEN, "Access denied", Map.of());
+        return build(HttpStatus.FORBIDDEN, MessageKeys.SECURITY_ACCESS_DENIED, Map.of());
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -105,37 +110,59 @@ public class GlobalExceptionHandler {
         if (exception instanceof AuthenticationServiceException) {
             log.error("Authentication failed due to a system error", exception);
             return build(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Authentication is unavailable", Map.of());
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    MessageKeys.SECURITY_AUTHENTICATION_UNAVAILABLE,
+                    Map.of());
         }
-        return build(HttpStatus.UNAUTHORIZED, "Authentication required", Map.of());
+        return build(
+                HttpStatus.UNAUTHORIZED, MessageKeys.SECURITY_AUTHENTICATION_REQUIRED, Map.of());
     }
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> unexpectedFailure(Exception exception) {
         if (exception instanceof TypeMismatchException
                 && !(exception instanceof ConversionNotSupportedException)) {
-            return build(HttpStatus.BAD_REQUEST, "Invalid request parameter", Map.of());
+            return build(HttpStatus.BAD_REQUEST, MessageKeys.REQUEST_INVALID_PARAMETER, Map.of());
         }
         if (exception instanceof ErrorResponse error) {
             var status = error.getStatusCode();
             if (status.is4xxClientError()) {
                 return ResponseEntity.status(status)
                         .headers(error.getHeaders())
+                        .varyBy("Accept-Language")
                         .body(
-                                new ApiError(
-                                        Instant.now(),
-                                        status.value(),
-                                        "Request rejected",
+                                ApiError.of(
+                                        status,
+                                        MessageKeys.REQUEST_REJECTED,
+                                        messages.get(MessageKeys.REQUEST_REJECTED),
                                         Map.of()));
             }
         }
         log.error("Unexpected request processing failure", exception);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, MessageKeys.INTERNAL_ERROR, Map.of());
+    }
+
+    private ResponseEntity<ApiError> business(
+            HttpStatus status, Exception exception, String fallback) {
+        if (exception instanceof LocalizedError localized
+                && localized.getMessage().matches("[a-z]+(?:[._][a-z]+)+")) {
+            String key = localized.getMessage();
+            return ResponseEntity.status(status)
+                    .varyBy("Accept-Language")
+                    .body(
+                            ApiError.of(
+                                    status,
+                                    key,
+                                    messages.get(key, localized.getArguments()),
+                                    Map.of()));
+        }
+        return build(status, fallback, Map.of());
     }
 
     private ResponseEntity<ApiError> build(
             HttpStatus status, String message, Map<String, String> errors) {
         return ResponseEntity.status(status)
-                .body(new ApiError(Instant.now(), status.value(), message, errors));
+                .varyBy("Accept-Language")
+                .body(ApiError.of(status, message, messages.get(message), errors));
     }
 }

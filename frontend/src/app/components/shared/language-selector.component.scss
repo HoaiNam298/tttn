@@ -1,0 +1,14 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+}
+select {
+  border: 1px solid #9ba8b6;
+  border-radius: 8px;
+  padding: 7px;
+  background: white;
+  color: #172033;
+  max-width: 112px;
+  font: inherit;
+  font-size: 13px;
+}

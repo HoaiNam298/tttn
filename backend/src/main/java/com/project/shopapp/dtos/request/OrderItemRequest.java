@@ -14,12 +14,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderItemRequest {
 
-    @NotNull(message = "Product is required")
+    @NotNull(message = "{validation.notnull}")
     @Min(1)
     private Long productId;
 
-    @Min(value = 1, message = "Quantity must be at least 1")
-    @Max(value = 100, message = "Quantity must not exceed 100")
+    @Min(value = 1, message = "{validation.min}")
+    @Max(value = 100, message = "{validation.max}")
     private int quantity;
 
     @Min(1)

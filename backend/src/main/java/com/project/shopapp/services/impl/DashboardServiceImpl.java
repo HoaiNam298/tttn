@@ -1,9 +1,11 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.dtos.response.DailyRevenueResponse;
 import com.project.shopapp.dtos.response.DashboardResponse;
 import com.project.shopapp.dtos.response.OrderSummaryResponse;
 import com.project.shopapp.dtos.response.TopProductResponse;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
 import com.project.shopapp.projections.DailyRevenueProjection;
 import com.project.shopapp.projections.TopProductProjection;
 import com.project.shopapp.repositories.CategoryRepository;
@@ -54,7 +56,7 @@ public class DashboardServiceImpl implements DashboardService {
         LocalDate startDate = from == null ? endDate.minusDays(29) : from;
         long days = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         if (days < 1 || days > 93) {
-            throw new IllegalArgumentException("Report range must contain 1 to 93 days");
+            throw new LocalizedArgumentException(MessageKeys.REPORT_INVALID_RANGE);
         }
         Instant start = startDate.atStartOfDay(REPORT_ZONE).toInstant();
         Instant end = endDate.plusDays(1).atStartOfDay(REPORT_ZONE).toInstant();

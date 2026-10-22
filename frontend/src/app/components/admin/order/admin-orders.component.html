@@ -1,18 +1,20 @@
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Quản trị</p>
-    <h1>Quản lý đơn hàng</h1>
+    <p class="eyebrow">{{ "common.admin" | translate }}</p>
+    <h1>{{ "admin.orderManagement" | translate }}</h1>
   </div>
-  <a mat-stroked-button routerLink="/admin/dashboard">Tổng quan</a>
+  <a mat-stroked-button routerLink="/admin/dashboard">{{
+    "admin.overview" | translate
+  }}</a>
 </div>
 <mat-card appearance="outlined" class="management-card filter-card">
   <div class="material-filters">
     <div class="filter-summary">
-      <strong>{{ totalElements | number }}</strong
-      ><span>đơn hàng trong danh sách</span>
+      <strong>{{ totalElements | shopNumber }}</strong
+      ><span>{{ "admin.ordersInTheList" | translate }}</span>
     </div>
     <mat-form-field appearance="outline" subscriptSizing="dynamic"
-      ><mat-label>Trạng thái đơn hàng</mat-label>
+      ><mat-label>{{ "admin.orderStatuses" | translate }}</mat-label>
       <mat-select
         [(ngModel)]="selectedStatus"
         (ngModelChange)="load(0)"
@@ -20,13 +22,13 @@
       >
         @for (status of statuses; track status) {
           <mat-option [value]="status">{{
-            status ? statusLabel(status) : "Tất cả trạng thái"
+            status ? statusLabel(status) : ("admin.allStatuses" | translate)
           }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
     <button mat-stroked-button [disabled]="loading" (click)="load(page)">
-      Làm mới
+      {{ "account.refresh" | translate }}
     </button>
   </div>
 </mat-card>
@@ -34,7 +36,10 @@
   <p class="error" role="alert">{{ error }}</p>
 }
 @if (loading) {
-  <mat-progress-bar mode="indeterminate" aria-label="Đang tải đơn hàng" />
+  <mat-progress-bar
+    mode="indeterminate"
+    [attr.aria-label]="'orders.loadingOrder' | translate"
+  />
 }
 <mat-card
   appearance="outlined"
@@ -44,37 +49,49 @@
   <div class="table-wrap">
     <table mat-table [dataSource]="items">
       <ng-container matColumnDef="number"
-        ><th mat-header-cell *matHeaderCellDef>Mã đơn</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.orderNumber" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           <a
             class="order-number"
             [routerLink]="['/admin/orders', row.id]"
             [matTooltip]="row.orderNumber"
-            [attr.aria-label]="'Xem đơn hàng ' + row.orderNumber"
+            [attr.aria-label]="
+              'admin.viewOrderNumber' | translate: { number: row.orderNumber }
+            "
             >{{ row.orderNumber }}</a
           >
         </td></ng-container
       >
       <ng-container matColumnDef="customer"
-        ><th mat-header-cell *matHeaderCellDef>Khách hàng</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "orders.customer" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           {{ row.recipientName }}<small>{{ row.phoneNumber }}</small>
         </td></ng-container
       >
       <ng-container matColumnDef="created"
-        ><th mat-header-cell *matHeaderCellDef>Ngày đặt</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.orderDate" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.createdAt | date: "dd/MM/yyyy HH:mm" }}
+          {{ row.createdAt | shopDate }}
         </td></ng-container
       >
       <ng-container matColumnDef="total"
-        ><th mat-header-cell *matHeaderCellDef>Tổng tiền</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "orders.total2" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.total | currency: "VND" : "symbol" : "1.0-0" }}
+          {{ row.total | shopMoney }}
         </td></ng-container
       >
       <ng-container matColumnDef="status"
-        ><th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.status" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           <span class="status-badge" [ngClass]="'status-' + row.status">{{
             statusLabel(row.status)
@@ -82,14 +99,18 @@
         </td></ng-container
       >
       <ng-container matColumnDef="payment">
-        <th mat-header-cell *matHeaderCellDef>Thanh toán</th>
+        <th mat-header-cell *matHeaderCellDef>
+          {{ "common.checkout" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           {{ row.paymentMethod ?? "COD" }}
           <small>{{ paymentLabel(row) }}</small>
         </td>
       </ng-container>
       <ng-container matColumnDef="actions"
-        ><th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.actions" | translate }}
+        </th>
         <td mat-cell *matCellDef="let row">
           <div class="row-actions">
             @for (status of availableStatuses(row); track status) {
@@ -103,7 +124,7 @@
               </button>
             }
             @if (updating.has(row.id)) {
-              <small role="status">Đang cập nhật...</small>
+              <small role="status">{{ "admin.updating" | translate }}</small>
             }
           </div>
         </td></ng-container
@@ -112,7 +133,11 @@
       <tr mat-row *matRowDef="let row; columns: columns"></tr>
       <tr *matNoDataRow>
         <td colspan="7" class="state">
-          {{ loading ? "Đang tải đơn hàng..." : "Không có đơn hàng phù hợp." }}
+          {{
+            loading
+              ? ("orders.loadingOrder2" | translate)
+              : ("admin.noMatchingOrders" | translate)
+          }}
         </td>
       </tr>
     </table>
@@ -125,6 +150,6 @@
     [showFirstLastButtons]="true"
     [disabled]="loading"
     (page)="changePage($event)"
-    aria-label="Phân trang đơn hàng"
+    [attr.aria-label]="'admin.orderPagination' | translate"
   />
 </mat-card>

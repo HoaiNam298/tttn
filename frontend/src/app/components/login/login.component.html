@@ -2,36 +2,40 @@
   <mat-card appearance="outlined" class="auth-card">
     <div class="auth-heading">
       <a class="auth-brand" routerLink="/">ShopApp</a>
-      <h1>Chào mừng trở lại</h1>
-      <p>Đăng nhập để quản lý đơn hàng và tiếp tục mua sắm.</p>
+      <h1>{{ "auth.welcomeBack" | translate }}</h1>
+      <p>{{ "auth.logInToManageOrdersAndContinueShopping" | translate }}</p>
     </div>
     @if (loading) {
-      <mat-progress-bar mode="indeterminate" aria-label="Đang đăng nhập" />
+      <mat-progress-bar
+        mode="indeterminate"
+        [attr.aria-label]="'auth.loggingIn' | translate"
+      />
     }
     @if (registered) {
       <p class="auth-success" role="status">
-        Đăng ký thành công. Bạn có thể đăng nhập ngay.
+        {{ "auth.registrationSuccessfulYouCanNowLogIn" | translate }}
       </p>
     }
     @if (idleExpired) {
       <p class="auth-error" role="alert">
-        Bạn đã được đăng xuất sau 30 phút không hoạt động. Vui lòng đăng nhập
-        lại.
+        {{ "auth.youWereLoggedOutAfter30MinutesOfInactivity" | translate }}
       </p>
     }
     <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
       <mat-form-field appearance="outline"
-        ><mat-label>Số điện thoại</mat-label
+        ><mat-label>{{ "common.phoneNumber" | translate }}</mat-label
         ><input
           matInput
           type="tel"
           formControlName="phoneNumber"
           autocomplete="username"
-        /><mat-error>Vui lòng nhập số điện thoại.</mat-error></mat-form-field
+        /><mat-error>{{
+          "auth.pleaseEnterYourPhoneNumber" | translate
+        }}</mat-error></mat-form-field
       >
 
       <mat-form-field appearance="outline"
-        ><mat-label>Mật khẩu</mat-label
+        ><mat-label>{{ "auth.password" | translate }}</mat-label
         ><input
           matInput
           [type]="showPassword ? 'text' : 'password'"
@@ -43,11 +47,19 @@
           type="button"
           [disabled]="loading"
           (click)="showPassword = !showPassword"
-          [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+          [attr.aria-label]="
+            showPassword
+              ? ('auth.hidePassword' | translate)
+              : ('auth.showPassword' | translate)
+          "
           [attr.aria-pressed]="showPassword"
         >
-          {{ showPassword ? "Ẩn" : "Hiện" }}</button
-        ><mat-error>Vui lòng nhập mật khẩu.</mat-error></mat-form-field
+          {{
+            showPassword ? ("auth.hide" | translate) : ("auth.show" | translate)
+          }}</button
+        ><mat-error>{{
+          "auth.pleaseEnterYourPassword" | translate
+        }}</mat-error></mat-form-field
       >
       @if (error) {
         <p class="auth-error" role="alert">{{ error }}</p>
@@ -58,16 +70,20 @@
         class="submit-button"
         [disabled]="loading"
       >
-        {{ loading ? "Đang đăng nhập..." : "Đăng nhập" }}
+        {{
+          loading
+            ? ("auth.loggingIn2" | translate)
+            : ("common.logIn" | translate)
+        }}
       </button>
     </form>
     <p class="auth-switch">
-      Chưa có tài khoản?
+      {{ "auth.noAccountYet" | translate }}
       <a
         mat-button
         routerLink="/register"
         [queryParams]="{ returnUrl: returnUrl }"
-        >Đăng ký</a
+        >{{ "common.register" | translate }}</a
       >
     </p>
   </mat-card>

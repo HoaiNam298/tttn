@@ -1,3 +1,5 @@
+import { TranslatePipe } from '@ngx-translate/core';
+import { LanguageSelectorComponent } from '../../shared/language-selector.component';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -13,6 +15,8 @@ import { NotificationService } from '../../../services/notification.service';
 @Component({
   selector: 'app-store-header',
   imports: [
+    LanguageSelectorComponent,
+    TranslatePipe,
     RouterLink,
     RouterLinkActive,
     ReactiveFormsModule,

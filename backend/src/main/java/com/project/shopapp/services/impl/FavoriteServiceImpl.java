@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.response.ProductResponse;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
@@ -56,7 +57,10 @@ public class FavoriteServiceImpl implements FavoriteService {
         if (!favorites.existsByUserIdAndProductId(user.getId(), productId)) {
             Product product =
                     products.findById(productId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                            .orElseThrow(
+                                    () ->
+                                            new ResourceNotFoundException(
+                                                    MessageKeys.PRODUCT_NOT_FOUND));
             Favorite favorite = Favorite.builder().user(user).product(product).build();
             favorites.save(favorite);
             TransactionLog.debug(
@@ -75,6 +79,6 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     private User lockUser(String phoneNumber) {
         return users.findForUpdateByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageKeys.USER_NOT_FOUND));
     }
 }

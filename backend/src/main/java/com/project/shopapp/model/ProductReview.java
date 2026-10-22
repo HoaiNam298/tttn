@@ -1,5 +1,8 @@
 package com.project.shopapp.model;
 
+import com.project.shopapp.components.MessageKeys;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -82,7 +85,7 @@ public class ProductReview extends BaseEntity {
 
     public void attachImages(List<String> images) {
         if (images.size() > 5) {
-            throw new IllegalArgumentException("At most five review images are allowed");
+            throw new LocalizedArgumentException(MessageKeys.REVIEW_IMAGE_LIMIT);
         }
         this.images = new ArrayList<>(images);
     }
@@ -93,7 +96,7 @@ public class ProductReview extends BaseEntity {
 
     public void reply(String text, long expectedVersion) {
         if (version != expectedVersion) {
-            throw new IllegalStateException("Review changed. Reload before replying");
+            throw new LocalizedStateException(MessageKeys.REVIEW_CHANGED);
         }
         shopReply = text.trim();
         repliedAt = Instant.now();

@@ -1,3 +1,4 @@
+import { TranslatePipe } from '@ngx-translate/core';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
@@ -5,7 +6,7 @@ import { HeaderComponent } from './components/layout/header/header.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterOutlet, HeaderComponent],
+  imports: [TranslatePipe, RouterLink, RouterOutlet, HeaderComponent],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.component.scss',

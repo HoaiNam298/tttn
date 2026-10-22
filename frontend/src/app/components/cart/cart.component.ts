@@ -1,3 +1,5 @@
+import { ShopMoneyPipe } from '../shared/shop-money.pipe';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -20,6 +22,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 @Component({
   selector: 'app-cart',
   imports: [
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     RouterLink,
     MatButtonModule,
@@ -33,6 +37,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
   styleUrl: './cart.component.scss',
 })
 export class CartComponent implements OnInit {
+  private readonly translate = inject(TranslateService);
   readonly cart = inject(CartService);
   readonly maxQuantity = 100;
   private readonly destroyRef = inject(DestroyRef);
@@ -109,11 +114,14 @@ export class CartComponent implements OnInit {
       return;
     }
     if (quantity > this.maxQuantity) {
-      this.error = `Mỗi sản phẩm hoặc phân loại chỉ được đặt tối đa ${this.maxQuantity} sản phẩm.`;
+      this.error = this.translate.instant(
+        'cart.eachProductOrVariantIsLimitedToItemsPer',
+        { p0: this.maxQuantity },
+      );
       return;
     }
     if (quantity > (line.product.stock ?? 0)) {
-      this.error = 'Số lượng vượt quá tồn kho.';
+      this.error = this.translate.instant('cart.quantityExceedsAvailableStock');
       return;
     }
     this.cart.setQuantity(line.product.id, quantity, line.variantId);
@@ -135,8 +143,9 @@ export class CartComponent implements OnInit {
   private loadLines(): Observable<CartLine[]> {
     return this.cart.lines().pipe(
       catchError(() => {
-        this.error =
-          'Không thể tải thông tin sản phẩm trong giỏ hàng. Vui lòng thử lại trước khi đặt hàng.';
+        this.error = this.translate.instant(
+          'cart.cannotLoadProductInformationInTheCartPleaseRetry',
+        );
         this.loadFailed = true;
         this.loading = false;
         return EMPTY;

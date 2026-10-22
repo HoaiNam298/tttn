@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:../.env[.properties],optional:file:.env[.properties]
   application:
     name: shopapp-backend
   servlet:
@@ -6,7 +8,7 @@ spring:
       max-file-size: 5MB
       max-request-size: 26MB
   datasource:
-    url: ${SHOPAPP_DB_URL:jdbc:postgresql://127.0.0.1:5433/shopapp}
+    url: ${SHOPAPP_DB_URL:jdbc:postgresql://127.0.0.1:${SHOPAPP_POSTGRES_PORT:5433}/${SHOPAPP_APP_DB:shopapp_keycloak}}
     username: ${SHOPAPP_DB_USERNAME:shopapp}
     password: ${SHOPAPP_DB_PASSWORD:}
   jpa:

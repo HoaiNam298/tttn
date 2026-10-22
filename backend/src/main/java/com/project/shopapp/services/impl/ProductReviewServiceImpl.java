@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.CreateProductReviewRequest;
 import com.project.shopapp.dtos.request.ReviewReplyRequest;
@@ -8,6 +9,7 @@ import com.project.shopapp.dtos.response.ProductReviewOverviewResponse;
 import com.project.shopapp.dtos.response.ProductReviewResponse;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.exceptions.DuplicateResourceException;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.OrderItem;
 import com.project.shopapp.model.ProductReview;
@@ -47,7 +49,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     public ProductReviewOverviewResponse findByProduct(
             Long productId, Integer rating, Pageable pageable) {
         if (rating != null && (rating < 1 || rating > 5)) {
-            throw new IllegalArgumentException("Rating must be between 1 and 5");
+            throw new LocalizedArgumentException(MessageKeys.REVIEW_INVALID_RATING);
         }
         pageable = bounded(pageable);
         Page<ProductReview> page =
@@ -79,9 +81,9 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                 eligible(productId, phoneNumber, request.getOrderId(), request.getVariantId());
         orderItemRepository
                 .lockById(orderItem.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Order item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageKeys.ORDER_ITEM_NOT_FOUND));
         if (reviewRepository.existsByOrderItemId(orderItem.getId())) {
-            throw new DuplicateResourceException("This order item has already been reviewed");
+            throw new DuplicateResourceException(MessageKeys.REVIEW_ALREADY_EXISTS);
         }
         ProductReview review =
                 ProductReview.builder()
@@ -129,7 +131,8 @@ public class ProductReviewServiceImpl implements ProductReviewService {
         ProductReview review =
                 reviewRepository
                         .findById(reviewId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.REVIEW_NOT_FOUND));
         review.reply(request.getReply(), request.getVersion());
         ProductReview saved = reviewRepository.saveAndFlush(review);
         TransactionLog.info(log, "Product review replied reviewId={}", reviewId);
@@ -162,7 +165,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
         }
         OrderItem orderItem = result.orElse(null);
         if (orderItem == null) {
-            throw new ResourceNotFoundException("Completed order item not found for this product");
+            throw new ResourceNotFoundException(MessageKeys.REVIEW_PURCHASE_REQUIRED);
         }
         return orderItem;
     }

@@ -1,3 +1,6 @@
+import { ShopDatePipe } from '../shared/shop-date.pipe';
+import { ShopMoneyPipe } from '../shared/shop-money.pipe';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import {
   MatPaginatorIntl,
   MatPaginatorModule,
@@ -31,6 +34,9 @@ import { OrderService } from '../../services/order.service';
   ],
   selector: 'app-order-history',
   imports: [
+    ShopDatePipe,
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     RouterLink,
     MatButtonModule,
@@ -43,19 +49,29 @@ import { OrderService } from '../../services/order.service';
   styleUrl: './order-history.component.scss',
 })
 export class OrderHistoryComponent implements OnInit {
-  readonly paymentLabels = PAYMENT_STATUS_LABELS;
+  private readonly translate = inject(TranslateService);
+  get paymentLabels(): typeof PAYMENT_STATUS_LABELS {
+    return Object.fromEntries(
+      Object.keys(PAYMENT_STATUS_LABELS).map((status) => [
+        status,
+        this.translate.instant('paymentStatus.' + status),
+      ]),
+    ) as typeof PAYMENT_STATUS_LABELS;
+  }
   private readonly orders = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly requests = new Subject<number>();
   status: OrderStatus | '' = '';
-  readonly labels: Record<OrderStatus, string> = {
-    PENDING: 'Chờ xác nhận',
-    CONFIRMED: 'Chờ vận chuyển',
-    SHIPPING: 'Đang vận chuyển',
-    DELIVERED: 'Đã giao · Chờ nhận hàng',
-    COMPLETED: 'Hoàn thành',
-    CANCELLED: 'Đã hủy',
-  };
+  get labels(): Record<OrderStatus, string> {
+    return {
+      PENDING: this.translate.instant('orders.awaitingConfirmation'),
+      CONFIRMED: this.translate.instant('orders.awaitingShipment'),
+      SHIPPING: this.translate.instant('orders.shipping3'),
+      DELIVERED: this.translate.instant('orders.deliveredAwaitingReceipt'),
+      COMPLETED: this.translate.instant('orders.completed'),
+      CANCELLED: this.translate.instant('orders.cancelled'),
+    };
+  }
   readonly tabs: (OrderStatus | '')[] = [
     '',
     'PENDING',
@@ -80,7 +96,9 @@ export class OrderHistoryComponent implements OnInit {
           this.error = '';
           return this.orders.findMine(page, 10, this.status).pipe(
             catchError(() => {
-              this.error = 'Không thể tải lịch sử đơn hàng.';
+              this.error = this.translate.instant(
+                'orders.cannotLoadOrderHistory',
+              );
               this.loading = false;
               this.totalPages = 0;
               return EMPTY;

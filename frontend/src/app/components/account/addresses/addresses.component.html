@@ -1,17 +1,22 @@
 <section>
   <div class="page-heading">
     <div>
-      <p class="eyebrow">Tài khoản</p>
-      <h1>Sổ địa chỉ</h1>
+      <p class="eyebrow">{{ "common.account" | translate }}</p>
+      <h1>{{ "common.addressBook" | translate }}</h1>
     </div>
-    <button mat-flat-button (click)="edit()">Thêm địa chỉ</button>
+    <button mat-flat-button (click)="edit()">
+      {{ "account.addAddress" | translate }}
+    </button>
   </div>
   @if (error) {
     <p class="error" role="alert">{{ error }}</p>
   }
   @if (loading) {
-    <mat-progress-bar mode="indeterminate" aria-label="Đang tải dữ liệu" />
-    <p class="state">Đang tải địa chỉ...</p>
+    <mat-progress-bar
+      mode="indeterminate"
+      [attr.aria-label]="'common.loadingData' | translate"
+    />
+    <p class="state">{{ "account.loadingAddresses" | translate }}</p>
   } @else {
     @for (address of addresses; track address.id) {
       <mat-card appearance="outlined" class="panel address-card">
@@ -21,24 +26,24 @@
           </h2>
           <p>{{ address.shippingAddress }}</p>
           @if (address.defaultAddress) {
-            <span class="badge">Mặc định</span>
+            <span class="badge">{{ "account.default" | translate }}</span>
           }
         </div>
         <div class="actions">
           <button mat-stroked-button class="link" (click)="edit(address)">
-            Sửa</button
+            {{ "account.edit" | translate }}</button
           ><button
             mat-stroked-button
             class="link danger"
             (click)="remove(address)"
           >
-            Xóa
+            {{ "common.remove" | translate }}
           </button>
         </div>
       </mat-card>
     } @empty {
       <p class="panel state">
-        Chưa có địa chỉ. Thêm địa chỉ để đặt hàng nhanh hơn.
+        {{ "account.noAddressesYetAddAnAddressForFasterCheckout" | translate }}
       </p>
     }
   }
@@ -47,13 +52,17 @@
       <form class="panel form" [formGroup]="form" (ngSubmit)="save()">
         <div class="editor-heading">
           <h2 id="address-title">
-            {{ editingId ? "Sửa địa chỉ" : "Thêm địa chỉ" }}
+            {{
+              editingId
+                ? ("account.editAddress" | translate)
+                : ("account.addAddress" | translate)
+            }}
           </h2>
           <button
             mat-stroked-button
             type="button"
             [disabled]="saving"
-            aria-label="Đóng"
+            [attr.aria-label]="'account.close' | translate"
             (click)="close()"
           >
             ×
@@ -61,32 +70,35 @@
         </div>
         <div class="editor-fields">
           <mat-form-field appearance="outline"
-            ><mat-label>Người nhận</mat-label
-            ><input matInput formControlName="recipientName" /><mat-error
-              >Vui lòng nhập người nhận hợp lệ.</mat-error
-            ></mat-form-field
+            ><mat-label>{{ "account.recipient" | translate }}</mat-label
+            ><input matInput formControlName="recipientName" /><mat-error>{{
+              "account.pleaseEnterAValidRecipientName" | translate
+            }}</mat-error></mat-form-field
           ><mat-form-field appearance="outline"
-            ><mat-label>Số điện thoại</mat-label
-            ><input matInput formControlName="phoneNumber" /><mat-error
-              >Vui lòng nhập số điện thoại hợp lệ.</mat-error
-            ></mat-form-field
+            ><mat-label>{{ "common.phoneNumber" | translate }}</mat-label
+            ><input matInput formControlName="phoneNumber" /><mat-error>{{
+              "account.pleaseEnterAValidPhoneNumber" | translate
+            }}</mat-error></mat-form-field
           ><mat-form-field appearance="outline"
-            ><mat-label>Địa chỉ</mat-label
+            ><mat-label>{{ "common.address" | translate }}</mat-label
             ><textarea
               matInput
               formControlName="shippingAddress"
               rows="3"
             ></textarea
-            ><mat-error
-              >Vui lòng nhập địa chỉ hợp lệ.</mat-error
-            ></mat-form-field
-          ><mat-checkbox formControlName="defaultAddress"
-            >Đặt làm mặc định</mat-checkbox
-          >
+            ><mat-error>{{
+              "account.pleaseEnterAValidAddress" | translate
+            }}</mat-error></mat-form-field
+          ><mat-checkbox formControlName="defaultAddress">{{
+            "account.setAsDefault" | translate
+          }}</mat-checkbox>
         </div>
         @if (form.touched && form.invalid) {
           <p class="error">
-            Nhập đầy đủ người nhận, số điện thoại và địa chỉ hợp lệ.
+            {{
+              "account.enterAValidRecipientNamePhoneNumberAndAddress"
+                | translate
+            }}
           </p>
         }
         @if (formError) {
@@ -94,14 +106,18 @@
         }
         <div class="actions">
           <button mat-flat-button type="submit" [disabled]="saving">
-            {{ saving ? "Đang lưu..." : "Lưu" }}</button
+            {{
+              saving
+                ? ("account.saving" | translate)
+                : ("account.save" | translate)
+            }}</button
           ><button
             mat-stroked-button
             type="button"
             [disabled]="saving"
             (click)="close()"
           >
-            Hủy
+            {{ "account.cancel" | translate }}
           </button>
         </div>
       </form>

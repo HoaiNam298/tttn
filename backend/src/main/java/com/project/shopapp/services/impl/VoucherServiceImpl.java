@@ -1,9 +1,12 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.VoucherRequest;
 import com.project.shopapp.dtos.response.VoucherResponse;
 import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Voucher;
 import com.project.shopapp.repositories.OrderRepository;
@@ -41,7 +44,7 @@ public class VoucherServiceImpl implements VoucherService {
         var allowed = Set.of("id", "code", "createdAt", "startsAt", "endsAt");
         for (var order : pageable.getSort()) {
             if (!allowed.contains(order.getProperty())) {
-                throw new IllegalArgumentException("Unsupported voucher sort field");
+                throw new LocalizedArgumentException(MessageKeys.VOUCHER_INVALID_SORT);
             }
         }
         var sort = pageable.getSort();
@@ -67,9 +70,10 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse update(Long id, VoucherRequest request) {
         Voucher voucher =
                 vouchers.findForUpdateById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.VOUCHER_NOT_FOUND));
         if (request.getVersion() == null || request.getVersion() != voucher.getVersion()) {
-            throw new IllegalStateException("Voucher changed. Reload before saving");
+            throw new LocalizedStateException(MessageKeys.VOUCHER_CHANGED);
         }
         validateTarget(request.getTargetUserId());
         voucher.update(request);
@@ -81,7 +85,8 @@ public class VoucherServiceImpl implements VoucherService {
     public BigDecimal preview(String code, Long userId, BigDecimal subtotal) {
         Voucher voucher =
                 vouchers.findByCode(normalize(code))
-                        .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.VOUCHER_NOT_FOUND));
         return eligibleDiscount(voucher, userId, subtotal);
     }
 
@@ -89,7 +94,8 @@ public class VoucherServiceImpl implements VoucherService {
     public Voucher reserve(String code, Long userId, BigDecimal subtotal) {
         Voucher voucher =
                 vouchers.findForUpdateByCode(normalize(code))
-                        .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.VOUCHER_NOT_FOUND));
         eligibleDiscount(voucher, userId, subtotal);
         voucher.reserve();
         TransactionLog.debug(
@@ -100,7 +106,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Transactional
     public void release(Long id) {
         vouchers.findForUpdateById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"))
+                .orElseThrow(() -> new ResourceNotFoundException(MessageKeys.VOUCHER_NOT_FOUND))
                 .release();
         TransactionLog.debug(log, "Voucher released voucherId={}", id);
     }
@@ -114,7 +120,7 @@ public class VoucherServiceImpl implements VoucherService {
 
     private void validateTarget(Long userId) {
         if (userId != null && !users.existsById(userId)) {
-            throw new ResourceNotFoundException("Target user not found");
+            throw new ResourceNotFoundException(MessageKeys.VOUCHER_TARGET_NOT_FOUND);
         }
     }
 

@@ -1,3 +1,5 @@
+import { ErrorMessageService } from '../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -39,6 +41,7 @@ import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
 @Component({
   selector: 'app-product-list',
   imports: [
+    TranslatePipe,
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
@@ -59,6 +62,8 @@ import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
   styleUrl: './product-list.component.scss',
 })
 export class ProductListComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -91,8 +96,11 @@ export class ProductListComponent implements OnInit {
         next: (value) => {
           this.categories = value;
         },
-        error: () => {
-          this.categoryError = 'Không tải được danh mục.';
+        error: (response) => {
+          this.categoryError = this.errorMessages.message(
+            response,
+            'catalog.cannotLoadCategories',
+          );
         },
       });
     combineLatest([
@@ -119,8 +127,9 @@ export class ProductListComponent implements OnInit {
         value.maxPrice != null &&
         value.minPrice > value.maxPrice)
     ) {
-      this.filterError =
-        'Khoảng giá không hợp lệ. Giá tối thiểu phải nhỏ hơn hoặc bằng giá tối đa.';
+      this.filterError = this.translate.instant(
+        'catalog.invalidPriceRangeTheMinimumMustNotExceedThe',
+      );
       return;
     }
     void this.router.navigate(['/products'], {
@@ -173,7 +182,9 @@ export class ProductListComponent implements OnInit {
       )
       .pipe(
         catchError(() => {
-          this.error = 'Không thể tải sản phẩm. Kiểm tra bộ lọc hoặc thử lại.';
+          this.error = this.translate.instant(
+            'catalog.cannotLoadProductsCheckTheFiltersOrTryAgain',
+          );
           this.products = [];
           this.totalPages = 0;
           this.totalElements = 0;

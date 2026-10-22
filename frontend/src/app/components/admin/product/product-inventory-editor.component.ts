@@ -1,3 +1,5 @@
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -33,6 +35,7 @@ import { ProductVariantPayload } from '../../../dtos/product-inventory.dto';
 @Component({
   selector: 'app-product-inventory-editor',
   imports: [
+    TranslatePipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -47,6 +50,8 @@ import { ProductVariantPayload } from '../../../dtos/product-inventory.dto';
   styleUrl: './product-inventory-editor.component.scss',
 })
 export class ProductInventoryEditorComponent {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly fb = inject(FormBuilder);
   private readonly catalog = inject(CatalogService);
   @ViewChild('dialog') private editor!: TemplateRef<unknown>;
@@ -167,8 +172,11 @@ export class ProductInventoryEditorComponent {
           );
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Không tải được dữ liệu sản phẩm.';
+        error: (error) => {
+          this.error = this.errorMessages.message(
+            error,
+            'admin.cannotLoadProductData',
+          );
           this.loading = false;
         },
       });
@@ -219,7 +227,7 @@ export class ProductInventoryEditorComponent {
       !['image/jpeg', 'image/png'].includes(file.type) ||
       file.size > 5 * 1024 * 1024
     ) {
-      this.error = 'Chọn ảnh JPEG/PNG tối đa 5 MB.';
+      this.error = this.translate.instant('admin.chooseAJpegPngImageUpTo5Mb');
       input.value = '';
       return;
     }
@@ -242,8 +250,11 @@ export class ProductInventoryEditorComponent {
           this.form.enable({ emitEvent: false });
           input.value = '';
         },
-        error: () => {
-          this.error = 'Upload thất bại. Kiểm tra ảnh hoặc kết nối.';
+        error: (error) => {
+          this.error = this.errorMessages.message(
+            error,
+            'admin.uploadFailedCheckTheImageOrYourConnection',
+          );
           this.uploading = false;
           this.form.enable({ emitEvent: false });
           input.value = '';
@@ -300,9 +311,10 @@ export class ProductInventoryEditorComponent {
         error: (response) => {
           this.saving = false;
           this.form.enable({ emitEvent: false });
-          this.error =
-            response.error?.message ??
-            'Không lưu được ảnh/SKU. Hãy mở lại dữ liệu nếu tồn kho vừa thay đổi.';
+          this.error = this.errorMessages.message(
+            response,
+            'admin.cannotSaveImagesSkusReopenTheEditorIfStock',
+          );
         },
       });
   }

@@ -1,16 +1,19 @@
 <mat-card appearance="outlined" class="panel">
   <div class="section-heading">
-    <h1>Sản phẩm yêu thích</h1>
+    <h1>{{ "account.favoriteProducts" | translate }}</h1>
     <button mat-stroked-button [disabled]="loading" (click)="load(page)">
-      Làm mới
+      {{ "account.refresh" | translate }}
     </button>
   </div>
   @if (error) {
     <p class="error" role="alert">{{ error }}</p>
   }
   @if (loading) {
-    <mat-progress-bar mode="indeterminate" aria-label="Đang tải dữ liệu" />
-    <p class="state">Đang tải sản phẩm...</p>
+    <mat-progress-bar
+      mode="indeterminate"
+      [attr.aria-label]="'common.loadingData' | translate"
+    />
+    <p class="state">{{ "common.loadingProducts" | translate }}</p>
   } @else {
     <div class="product-grid">
       @for (product of products; track product.id) {
@@ -20,11 +23,13 @@
             [disabled]="removingId !== undefined"
             (click)="remove(product.id)"
           >
-            Bỏ yêu thích
+            {{ "account.removeFromFavorites" | translate }}
           </button>
         </div>
       } @empty {
-        <p class="state">Bạn chưa có sản phẩm yêu thích.</p>
+        <p class="state">
+          {{ "account.youHaveNoFavoriteProductsYet" | translate }}
+        </p>
       }
     </div>
   }
@@ -37,7 +42,7 @@
       [showFirstLastButtons]="true"
       [disabled]="loading"
       (page)="load($event.pageIndex)"
-      aria-label="Phân trang"
+      [attr.aria-label]="'common.pagination' | translate"
     />
   }
 </mat-card>

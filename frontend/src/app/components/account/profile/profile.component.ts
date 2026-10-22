@@ -1,3 +1,4 @@
+import { TranslatePipe } from '@ngx-translate/core';
 import { MatCardModule } from '@angular/material/card';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -6,7 +7,7 @@ import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-profile',
-  imports: [RouterLink, MatCardModule, MatButtonModule],
+  imports: [TranslatePipe, RouterLink, MatCardModule, MatButtonModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile.component.html',
 })

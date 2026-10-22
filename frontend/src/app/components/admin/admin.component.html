@@ -6,14 +6,20 @@
     [mode]="compact() ? 'over' : 'side'"
     [opened]="!compact()"
     [fixedInViewport]="compact()"
-    aria-label="Menu quản trị"
+    [attr.aria-label]="'admin.administrationMenu' | translate"
   >
     <a class="admin-brand" routerLink="/admin/dashboard">
       <span class="brand-mark">S</span>
-      <span>ShopApp<small>QUẢN TRỊ CỬA HÀNG</small></span>
+      <span
+        >ShopApp<small>{{
+          "admin.storeAdministration" | translate
+        }}</small></span
+      >
     </a>
-    <p class="nav-caption">Không gian quản trị</p>
-    <mat-nav-list aria-label="Điều hướng quản trị">
+    <p class="nav-caption">{{ "admin.administrationWorkspace" | translate }}</p>
+    <mat-nav-list
+      [attr.aria-label]="'admin.administrationNavigation' | translate"
+    >
       @for (item of navigation; track item.path) {
         <a
           mat-list-item
@@ -22,13 +28,17 @@
           routerLinkActive="selected"
           ariaCurrentWhenActive="page"
         >
-          <span matListItemTitle class="nav-label">{{ item.label }}</span>
+          <span matListItemTitle class="nav-label">{{
+            item.label | translate
+          }}</span>
         </a>
       }
     </mat-nav-list>
     <div class="sidebar-footer">
-      <a mat-button class="store-link" routerLink="/products">← Về cửa hàng</a>
-      <small>ShopApp · Trang quản trị</small>
+      <a mat-button class="store-link" routerLink="/products">{{
+        "admin.backToStore" | translate
+      }}</a>
+      <small>{{ "admin.shopappAdministration" | translate }}</small>
     </div>
   </mat-sidenav>
   <mat-sidenav-content>
@@ -37,7 +47,7 @@
         <button
           mat-icon-button
           (click)="drawer.toggle()"
-          aria-label="Mở hoặc đóng menu quản trị"
+          [attr.aria-label]="'admin.toggleAdministrationMenu' | translate"
           [attr.aria-expanded]="drawer.opened"
           aria-controls="admin-navigation"
         >
@@ -47,15 +57,16 @@
         </button>
       }
       <div class="toolbar-heading">
-        <strong>Quản lý cửa hàng</strong
-        ><small>Không gian làm việc của bạn</small>
+        <strong>{{ "admin.storeManagement" | translate }}</strong
+        ><small>{{ "admin.yourWorkspace" | translate }}</small>
       </div>
       <span class="toolbar-spacer"></span>
+      <app-language-selector />
       <button
         mat-button
         class="account-button"
         [matMenuTriggerFor]="accountMenu"
-        aria-label="Mở menu tài khoản quản trị"
+        [attr.aria-label]="'admin.openAdministratorAccountMenu' | translate"
       >
         <span class="avatar" aria-hidden="true">{{ initials }}</span>
         <span class="account-name">{{ displayName }}</span>
@@ -65,9 +76,15 @@
       </button>
       <mat-menu #accountMenu="matMenu">
         <button mat-menu-item disabled>{{ displayName }}</button>
-        <a mat-menu-item routerLink="/products">Về cửa hàng</a>
+        <a mat-menu-item routerLink="/products">{{
+          "admin.backToStore2" | translate
+        }}</a>
         <button mat-menu-item [disabled]="loggingOut" (click)="logout()">
-          {{ loggingOut ? "Đang đăng xuất..." : "Đăng xuất" }}
+          {{
+            loggingOut
+              ? ("account.loggingOut" | translate)
+              : ("account.logOut" | translate)
+          }}
         </button>
       </mat-menu>
     </mat-toolbar>

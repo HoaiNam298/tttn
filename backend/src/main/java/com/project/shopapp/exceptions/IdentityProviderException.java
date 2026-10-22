@@ -1,7 +1,14 @@
 package com.project.shopapp.exceptions;
 
-public class IdentityProviderException extends RuntimeException {
+import com.project.shopapp.components.MessageKeys;
+
+public class IdentityProviderException extends RuntimeException implements LocalizedError {
     public IdentityProviderException() {
-        super("Account registration is temporarily unavailable");
+        super(MessageKeys.IDENTITY_PROVIDER_UNAVAILABLE);
+    }
+
+    @Override
+    public Object[] getArguments() {
+        return new Object[0];
     }
 }

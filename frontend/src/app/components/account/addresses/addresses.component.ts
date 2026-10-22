@@ -1,3 +1,5 @@
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import {
   DestroyRef,
   ChangeDetectionStrategy,
@@ -29,6 +31,7 @@ import { AddressService } from '../../../services/address.service';
 @Component({
   selector: 'app-addresses',
   imports: [
+    TranslatePipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -43,6 +46,8 @@ import { AddressService } from '../../../services/address.service';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AddressesComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private confirmationOpen = false;
 
   private readonly service = inject(AddressService);
@@ -82,8 +87,11 @@ export class AddressesComponent implements OnInit {
           this.addresses = value;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Không thể tải địa chỉ.';
+        error: (response) => {
+          this.error = this.errorMessages.message(
+            response,
+            'account.cannotLoadAddresses',
+          );
           this.loading = false;
         },
       });
@@ -105,7 +113,7 @@ export class AddressesComponent implements OnInit {
       width: '560px',
       maxWidth: 'calc(100vw - 32px)',
       disableClose: false,
-      ariaLabel: 'Chỉnh sửa địa chỉ',
+      ariaLabelledBy: 'address-title',
     });
     const editorDialog = this.editorDialog;
     editorDialog
@@ -147,14 +155,16 @@ export class AddressesComponent implements OnInit {
           this.close();
           this.load();
         },
-        error: () => {
+        error: (response) => {
           this.saving = false;
           if (this.editorDialog) {
             this.editorDialog.disableClose = false;
           }
           this.form.enable({ emitEvent: false });
-          this.formError =
-            'Không thể lưu địa chỉ. Kiểm tra thông tin và giới hạn 20 địa chỉ.';
+          this.formError = this.errorMessages.message(
+            response,
+            'account.cannotSaveTheAddressCheckTheInformationAndThe',
+          );
         },
       });
   }
@@ -165,8 +175,11 @@ export class AddressesComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.load(),
-        error: () => {
-          this.error = 'Không thể xóa địa chỉ.';
+        error: (response) => {
+          this.error = this.errorMessages.message(
+            response,
+            'account.cannotDeleteTheAddress',
+          );
         },
       });
   }
@@ -178,7 +191,7 @@ export class AddressesComponent implements OnInit {
     this.confirmationOpen = true;
     this.dialog
       .open(ConfirmationDialogComponent, {
-        data: 'Xóa địa chỉ này?',
+        data: this.translate.instant('account.deleteThisAddress'),
         width: '440px',
         maxWidth: 'calc(100vw - 32px)',
       })

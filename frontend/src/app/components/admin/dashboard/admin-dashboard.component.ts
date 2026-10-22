@@ -1,3 +1,10 @@
+import { ShopDatePipe } from '../../shared/shop-date.pipe';
+import { ShopNumberPipe } from '../../shared/shop-number.pipe';
+import { ShopMoneyPipe } from '../../shared/shop-money.pipe';
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { effect } from '@angular/core';
+import { createMaterialPaginatorIntl } from '../../shared/material-paginator-intl';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -28,24 +35,29 @@ import { ORDER_STATUS_LABELS, OrderStatus } from '../../../models/order.model';
 import { DashboardChartsComponent } from './dashboard-charts.component';
 
 function createPaginatorIntl(): MatPaginatorIntl {
-  const intl = new MatPaginatorIntl();
-  intl.itemsPerPageLabel = 'Số ngày / trang';
-  intl.nextPageLabel = 'Trang sau';
-  intl.previousPageLabel = 'Trang trước';
-  intl.firstPageLabel = 'Trang đầu';
-  intl.lastPageLabel = 'Trang cuối';
-  intl.getRangeLabel = (page, size, length): string => {
-    if (!length) {
-      return '0 / 0 ngày';
-    }
-    return `${page * size + 1}–${Math.min((page + 1) * size, length)} / ${length} ngày`;
-  };
+  const intl = createMaterialPaginatorIntl();
+  const translate = inject(TranslateService);
+  effect(() => {
+    translate.currentLang();
+    intl.itemsPerPageLabel = translate.instant('admin.daysPerPage');
+    intl.changes.next();
+  });
+  intl.getRangeLabel = (page, size, length): string =>
+    translate.instant('admin.dayRange', {
+      start: length && size ? page * size + 1 : 0,
+      end: length && size ? Math.min((page + 1) * size, length) : 0,
+      total: length,
+    });
   return intl;
 }
 
 @Component({
   selector: 'app-admin-dashboard',
   imports: [
+    ShopDatePipe,
+    ShopNumberPipe,
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
@@ -65,6 +77,8 @@ function createPaginatorIntl(): MatPaginatorIntl {
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AdminDashboardComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly service = inject(DashboardService);
   private readonly destroyRef = inject(DestroyRef);
   private revision = 0;
@@ -80,7 +94,14 @@ export class AdminDashboardComponent implements OnInit {
     ],
     to: [this.today, Validators.required],
   });
-  readonly labels = ORDER_STATUS_LABELS;
+  get labels(): typeof ORDER_STATUS_LABELS {
+    return Object.fromEntries(
+      Object.keys(ORDER_STATUS_LABELS).map((status) => [
+        status,
+        this.translate.instant('orderStatus.' + status),
+      ]),
+    ) as typeof ORDER_STATUS_LABELS;
+  }
   readonly processingStates = [
     'PENDING',
     'CONFIRMED',
@@ -131,7 +152,9 @@ export class AdminDashboardComponent implements OnInit {
     const { from, to } = this.range.getRawValue();
     const days = (Date.parse(to) - Date.parse(from)) / 86400000 + 1;
     if (!Number.isFinite(days) || days < 1 || days > 93) {
-      this.error = 'Chọn khoảng ngày hợp lệ, tối đa 93 ngày.';
+      this.error = this.translate.instant(
+        'admin.selectAValidDateRangeOfUpTo93',
+      );
       return;
     }
     const revision = ++this.revision;
@@ -148,9 +171,12 @@ export class AdminDashboardComponent implements OnInit {
             this.loading = false;
           }
         },
-        error: () => {
+        error: (error) => {
           if (revision === this.revision) {
-            this.error = 'Không tải được báo cáo. Vui lòng thử lại.';
+            this.error = this.errorMessages.message(
+              error,
+              'admin.cannotLoadTheReportPleaseTryAgain',
+            );
             this.loading = false;
           }
         },

@@ -1,11 +1,11 @@
 <app-product-inventory-editor #inventoryEditor (saved)="load(page)" />
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Quản trị catalog</p>
-    <h1>Quản lý sản phẩm</h1>
+    <p class="eyebrow">{{ "admin.catalogAdministration" | translate }}</p>
+    <h1>{{ "admin.productManagement" | translate }}</h1>
   </div>
   <button mat-flat-button [disabled]="saving" (click)="openCreate()">
-    Thêm sản phẩm
+    {{ "admin.addProduct" | translate }}
   </button>
 </div>
 @if (message) {
@@ -16,7 +16,11 @@
 }
 <ng-template #editor>
   <h2 mat-dialog-title>
-    {{ editingId ? "Cập nhật sản phẩm" : "Thêm sản phẩm" }}
+    {{
+      editingId
+        ? ("admin.editProduct" | translate)
+        : ("admin.addProduct" | translate)
+    }}
   </h2>
   <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
     <mat-dialog-content>
@@ -25,17 +29,19 @@
       }
       <div class="product-fields">
         <mat-form-field appearance="outline" class="wide-field">
-          <mat-label>Tên sản phẩm</mat-label
+          <mat-label>{{ "catalog.productName" | translate }}</mat-label
           ><input
             matInput
             formControlName="name"
             [readOnly]="saving"
             maxlength="350"
           />
-          <mat-error>Tên sản phẩm bắt buộc, tối đa 350 ký tự.</mat-error>
+          <mat-error>{{
+            "admin.productNameIsRequiredUpTo350Characters" | translate
+          }}</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Giá (VND)</mat-label
+          <mat-label>{{ "admin.priceVnd" | translate }}</mat-label
           ><input
             matInput
             type="number"
@@ -43,30 +49,36 @@
             formControlName="price"
             [readOnly]="saving"
           />
-          <mat-error>Giá bắt buộc và không được âm.</mat-error>
+          <mat-error>{{
+            "admin.priceIsRequiredAndCannotBeNegative" | translate
+          }}</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Danh mục</mat-label>
+          <mat-label>{{ "catalog.category" | translate }}</mat-label>
           <mat-select formControlName="categoryId">
-            <mat-option [value]="0">Chọn danh mục</mat-option>
+            <mat-option [value]="0">{{
+              "admin.selectCategory" | translate
+            }}</mat-option>
             @for (category of categories; track category.id) {
               <mat-option [value]="category.id">{{ category.name }}</mat-option>
             }
           </mat-select>
-          <mat-error>Vui lòng chọn danh mục.</mat-error>
+          <mat-error>{{ "admin.pleaseSelectACategory" | translate }}</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="wide-field">
-          <mat-label>URL hình ảnh</mat-label
+          <mat-label>{{ "admin.imageUrl" | translate }}</mat-label
           ><input
             matInput
             formControlName="thumbnail"
             [readOnly]="saving"
             maxlength="500"
           />
-          <mat-error>URL tối đa 500 ký tự.</mat-error>
+          <mat-error>{{
+            "admin.urlMustBeAtMost500Characters" | translate
+          }}</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="wide-field">
-          <mat-label>Mô tả</mat-label
+          <mat-label>{{ "admin.description" | translate }}</mat-label
           ><textarea
             matInput
             rows="5"
@@ -74,7 +86,9 @@
             [readOnly]="saving"
             maxlength="10000"
           ></textarea>
-          <mat-error>Mô tả tối đa 10.000 ký tự.</mat-error>
+          <mat-error>{{
+            "admin.descriptionMustBeAtMost10000Characters" | translate
+          }}</mat-error>
         </mat-form-field>
       </div>
     </mat-dialog-content>
@@ -85,10 +99,14 @@
         [disabled]="saving"
         (click)="cancelEdit()"
       >
-        Hủy
+        {{ "account.cancel" | translate }}
       </button>
       <button mat-flat-button type="submit" [disabled]="saving">
-        {{ saving ? "Đang lưu..." : "Lưu sản phẩm" }}
+        {{
+          saving
+            ? ("account.saving" | translate)
+            : ("admin.saveProduct" | translate)
+        }}
       </button>
     </mat-dialog-actions>
   </form>
@@ -99,7 +117,7 @@
       appearance="outline"
       subscriptSizing="dynamic"
       class="search-field"
-      ><mat-label>Tìm tên sản phẩm</mat-label
+      ><mat-label>{{ "admin.searchProductNames" | translate }}</mat-label
       ><input matInput name="keyword" [(ngModel)]="keyword"
     /></mat-form-field>
     <mat-form-field
@@ -107,62 +125,77 @@
       subscriptSizing="dynamic"
       class="category-filter"
     >
-      <mat-label>Danh mục</mat-label>
+      <mat-label>{{ "catalog.category" | translate }}</mat-label>
       <mat-select name="category" [(ngModel)]="categoryId">
-        <mat-option [value]="undefined">Tất cả danh mục</mat-option>
+        <mat-option [value]="undefined">{{
+          "catalog.allCategories" | translate
+        }}</mat-option>
         @for (category of categories; track category.id) {
           <mat-option [value]="category.id">{{ category.name }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
-    <button mat-flat-button type="submit" [disabled]="loading">Tìm kiếm</button>
+    <button mat-flat-button type="submit" [disabled]="loading">
+      {{ "catalog.search" | translate }}
+    </button>
   </form>
 </mat-card>
 @if (loading) {
-  <mat-progress-bar mode="indeterminate" aria-label="Đang tải sản phẩm" />
+  <mat-progress-bar
+    mode="indeterminate"
+    [attr.aria-label]="'catalog.loadingProducts2' | translate"
+  />
 }
 <mat-card
   appearance="outlined"
   class="management-card"
   [attr.aria-busy]="loading"
 >
-  <h2>Danh sách sản phẩm ({{ totalElements }})</h2>
+  <h2>{{ "admin.products" | translate: { p0: totalElements } }}</h2>
   <div class="table-wrap">
     <table mat-table [dataSource]="products">
       <ng-container matColumnDef="name"
-        ><th mat-header-cell *matHeaderCellDef>Sản phẩm</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "common.products" | translate }}
+        </th>
         <td mat-cell *matCellDef="let product">
           {{ product.name }}
         </td></ng-container
       >
       <ng-container matColumnDef="category"
-        ><th mat-header-cell *matHeaderCellDef>Danh mục</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "catalog.category" | translate }}
+        </th>
         <td mat-cell *matCellDef="let product">
           {{ product.category.name }}
         </td></ng-container
       >
       <ng-container matColumnDef="price"
-        ><th mat-header-cell *matHeaderCellDef>Giá</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.price" | translate }}
+        </th>
         <td mat-cell *matCellDef="let product">
-          {{ product.price | currency: "VND" : "symbol" : "1.0-0" }}
+          {{ product.price | shopMoney }}
         </td></ng-container
       >
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        <th mat-header-cell *matHeaderCellDef>
+          {{ "admin.actions" | translate }}
+        </th>
         <td mat-cell *matCellDef="let product" class="row-actions">
           <button
             mat-button
             [disabled]="loading || saving"
             (click)="editProduct(product)"
           >
-            Sửa
+            {{ "account.edit" | translate }}
           </button>
           <button
             mat-button
             [disabled]="loading || saving"
             (click)="inventoryEditor.open(product.id)"
           >
-            Ảnh / SKU / Kho
+            {{ "admin.imagesSkusStock" | translate }}
           </button>
           <button
             mat-button
@@ -170,7 +203,7 @@
             [disabled]="loading || saving"
             (click)="deleteProduct(product)"
           >
-            Xóa
+            {{ "common.remove" | translate }}
           </button>
         </td>
       </ng-container>
@@ -178,7 +211,11 @@
       <tr mat-row *matRowDef="let row; columns: columns"></tr>
       <tr *matNoDataRow>
         <td colspan="4" class="state">
-          {{ loading ? "Đang tải sản phẩm..." : "Không có sản phẩm phù hợp." }}
+          {{
+            loading
+              ? ("common.loadingProducts" | translate)
+              : ("admin.noMatchingProducts" | translate)
+          }}
         </td>
       </tr>
     </table>
@@ -191,6 +228,6 @@
     [disabled]="loading"
     [showFirstLastButtons]="true"
     (page)="changePage($event)"
-    aria-label="Phân trang sản phẩm"
+    [attr.aria-label]="'catalog.productPagination' | translate"
   />
 </mat-card>

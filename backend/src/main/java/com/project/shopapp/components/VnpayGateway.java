@@ -1,6 +1,7 @@
 package com.project.shopapp.components;
 
 import com.project.shopapp.configuration.VnpayProperties;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -34,11 +35,10 @@ public class VnpayGateway {
         try {
             amount = total.movePointRight(2).longValueExact();
         } catch (ArithmeticException exception) {
-            throw new IllegalArgumentException("Invalid VNPAY amount", exception);
+            throw new LocalizedArgumentException(MessageKeys.PAYMENT_INVALID_AMOUNT, exception);
         }
         if (total.stripTrailingZeros().scale() > 0 || amount <= 0 || amount > 999999999999L) {
-            throw new IllegalArgumentException(
-                    "VNPAY requires a positive whole VND amount within its limit");
+            throw new LocalizedArgumentException(MessageKeys.PAYMENT_AMOUNT_LIMIT);
         }
         return amount;
     }

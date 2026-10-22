@@ -4,7 +4,14 @@ import {
   HttpErrorResponse,
   HttpParams,
 } from '@angular/common/http';
-import { DestroyRef, Injectable, NgZone, inject, signal } from '@angular/core';
+import {
+  DestroyRef,
+  Injectable,
+  NgZone,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import {
   Observable,
@@ -38,13 +45,13 @@ export class AuthService {
   private readonly baseUrl = `${environment.keycloak.url}/realms/${environment.keycloak.realm}/protocol/openid-connect`;
   private readonly storage = inject(AuthSessionStorage);
   private readonly idleTimeout = 30 * 60 * 1000;
-  private current: AuthResponse | null = null;
+  private readonly current = signal<AuthResponse | null>(null);
   private stored: StoredAuthSession | null = null;
   private lastActivity = 0;
   private lastActivityWrite = 0;
   private revision = 0;
   private refreshRequest?: Observable<AuthResponse>;
-  readonly userId = signal<number | null>(null);
+  readonly userId = computed(() => this.current()?.user.id ?? null);
 
   constructor() {
     this.restoreTokens();
@@ -125,19 +132,19 @@ export class AuthService {
   }
 
   session(): AuthResponse | null {
-    return this.current;
+    return this.current();
   }
 
   token(): string | null {
     return !this.checkIdle() &&
       this.stored &&
       Date.now() < this.stored.expiresAt
-      ? (this.current?.accessToken ?? null)
+      ? (this.current()?.accessToken ?? null)
       : null;
   }
 
   isAdmin(): boolean {
-    return this.current?.user.role === 'ADMIN';
+    return this.current()?.user.role === 'ADMIN';
   }
 
   ensureSession(): Observable<boolean> {
@@ -147,7 +154,7 @@ export class AuthService {
     if (this.checkIdle() || !this.stored) {
       return of(false);
     }
-    if (this.current && this.stored.expiresAt - Date.now() > 30000) {
+    if (this.current() && this.stored.expiresAt - Date.now() > 30000) {
       return of(true);
     }
     return this.refresh().pipe(
@@ -334,12 +341,12 @@ export class AuthService {
             throw new Error('Session changed while loading profile');
           }
           commit?.();
-          this.current = {
+          const session: AuthResponse = {
             accessToken: stored.accessToken,
             user,
           };
-          this.zone.run(() => this.userId.set(user.id));
-          return this.current;
+          this.zone.run(() => this.current.set(session));
+          return session;
         }),
       );
   }
@@ -382,12 +389,11 @@ export class AuthService {
 
   private resetMemory(): void {
     this.revision++;
-    this.current = null;
     this.stored = null;
     this.refreshRequest = undefined;
     this.lastActivity = 0;
     this.lastActivityWrite = 0;
-    this.zone.run(() => this.userId.set(null));
+    this.zone.run(() => this.current.set(null));
   }
 
   private syncTokens(): void {
@@ -400,8 +406,11 @@ export class AuthService {
       this.goToLogin();
     } else {
       this.stored = saved;
-      if (this.current && this.current.accessToken !== saved.accessToken) {
-        this.current = { ...this.current, accessToken: saved.accessToken };
+      const current = this.current();
+      if (current && current.accessToken !== saved.accessToken) {
+        this.zone.run(() =>
+          this.current.set({ ...current, accessToken: saved.accessToken }),
+        );
       }
     }
   }
@@ -412,7 +421,7 @@ export class AuthService {
       this.syncTokens();
       if (
         this.stored &&
-        this.current &&
+        this.current() &&
         this.stored.accessToken !== previousAccess
       ) {
         this.loadProfile(this.stored, this.revision).subscribe({

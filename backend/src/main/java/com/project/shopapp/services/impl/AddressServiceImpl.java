@@ -1,8 +1,10 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.AddressRequest;
 import com.project.shopapp.dtos.response.AddressResponse;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.User;
 import com.project.shopapp.model.UserAddress;
@@ -30,7 +32,8 @@ public class AddressServiceImpl implements AddressService {
     public List<AddressResponse> findMine(String phoneNumber) {
         User user =
                 users.findByPhoneNumber(phoneNumber)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.USER_NOT_FOUND));
         return addresses.findAllByUserIdOrderByIdAsc(user.getId()).stream()
                 .map(AddressResponse::from)
                 .toList();
@@ -42,7 +45,7 @@ public class AddressServiceImpl implements AddressService {
         User user = lockUser(phoneNumber);
         List<UserAddress> owned = addresses.findAllByUserIdOrderByIdAsc(user.getId());
         if (id == null && owned.size() >= 20) {
-            throw new IllegalStateException("A user can save up to 20 addresses");
+            throw new LocalizedStateException(MessageKeys.ADDRESS_LIMIT_REACHED);
         }
         UserAddress address = id == null ? new UserAddress(user) : findOwned(owned, id);
         boolean makeDefault =
@@ -84,13 +87,13 @@ public class AddressServiceImpl implements AddressService {
 
     private User lockUser(String phoneNumber) {
         return users.findForUpdateByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageKeys.USER_NOT_FOUND));
     }
 
     private UserAddress findOwned(List<UserAddress> owned, Long id) {
         return owned.stream()
                 .filter(item -> item.getId().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageKeys.ADDRESS_NOT_FOUND));
     }
 }

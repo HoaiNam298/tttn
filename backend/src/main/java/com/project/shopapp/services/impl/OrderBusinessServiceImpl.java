@@ -1,9 +1,11 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.enums.OrderStatus;
 import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.enums.PaymentStatus;
 import com.project.shopapp.enums.ShippingMethod;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.OrderItem;
 import com.project.shopapp.model.OrderStatusHistory;
@@ -47,11 +49,6 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
     }
 
     @Override
-    public void addItem(Order order, Product product, int quantity) {
-        addItem(order, product, null, quantity);
-    }
-
-    @Override
     public void addItem(Order order, Product product, ProductVariant variant, int quantity) {
         BigDecimal unitPrice = variant == null ? product.getPrice() : variant.getPrice();
         BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
@@ -69,16 +66,14 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
                         .build();
         order.getItems().add(item);
         order.setSubtotal(order.getSubtotal().add(lineTotal));
-        order.setTotal(
-                order.getSubtotal().add(order.getShippingFee()).subtract(order.getDiscount()));
+        updateTotal(order);
     }
 
     @Override
     public void selectShipping(Order order, ShippingMethod method) {
         order.setShippingMethod(method);
         order.setShippingFee(method.getFee());
-        order.setTotal(
-                order.getSubtotal().add(order.getShippingFee()).subtract(order.getDiscount()));
+        updateTotal(order);
     }
 
     @Override
@@ -86,8 +81,7 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         order.setVoucher(voucher);
         order.setVoucherCode(voucher.getCode());
         order.setDiscount(voucher.calculateDiscount(order.getSubtotal()));
-        order.setTotal(
-                order.getSubtotal().add(order.getShippingFee()).subtract(order.getDiscount()));
+        updateTotal(order);
     }
 
     @Override
@@ -100,14 +94,9 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
     @Override
     public void recordPayment(Order order, PaymentStatus result) {
         if (order.getPaymentMethod() != PaymentMethod.VNPAY) {
-            throw new IllegalStateException("Order does not use online payment");
+            throw new LocalizedStateException(MessageKeys.ORDER_NOT_ONLINE);
         }
         order.setPaymentStatus(result);
-    }
-
-    @Override
-    public OrderStatusHistory updateStatus(Order order, OrderStatus nextStatus) {
-        return updateStatus(order, nextStatus, "ADMIN");
     }
 
     @Override
@@ -116,17 +105,16 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
             if (nextStatus == OrderStatus.CANCELLED
                     && (order.getPaymentStatus() == PaymentStatus.PAID
                             || order.getPaymentStatus() == PaymentStatus.REVIEW_REQUIRED)) {
-                throw new IllegalStateException("A paid order requires a separate refund workflow");
+                throw new LocalizedStateException(MessageKeys.ORDER_REFUND_REQUIRED);
             }
             if (nextStatus == OrderStatus.CONFIRMED
                     && order.getPaymentStatus() != PaymentStatus.PAID) {
-                throw new IllegalStateException(
-                        "Online payment must be verified before confirming the order");
+                throw new LocalizedStateException(MessageKeys.ORDER_PAYMENT_UNVERIFIED);
             }
         }
         if (!order.getStatus().canTransitionTo(nextStatus)) {
-            throw new IllegalStateException(
-                    "Cannot change order status from " + order.getStatus() + " to " + nextStatus);
+            throw new LocalizedStateException(
+                    MessageKeys.ORDER_INVALID_TRANSITION, order.getStatus(), nextStatus);
         }
         order.setStatus(nextStatus);
         if (nextStatus == OrderStatus.CANCELLED
@@ -141,6 +129,11 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
             order.setCompletionTimeEstimated(false);
         }
         return addHistory(order, actor);
+    }
+
+    private void updateTotal(Order order) {
+        order.setTotal(
+                order.getSubtotal().add(order.getShippingFee()).subtract(order.getDiscount()));
     }
 
     private OrderStatusHistory addHistory(Order order, String actor) {
