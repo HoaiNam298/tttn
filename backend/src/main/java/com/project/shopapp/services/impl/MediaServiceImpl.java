@@ -1,5 +1,7 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.services.MediaService;
 import java.awt.image.BufferedImage;
@@ -29,19 +31,19 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public String upload(MultipartFile file) throws IOException {
         if (file.isEmpty() || file.getSize() > 5 * 1024 * 1024) {
-            throw new IllegalArgumentException("Image must be non-empty and at most 5 MB");
+            throw new LocalizedArgumentException(MessageKeys.IMAGE_INVALID_SIZE);
         }
         try (var input = file.getInputStream();
                 var stream = ImageIO.createImageInputStream(input)) {
             var readers = ImageIO.getImageReaders(stream);
             if (!readers.hasNext()) {
-                throw new IllegalArgumentException("Only valid JPEG and PNG images are supported");
+                throw new LocalizedArgumentException(MessageKeys.IMAGE_INVALID_FORMAT);
             }
             var reader = readers.next();
             try {
                 String format = reader.getFormatName().toLowerCase(Locale.ROOT);
                 if (!format.equals("jpeg") && !format.equals("png")) {
-                    throw new IllegalArgumentException("Only JPEG and PNG images are supported");
+                    throw new LocalizedArgumentException(MessageKeys.IMAGE_UNSUPPORTED_FORMAT);
                 }
                 reader.setInput(stream);
                 BufferedImage image;
@@ -49,11 +51,11 @@ public class MediaServiceImpl implements MediaService {
                     int width = reader.getWidth(0);
                     int height = reader.getHeight(0);
                     if (width < 1 || height < 1 || (long) width * height > 16000000) {
-                        throw new IllegalArgumentException("Image exceeds the 16 megapixel limit");
+                        throw new LocalizedArgumentException(MessageKeys.IMAGE_PIXEL_LIMIT);
                     }
                     image = reader.read(0);
                 } catch (IIOException exception) {
-                    throw new IllegalArgumentException("Invalid image data", exception);
+                    throw new LocalizedArgumentException(MessageKeys.IMAGE_INVALID_DATA, exception);
                 }
                 String extension = format.equals("jpeg") ? "jpg" : "png";
                 String filename = UUID.randomUUID() + "." + extension;
@@ -82,11 +84,11 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public Resource read(String filename) {
         if (!filename.matches("^[a-f0-9-]{36}\\.(jpg|png)$")) {
-            throw new ResourceNotFoundException("Image not found");
+            throw new ResourceNotFoundException(MessageKeys.IMAGE_NOT_FOUND);
         }
         Path file = directory.resolve(filename).normalize();
         if (!file.startsWith(directory) || !Files.isRegularFile(file)) {
-            throw new ResourceNotFoundException("Image not found");
+            throw new ResourceNotFoundException(MessageKeys.IMAGE_NOT_FOUND);
         }
         return new FileSystemResource(file);
     }
@@ -95,11 +97,11 @@ public class MediaServiceImpl implements MediaService {
     public void deleteUpload(String url) throws IOException {
         String prefix = "/api/v1/media/";
         if (url == null || !url.startsWith(prefix)) {
-            throw new IllegalArgumentException("Invalid upload URL");
+            throw new LocalizedArgumentException(MessageKeys.IMAGE_INVALID_URL);
         }
         String filename = url.substring(prefix.length());
         if (!filename.matches("^[a-f0-9-]{36}\\.(jpg|png)$")) {
-            throw new IllegalArgumentException("Invalid upload filename");
+            throw new LocalizedArgumentException(MessageKeys.IMAGE_INVALID_FILENAME);
         }
         boolean deleted = Files.deleteIfExists(directory.resolve(filename));
         log.info("Image deletion completed fileId={} deleted={}", filename, deleted);

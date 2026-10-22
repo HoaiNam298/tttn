@@ -1,17 +1,17 @@
 <mat-card appearance="outlined" class="panel">
-  <p class="eyebrow">Tài khoản</p>
-  <h1>Thông tin cá nhân</h1>
+  <p class="eyebrow">{{ "common.account" | translate }}</p>
+  <h1>{{ "account.personalInformation" | translate }}</h1>
   @if (auth.session()?.user; as user) {
     <dl>
-      <dt>Họ và tên</dt>
+      <dt>{{ "account.fullName" | translate }}</dt>
       <dd>{{ user.fullName }}</dd>
-      <dt>Số điện thoại</dt>
+      <dt>{{ "common.phoneNumber" | translate }}</dt>
       <dd>{{ user.phoneNumber }}</dd>
-      <dt>Địa chỉ đăng ký</dt>
-      <dd>{{ user.address || "Chưa cập nhật" }}</dd>
+      <dt>{{ "account.registeredAddress" | translate }}</dt>
+      <dd>{{ user.address || ("account.notProvided" | translate) }}</dd>
     </dl>
   }
-  <a mat-stroked-button routerLink="/account/addresses"
-    >Quản lý địa chỉ nhận hàng →</a
-  >
+  <a mat-stroked-button routerLink="/account/addresses">{{
+    "account.manageDeliveryAddresses" | translate
+  }}</a>
 </mat-card>

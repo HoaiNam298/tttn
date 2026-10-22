@@ -1,5 +1,5 @@
 <mat-toolbar class="store-toolbar">
-  <a class="brand" routerLink="/" aria-label="ShopApp — Trang chủ">
+  <a class="brand" routerLink="/" [attr.aria-label]="'common.home' | translate">
     <svg
       class="brand-icon"
       viewBox="0 0 24 24"
@@ -23,13 +23,18 @@
       ><input
         matInput
         formControlName="keyword"
-        placeholder="Bạn đang tìm sản phẩm gì?"
-        aria-label="Tìm sản phẩm"
+        [placeholder]="'common.searchPlaceholder' | translate"
+        [attr.aria-label]="'common.searchProducts' | translate"
     /></mat-form-field>
-    <button mat-flat-button type="submit">Tìm kiếm</button>
+    <button mat-flat-button type="submit">
+      {{ "common.search" | translate }}
+    </button>
   </form>
-  <nav aria-label="Điều hướng cửa hàng">
-    <a mat-button routerLink="/products" routerLinkActive="active">Sản phẩm</a>
+  <app-language-selector />
+  <nav [attr.aria-label]="'common.navigation' | translate">
+    <a mat-button routerLink="/products" routerLinkActive="active">{{
+      "common.products" | translate
+    }}</a>
     <a mat-button routerLink="/cart" routerLinkActive="active"
       ><svg
         class="nav-icon"
@@ -42,32 +47,42 @@
         <path d="m3 3 2 2 3 12h11l2-10H6" />
         <circle cx="9" cy="21" r="1" />
         <circle cx="18" cy="21" r="1" /></svg
-      >Giỏ hàng ({{ cart.count() }})</a
+      >{{ "common.cart" | translate: { count: cart.count() } }}</a
     >
     @if (auth.userId() !== null && auth.token()) {
       <button
         mat-stroked-button
         [matMenuTriggerFor]="accountMenu"
-        aria-label="Mở menu tài khoản"
+        [attr.aria-label]="'common.accountMenu' | translate"
       >
-        Tài khoản ▾
+        {{ "common.account" | translate }} ▾
       </button>
       <mat-menu #accountMenu="matMenu">
-        <a mat-menu-item routerLink="/account">Thông tin cá nhân</a>
-        <a mat-menu-item routerLink="/orders">Đơn hàng</a>
-        <a mat-menu-item routerLink="/account/favorites">Yêu thích</a>
-        <a mat-menu-item routerLink="/account/notifications"
-          >Thông báo ({{ notifications.unread() }})</a
-        >
+        <a mat-menu-item routerLink="/account">{{
+          "common.profile" | translate
+        }}</a>
+        <a mat-menu-item routerLink="/orders">{{
+          "common.orders" | translate
+        }}</a>
+        <a mat-menu-item routerLink="/account/favorites">{{
+          "common.favorites" | translate
+        }}</a>
+        <a mat-menu-item routerLink="/account/notifications">{{
+          "common.notifications" | translate: { count: notifications.unread() }
+        }}</a>
         @if (auth.isAdmin()) {
-          <a mat-menu-item routerLink="/admin">Quản trị</a>
+          <a mat-menu-item routerLink="/admin">{{
+            "common.admin" | translate
+          }}</a>
         }
       </mat-menu>
     } @else {
-      <a mat-button routerLink="/login" routerLinkActive="active">Đăng nhập</a>
-      <a mat-stroked-button routerLink="/register" routerLinkActive="active"
-        >Đăng ký</a
-      >
+      <a mat-button routerLink="/login" routerLinkActive="active">{{
+        "common.login" | translate
+      }}</a>
+      <a mat-stroked-button routerLink="/register" routerLinkActive="active">{{
+        "common.register" | translate
+      }}</a>
     }
   </nav>
 </mat-toolbar>

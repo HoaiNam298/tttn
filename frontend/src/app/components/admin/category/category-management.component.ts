@@ -1,3 +1,5 @@
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.component';
 import {
   Component,
@@ -43,6 +45,7 @@ import { CatalogService } from '../../../services/catalog.service';
   ],
   styleUrl: './category-management.component.scss',
   imports: [
+    TranslatePipe,
     ReactiveFormsModule,
     FormsModule,
     MatButtonModule,
@@ -58,6 +61,8 @@ import { CatalogService } from '../../../services/catalog.service';
   templateUrl: './category-management.component.html',
 })
 export class CategoryManagementComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private confirmationOpen = false;
 
   private readonly formBuilder = inject(FormBuilder);
@@ -147,15 +152,17 @@ export class CategoryManagementComponent implements OnInit {
       next: () => {
         this.saving = false;
         this.message = this.editingId
-          ? 'Đã cập nhật danh mục.'
-          : 'Đã thêm danh mục.';
+          ? this.translate.instant('admin.categoryUpdated')
+          : this.translate.instant('admin.categoryAdded');
         this.cancelEdit();
         this.load(this.page);
       },
-      error: () => {
+      error: (error) => {
         this.saving = false;
-        this.formError =
-          'Không thể lưu danh mục. Kiểm tra tên trùng hoặc không hợp lệ.';
+        this.formError = this.errorMessages.message(
+          error,
+          'admin.cannotSaveCategoryCheckForADuplicateOrInvalid',
+        );
       },
     });
   }
@@ -184,8 +191,11 @@ export class CategoryManagementComponent implements OnInit {
   private deleteConfirmed(category: Category): void {
     this.catalog.deleteCategory(category.id).subscribe({
       next: () => this.load(this.page),
-      error: () => {
-        this.error = 'Không thể xóa danh mục đang có sản phẩm.';
+      error: (error) => {
+        this.error = this.errorMessages.message(
+          error,
+          'admin.cannotDeleteACategoryContainingProducts',
+        );
       },
     });
   }
@@ -211,12 +221,15 @@ export class CategoryManagementComponent implements OnInit {
           this.loading = false;
           this.error = '';
         },
-        error: () => {
+        error: (error) => {
           if (revision !== this.loadRevision) {
             return;
           }
           this.loading = false;
-          this.error = 'Không thể tải danh mục.';
+          this.error = this.errorMessages.message(
+            error,
+            'admin.cannotLoadCategories',
+          );
         },
       });
   }
@@ -228,7 +241,9 @@ export class CategoryManagementComponent implements OnInit {
     this.confirmationOpen = true;
     this.dialog
       .open(ConfirmationDialogComponent, {
-        data: `Xóa danh mục "${category.name}"?`,
+        data: this.translate.instant('admin.deleteCategory', {
+          p0: category.name,
+        }),
         width: '440px',
         maxWidth: 'calc(100vw - 32px)',
       })

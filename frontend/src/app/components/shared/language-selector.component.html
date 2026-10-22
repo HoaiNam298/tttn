@@ -1,0 +1,8 @@
+<select
+  [attr.aria-label]="'common.language' | translate"
+  [value]="language.current()"
+  (change)="change($event)"
+>
+  <option value="vi">Tiếng Việt</option>
+  <option value="en">English</option>
+</select>

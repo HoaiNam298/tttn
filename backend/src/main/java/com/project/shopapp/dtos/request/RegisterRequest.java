@@ -22,7 +22,7 @@ public class RegisterRequest {
     private String fullName;
 
     @NotBlank
-    @Pattern(regexp = "^[0-9]{9,15}$", message = "Phone number must contain 9 to 15 digits")
+    @Pattern(regexp = "^[0-9]{9,15}$", message = "{validation.phone.invalid}")
     private String phoneNumber;
 
     @NotBlank

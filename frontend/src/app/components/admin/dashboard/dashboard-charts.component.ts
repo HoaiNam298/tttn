@@ -1,3 +1,9 @@
+import { DisplayFormatService } from '../../../services/display-format.service';
+import { ShopDatePipe } from '../../shared/shop-date.pipe';
+import { ShopNumberPipe } from '../../shared/shop-number.pipe';
+import { effect, ChangeDetectorRef } from '@angular/core';
+import { inject } from '@angular/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -16,12 +22,21 @@ import { ORDER_STATUS_LABELS, OrderStatus } from '../../../models/order.model';
 
 @Component({
   selector: 'app-dashboard-charts',
-  imports: [CommonModule, RouterLink, MatCardModule],
+  imports: [
+    ShopDatePipe,
+    ShopNumberPipe,
+    TranslatePipe,
+    CommonModule,
+    RouterLink,
+    MatCardModule,
+  ],
   templateUrl: './dashboard-charts.component.html',
   styleUrl: './dashboard-charts.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardChartsComponent implements OnChanges {
+  private readonly translate = inject(TranslateService);
+  private readonly format = inject(DisplayFormatService);
   @Input({ required: true }) report!: DashboardReport;
   readonly circumference = 2 * Math.PI * 72;
   readonly statusColors: Record<OrderStatus, string> = {
@@ -42,6 +57,18 @@ export class DashboardChartsComponent implements OnChanges {
   totalOrders = 0;
   hasRevenueData = false;
 
+  private readonly changeDetector = inject(ChangeDetectorRef);
+
+  constructor() {
+    effect(() => {
+      this.translate.currentLang();
+      if (this.report) {
+        this.ngOnChanges();
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
   ngOnChanges(): void {
     this.buildRevenue();
     this.buildProducts();
@@ -58,7 +85,11 @@ export class DashboardChartsComponent implements OnChanges {
       ...day,
       x: days.length === 1 ? 340 : 80 + (index / (days.length - 1)) * 520,
       y: 240 - (day.revenue / maximum) * 200,
-      label: `${this.dateLabel(day.date)}: ${this.money(day.revenue)}, ${day.completedOrders} đơn hoàn thành`,
+      label: this.translate.instant('admin.completedOrders2', {
+        p0: this.dateLabel(day.date),
+        p1: this.money(day.revenue),
+        p2: day.completedOrders,
+      }),
     }));
     this.linePoints = this.points
       .map((point) => `${point.x},${point.y}`)
@@ -98,7 +129,10 @@ export class DashboardChartsComponent implements OnChanges {
       y: 240 - (product.quantity / maximum) * 180,
       width: step * 0.6,
       height: (product.quantity / maximum) * 180,
-      label: `${product.productName}: ${product.quantity} sản phẩm đã bán`,
+      label: this.translate.instant('admin.unitsSold', {
+        p0: product.productName,
+        p1: product.quantity,
+      }),
     }));
     const values = [
       ...new Set(
@@ -128,7 +162,7 @@ export class DashboardChartsComponent implements OnChanges {
       const length = (percentage / 100) * this.circumference;
       const segment: ChartSegment = {
         status,
-        label: ORDER_STATUS_LABELS[status],
+        label: this.translate.instant('orderStatus.' + status),
         count,
         percentage,
         color: this.statusColors[status],
@@ -141,21 +175,14 @@ export class DashboardChartsComponent implements OnChanges {
   }
 
   private dateLabel(date: string): string {
-    return `${date.slice(8, 10)}/${date.slice(5, 7)}`;
+    return this.format.date(date, 'chart');
   }
 
   private money(value: number): string {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
-    }).format(value);
+    return this.format.money(value);
   }
 
   private compact(value: number): string {
-    return new Intl.NumberFormat('vi-VN', {
-      notation: 'compact',
-      maximumFractionDigits: 1,
-    }).format(value);
+    return this.format.compact(value);
   }
 }

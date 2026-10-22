@@ -1,14 +1,18 @@
 <main class="container">
-  <nav class="breadcrumb" aria-label="Đường dẫn">
-    <a routerLink="/account">Tài khoản</a><span>/</span><span>Đơn mua</span>
+  <nav class="breadcrumb" [attr.aria-label]="'common.breadcrumb' | translate">
+    <a routerLink="/account">{{ "common.account" | translate }}</a
+    ><span>/</span><span>{{ "common.myOrders" | translate }}</span>
   </nav>
   <div class="page-heading">
     <div>
-      <p class="eyebrow">Tài khoản của tôi</p>
-      <h1>Đơn mua</h1>
+      <p class="eyebrow">{{ "common.myAccount" | translate }}</p>
+      <h1>{{ "common.myOrders" | translate }}</h1>
     </div>
   </div>
-  <nav class="panel order-tabs" aria-label="Lọc đơn theo trạng thái">
+  <nav
+    class="panel order-tabs"
+    [attr.aria-label]="'orders.filterOrdersByStatus' | translate"
+  >
     @for (tab of tabs; track tab) {
       <button
         mat-stroked-button
@@ -17,46 +21,66 @@
         [attr.aria-pressed]="status === tab"
         (click)="selectStatus(tab)"
       >
-        {{ tab ? labels[tab] : "Tất cả" }}
+        {{ tab ? labels[tab] : ("common.all" | translate) }}
       </button>
     }
   </nav>
   @if (loading) {
-    <mat-progress-bar mode="indeterminate" aria-label="Đang tải dữ liệu" />
-    <p class="state" aria-live="polite">Đang tải đơn hàng...</p>
+    <mat-progress-bar
+      mode="indeterminate"
+      [attr.aria-label]="'common.loadingData' | translate"
+    />
+    <p class="state" aria-live="polite">
+      {{ "orders.loadingOrder2" | translate }}
+    </p>
   } @else if (error) {
     <p class="state error" role="alert">{{ error }}</p>
-    <button mat-stroked-button (click)="load()">Thử lại</button>
+    <button mat-stroked-button (click)="load()">
+      {{ "common.retry" | translate }}
+    </button>
   } @else {
     <section class="order-cards">
       @for (order of items; track order.id) {
         <mat-card appearance="outlined" class="panel order-card">
           <div class="order-card-heading">
-            <strong>Đơn #{{ order.id }}</strong
+            <strong>{{ "orders.order2" | translate: { p0: order.id } }}</strong
             ><span class="badge">{{ labels[order.status] }}</span>
           </div>
           <p class="order-reference">{{ order.orderNumber }}</p>
-          <p>Ngày đặt: {{ order.createdAt | date: "dd/MM/yyyy HH:mm" }}</p>
-          <p>Người nhận: {{ order.recipientName }}</p>
           <p>
-            Thanh toán: {{ order.paymentMethod ?? "COD" }} ·
-            {{ paymentLabels[order.paymentStatus ?? "UNPAID"] }}
+            {{
+              "orders.orderDate"
+                | translate: { p0: (order.createdAt | shopDate) }
+            }}
+          </p>
+          <p>
+            {{ "orders.recipient2" | translate: { p0: order.recipientName } }}
+          </p>
+          <p>
+            {{
+              "orders.payment3"
+                | translate
+                  : {
+                      p0: order.paymentMethod ?? "COD",
+                      p1: paymentLabels[order.paymentStatus ?? "UNPAID"],
+                    }
+            }}
           </p>
           @if (order.status === "DELIVERED") {
             <p class="success">
-              Đơn đã được giao. Vào chi tiết để xác nhận đã nhận hàng.
+              {{
+                "orders.yourOrderHasBeenDeliveredOpenTheDetailsTo" | translate
+              }}
             </p>
           }
           <div class="order-card-footer">
             <span
-              >Tổng tiền
-              <strong>{{
-                order.total | currency: "VND" : "symbol" : "1.0-0"
-              }}</strong></span
+              >{{ "orders.total2" | translate }}
+              <strong>{{ order.total | shopMoney }}</strong></span
             ><a mat-flat-button [routerLink]="['/orders', order.id]">{{
               order.status === "DELIVERED"
-                ? "Xác nhận nhận hàng"
-                : "Xem chi tiết"
+                ? ("orders.confirmReceipt" | translate)
+                : ("common.viewDetails" | translate)
             }}</a>
           </div>
         </mat-card>
@@ -65,11 +89,13 @@
           <p>
             {{
               status
-                ? "Chưa có đơn hàng ở trạng thái này."
-                : "Bạn chưa có đơn hàng nào."
+                ? ("orders.noOrdersWithThisStatus" | translate)
+                : ("orders.youHaveNoOrdersYet" | translate)
             }}
           </p>
-          <a mat-flat-button routerLink="/products">Tiếp tục mua sắm</a>
+          <a mat-flat-button routerLink="/products">{{
+            "orders.continueShopping3" | translate
+          }}</a>
         </mat-card>
       }
     </section>
@@ -82,7 +108,7 @@
         [showFirstLastButtons]="true"
         [disabled]="loading"
         (page)="load($event.pageIndex)"
-        aria-label="Phân trang"
+        [attr.aria-label]="'common.pagination' | translate"
       />
     }
   }

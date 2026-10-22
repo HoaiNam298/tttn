@@ -2,33 +2,41 @@
   @if (error) {
     <p class="panel error">{{ error }}</p>
   } @else if (!order) {
-    <p class="state">Đang tải kết quả đặt hàng...</p>
+    <p class="state">{{ "orders.loadingOrderResult" | translate }}</p>
   } @else {
     <mat-card appearance="outlined" class="panel success-card">
       <div class="success-icon">✓</div>
-      <p class="eyebrow">Đặt hàng thành công</p>
-      <h1>Cảm ơn bạn!</h1>
+      <p class="eyebrow">
+        {{ "orders.orderPlacedSuccessfully" | translate }}
+      </p>
+      <h1>{{ "orders.thankYou" | translate }}</h1>
       <p>
-        Mã đơn hàng: <strong>{{ order.orderNumber }}</strong>
+        {{ "orders.orderNumber" | translate }}
+        <strong>{{ order.orderNumber }}</strong>
       </p>
       <p>
-        Tổng thanh toán:
-        <strong>{{
-          order.total | currency: "VND" : "symbol" : "1.0-0"
-        }}</strong>
+        {{ "orders.totalPayment2" | translate }}
+        <strong>{{ order.total | shopMoney }}</strong>
       </p>
       <p>
-        Phương thức:
         {{
-          order.paymentMethod === "VNPAY"
-            ? "VNPAY Sandbox — kiểm tra thanh toán tại chi tiết đơn hàng"
-            : "Thanh toán khi nhận hàng (COD)"
+          "orders.method"
+            | translate
+              : {
+                  p0:
+                    order.paymentMethod === "VNPAY"
+                      ? ("orders.vnpaySandboxCheckPaymentOnTheOrderDetailsPage"
+                        | translate)
+                      : ("orders.cashOnDeliveryCod3" | translate),
+                }
         }}
       </p>
-      <a mat-stroked-button [routerLink]="['/orders', order.id]"
-        >Theo dõi đơn hàng</a
-      >
-      <a mat-flat-button routerLink="/products">Tiếp tục mua sắm</a>
+      <a mat-stroked-button [routerLink]="['/orders', order.id]">{{
+        "orders.trackOrder" | translate
+      }}</a>
+      <a mat-flat-button routerLink="/products">{{
+        "orders.continueShopping3" | translate
+      }}</a>
     </mat-card>
   }
 </main>

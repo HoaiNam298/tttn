@@ -1,5 +1,6 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.components.VnpayGateway;
 import com.project.shopapp.configuration.VnpayProperties;
@@ -13,6 +14,8 @@ import com.project.shopapp.enums.PaymentMethod;
 import com.project.shopapp.enums.PaymentStatus;
 import com.project.shopapp.enums.ShippingMethod;
 import com.project.shopapp.exceptions.InsufficientStockException;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Order;
 import com.project.shopapp.model.OrderItem;
@@ -82,11 +85,10 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse create(String phoneNumber, CreateOrderRequest request) {
         if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
             if (request.getRequestId() == null) {
-                throw new IllegalArgumentException(
-                        "Online payment requires a request ID for safe retries");
+                throw new LocalizedArgumentException(MessageKeys.ORDER_REQUEST_ID_REQUIRED);
             }
             if (vnpay == null) {
-                throw new IllegalStateException("VNPAY Sandbox is not configured");
+                throw new LocalizedStateException(MessageKeys.PAYMENT_NOT_CONFIGURED);
             }
             vnpay.requireEnabled();
         }
@@ -94,7 +96,9 @@ public class OrderServiceImpl implements OrderService {
                 request.getRequestId() == null
                         ? userRepository.findByPhoneNumber(phoneNumber)
                         : userRepository.findForUpdateByPhoneNumber(phoneNumber);
-        User user = matchedUser.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user =
+                matchedUser.orElseThrow(
+                        () -> new ResourceNotFoundException(MessageKeys.USER_NOT_FOUND));
         Map<OrderLineKey, Integer> quantities = aggregateItems(request.getItems());
         String fingerprint =
                 request.getRequestId() == null ? null : fingerprint(request, quantities);
@@ -106,8 +110,7 @@ public class OrderServiceImpl implements OrderService {
                     log.warn(
                             "Order retry rejected orderId={} reason=different_order_data",
                             existing.get().getId());
-                    throw new IllegalStateException(
-                            "Request ID has already been used with different order data");
+                    throw new LocalizedStateException(MessageKeys.ORDER_REQUEST_CONFLICT);
                 }
                 log.debug("Order retry reused existing orderId={}", existing.get().getId());
                 return OrderResponse.from(existing.get());
@@ -119,7 +122,7 @@ public class OrderServiceImpl implements OrderService {
                         .collect(Collectors.toSet());
         List<Product> products = productRepository.findAllByIdInOrderById(productIds);
         if (products.size() != productIds.size()) {
-            throw new ResourceNotFoundException("One or more products no longer exist");
+            throw new ResourceNotFoundException(MessageKeys.ORDER_PRODUCTS_MISSING);
         }
 
         Order order =
@@ -154,8 +157,7 @@ public class OrderServiceImpl implements OrderService {
         }
         if (request.getExpectedTotal() != null
                 && request.getExpectedTotal().compareTo(order.getTotal()) != 0) {
-            throw new IllegalStateException(
-                    "Order total changed. Recalculate and confirm the new total");
+            throw new LocalizedStateException(MessageKeys.ORDER_TOTAL_CHANGED);
         }
         if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
             VnpayGateway.amount(order.getTotal());
@@ -178,14 +180,15 @@ public class OrderServiceImpl implements OrderService {
         User user =
                 userRepository
                         .findByPhoneNumber(phoneNumber)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.USER_NOT_FOUND));
         Map<OrderLineKey, Integer> quantities = aggregateItems(request.getItems());
         BigDecimal subtotal = BigDecimal.ZERO;
         var productIds =
                 quantities.keySet().stream().map(OrderLineKey::productId).distinct().toList();
         var products = productRepository.findAllById(productIds);
         if (products.size() != productIds.size()) {
-            throw new ResourceNotFoundException("One or more products no longer exist");
+            throw new ResourceNotFoundException(MessageKeys.ORDER_PRODUCTS_MISSING);
         }
         for (var entry : quantities.entrySet()) {
             Product product =
@@ -197,7 +200,7 @@ public class OrderServiceImpl implements OrderService {
             ProductVariant variant = findVariant(product, variantId);
             if ((variant == null && !product.getVariants().isEmpty())
                     || (variant != null && !variant.isActive())) {
-                throw new IllegalStateException("Select an available product variant");
+                throw new LocalizedStateException(MessageKeys.PRODUCT_VARIANT_UNAVAILABLE);
             }
             int stock = variant == null ? product.getStock() : variant.getStock();
             if (stock < entry.getValue()) {
@@ -241,7 +244,7 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository
                 .findWithItemsByIdAndUserPhoneNumber(id, phoneNumber)
                 .map(OrderResponse::from)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageKeys.ORDER_NOT_FOUND, id));
     }
 
     @Override
@@ -249,7 +252,7 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository
                 .findDetailById(id)
                 .map(OrderResponse::from)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageKeys.ORDER_NOT_FOUND, id));
     }
 
     @Override
@@ -281,12 +284,15 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse updateStatus(Long id, OrderStatus status) {
         if (status == OrderStatus.COMPLETED) {
-            throw new IllegalStateException("Only the order owner can confirm receipt");
+            throw new LocalizedStateException(MessageKeys.ORDER_OWNER_REQUIRED);
         }
         Order order =
                 orderRepository
                         .findWithItemsById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                MessageKeys.ORDER_NOT_FOUND, id));
         changeStatus(order, status);
         if (status == OrderStatus.CANCELLED) {
             restoreStockAndVoucher(order);
@@ -311,13 +317,14 @@ public class OrderServiceImpl implements OrderService {
         Order order =
                 orderRepository
                         .findByIdAndUserPhoneNumber(id, phoneNumber)
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.ORDER_NOT_FOUND));
         if (order.getStatus() == OrderStatus.CANCELLED) {
             log.debug("Order cancellation skipped orderId={} reason=already_cancelled", id);
             return OrderResponse.from(order);
         }
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Only pending orders can be cancelled by the customer");
+            throw new LocalizedStateException(MessageKeys.ORDER_CANCELLATION_UNAVAILABLE);
         }
         changeStatus(order, OrderStatus.CANCELLED, "CUSTOMER");
         restoreStockAndVoucher(order);
@@ -333,7 +340,7 @@ public class OrderServiceImpl implements OrderService {
                     Math::addExact);
         }
         if (quantities.values().stream().anyMatch(quantity -> quantity > 100 || quantity < 1)) {
-            throw new IllegalArgumentException("Quantity per order line must be between 1 and 100");
+            throw new LocalizedArgumentException(MessageKeys.ORDER_INVALID_QUANTITY);
         }
         return quantities;
     }
@@ -385,12 +392,13 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void closeUnpaidPayment(Long id, PaymentStatus reason) {
         if (reason != PaymentStatus.FAILED && reason != PaymentStatus.EXPIRED) {
-            throw new IllegalArgumentException("Invalid payment closure reason");
+            throw new LocalizedArgumentException(MessageKeys.PAYMENT_INVALID_CLOSURE);
         }
         Order order =
                 orderRepository
                         .findWithItemsById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(MessageKeys.ORDER_NOT_FOUND));
         if (order.getPaymentMethod() != PaymentMethod.VNPAY
                 || order.getPaymentStatus() != PaymentStatus.PENDING
                 || order.getStatus() != OrderStatus.PENDING) {
@@ -411,10 +419,13 @@ public class OrderServiceImpl implements OrderService {
         Order order =
                 orderRepository
                         .findByIdAndUserPhoneNumber(id, phoneNumber)
-                        .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                MessageKeys.ORDER_NOT_FOUND, id));
         if (order.getStatus() != OrderStatus.COMPLETED) {
             if (order.getStatus() != OrderStatus.DELIVERED) {
-                throw new IllegalStateException("Only delivered orders can be confirmed received");
+                throw new LocalizedStateException(MessageKeys.ORDER_RECEIPT_UNAVAILABLE);
             }
             changeStatus(order, OrderStatus.COMPLETED, "CUSTOMER");
         }
@@ -447,7 +458,7 @@ public class OrderServiceImpl implements OrderService {
                         .findFirst()
                         .orElse(null);
         if (variant == null) {
-            throw new IllegalArgumentException("Variant does not belong to the selected product");
+            throw new LocalizedArgumentException(MessageKeys.PRODUCT_VARIANT_MISMATCH);
         }
         return variant;
     }

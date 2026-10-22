@@ -1,10 +1,11 @@
+import { TranslatePipe } from '@ngx-translate/core';
 import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-confirmation-dialog',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [TranslatePipe, MatDialogModule, MatButtonModule],
   templateUrl: './confirmation-dialog.component.html',
 })
 export class ConfirmationDialogComponent {

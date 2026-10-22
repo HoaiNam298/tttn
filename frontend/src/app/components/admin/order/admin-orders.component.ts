@@ -1,3 +1,8 @@
+import { ShopDatePipe } from '../../shared/shop-date.pipe';
+import { ShopNumberPipe } from '../../shared/shop-number.pipe';
+import { ShopMoneyPipe } from '../../shared/shop-money.pipe';
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -37,6 +42,10 @@ import { OrderService } from '../../../services/order.service';
   ],
   styleUrl: './admin-orders.component.scss',
   imports: [
+    ShopDatePipe,
+    ShopNumberPipe,
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -53,10 +62,26 @@ import { OrderService } from '../../../services/order.service';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AdminOrdersComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly orders = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly labels = ORDER_STATUS_LABELS;
-  readonly paymentLabels = PAYMENT_STATUS_LABELS;
+  get labels(): typeof ORDER_STATUS_LABELS {
+    return Object.fromEntries(
+      Object.keys(ORDER_STATUS_LABELS).map((status) => [
+        status,
+        this.translate.instant('orderStatus.' + status),
+      ]),
+    ) as typeof ORDER_STATUS_LABELS;
+  }
+  get paymentLabels(): typeof PAYMENT_STATUS_LABELS {
+    return Object.fromEntries(
+      Object.keys(PAYMENT_STATUS_LABELS).map((status) => [
+        status,
+        this.translate.instant('paymentStatus.' + status),
+      ]),
+    ) as typeof PAYMENT_STATUS_LABELS;
+  }
   paymentLabel(order: OrderSummary): string {
     return this.paymentLabels[order.paymentStatus ?? 'UNPAID'];
   }
@@ -129,11 +154,14 @@ export class AdminOrdersComponent implements OnInit {
           this.totalElements = response.totalElements;
           this.loading = false;
         },
-        error: () => {
+        error: (error) => {
           if (revision !== this.loadRevision) {
             return;
           }
-          this.error = 'Không thể tải danh sách đơn hàng.';
+          this.error = this.errorMessages.message(
+            error,
+            'admin.cannotLoadOrders',
+          );
           this.loading = false;
         },
       });
@@ -156,10 +184,12 @@ export class AdminOrdersComponent implements OnInit {
           this.updating.delete(order.id);
           this.load(this.page);
         },
-        error: () => {
+        error: (error) => {
           this.updating.delete(order.id);
-          this.error =
-            'Không thể cập nhật trạng thái đơn hàng. Vui lòng tải lại danh sách.';
+          this.error = this.errorMessages.message(
+            error,
+            'admin.cannotUpdateOrderStatusPleaseReloadTheList',
+          );
         },
       });
   }

@@ -1,15 +1,15 @@
 <mat-card appearance="outlined" class="panel">
   <div class="section-heading">
-    <h1>Thông báo</h1>
+    <h1>{{ "account.notifications" | translate }}</h1>
     <div class="actions">
       <button mat-stroked-button [disabled]="loading" (click)="load(page)">
-        Làm mới</button
+        {{ "account.refresh" | translate }}</button
       ><button
         mat-stroked-button
         [disabled]="updating || !service.unread()"
         (click)="markAll()"
       >
-        Đọc tất cả
+        {{ "account.markAllAsRead" | translate }}
       </button>
     </div>
   </div>
@@ -17,32 +17,37 @@
     <p class="error" role="alert">{{ error }}</p>
   }
   @if (loading) {
-    <mat-progress-bar mode="indeterminate" aria-label="Đang tải dữ liệu" />
-    <p class="state">Đang tải thông báo...</p>
+    <mat-progress-bar
+      mode="indeterminate"
+      [attr.aria-label]="'common.loadingData' | translate"
+    />
+    <p class="state">{{ "account.loadingNotifications" | translate }}</p>
   } @else {
     @for (notification of notifications; track notification.id) {
       <article class="review-item">
         <h3>
           {{ notification.title }}
           @if (!notification.read) {
-            <span class="badge">Mới</span>
+            <span class="badge">{{ "account.new" | translate }}</span>
           }
         </h3>
         <p>{{ notification.body }}</p>
-        <small>{{ notification.createdAt | date: "dd/MM/yyyy HH:mm" }}</small>
+        <small>{{ notification.createdAt | shopDate }}</small>
         <div class="actions">
           <button
             mat-stroked-button
             [disabled]="updating"
             (click)="open(notification)"
           >
-            Xem chi tiết
+            {{ "common.viewDetails" | translate }}
           </button>
         </div>
       </article>
     } @empty {
       <p class="state">
-        Bạn chưa có thông báo. Các cập nhật đơn hàng mới sẽ xuất hiện tại đây.
+        {{
+          "account.noNotificationsYetNewOrderUpdatesWillAppearHere" | translate
+        }}
       </p>
     }
   }
@@ -55,7 +60,7 @@
       [showFirstLastButtons]="true"
       [disabled]="loading"
       (page)="load($event.pageIndex)"
-      aria-label="Phân trang"
+      [attr.aria-label]="'common.pagination' | translate"
     />
   }
 </mat-card>

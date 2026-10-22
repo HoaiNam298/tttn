@@ -1,3 +1,5 @@
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { ErrorMessageService } from '../../services/error-message.service';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,6 +20,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 @Component({
   selector: 'app-register',
   imports: [
+    TranslatePipe,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -31,6 +34,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class RegisterComponent {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   showPassword = false;
@@ -39,7 +44,15 @@ export class RegisterComponent {
   private readonly route = inject(ActivatedRoute);
   readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   loading = false;
-  error = '';
+  private validationError = false;
+  private requestError = '';
+  get error(): string {
+    return this.validationError
+      ? this.translate.instant(
+          'auth.checkYourInformationAndPasswordConfirmationAtLeast8',
+        )
+      : this.requestError;
+  }
   form = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.maxLength(100)]],
     phoneNumber: [
@@ -61,13 +74,14 @@ export class RegisterComponent {
     this.form.markAllAsTouched();
     const value = this.form.getRawValue();
     if (this.form.invalid || value.password !== value.confirmPassword) {
-      this.error =
-        'Kiểm tra thông tin và xác nhận mật khẩu (tối thiểu 8 ký tự).';
+      this.validationError = true;
+      this.requestError = '';
       return;
     }
     this.loading = true;
     this.form.disable({ emitEvent: false });
-    this.error = '';
+    this.validationError = false;
+    this.requestError = '';
     this.auth
       .register({
         fullName: value.fullName.trim(),
@@ -89,10 +103,12 @@ export class RegisterComponent {
         error: (response) => {
           this.form.enable({ emitEvent: false });
           this.loading = false;
-          this.error =
+          this.requestError = this.errorMessages.message(
+            response,
             response.status === 409
-              ? 'Số điện thoại đã được đăng ký.'
-              : 'Không thể đăng ký. Vui lòng kiểm tra dữ liệu và thử lại.';
+              ? 'auth.phoneNumberIsAlreadyRegistered'
+              : 'auth.cannotRegisterCheckYourInformationAndTryAgain',
+          );
         },
       });
   }

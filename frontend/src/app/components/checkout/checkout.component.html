@@ -1,31 +1,40 @@
 <main class="container checkout-page">
-  <a mat-button [routerLink]="buyNow ? '/products' : '/cart'"
-    >← Tiếp tục mua sắm</a
-  >
+  <a mat-button [routerLink]="buyNow ? '/products' : '/cart'">{{
+    "checkout.continueShopping2" | translate
+  }}</a>
   <div class="page-heading">
-    <p class="eyebrow">Thanh toán</p>
-    <h1>Xác nhận đơn hàng</h1>
+    <p class="eyebrow">{{ "common.checkout" | translate }}</p>
+    <h1>{{ "checkout.confirmOrder" | translate }}</h1>
   </div>
   @if (error) {
     <p class="notice error-notice" role="alert">{{ error }}</p>
   }
   @if (pending) {
     <p class="notice" role="status">
-      Yêu cầu đặt hàng đang chờ xác nhận. Xác nhận lại sẽ sử dụng yêu cầu cũ;
-      thông tin được khóa để tránh tạo đơn trùng.
+      {{
+        "checkout.yourOrderRequestIsAwaitingConfirmationRetryingWillReuse"
+          | translate
+      }}
     </p>
   }
   @if (loading || submitting) {
-    <mat-progress-bar mode="indeterminate" aria-label="Đang xử lý đơn hàng" />
+    <mat-progress-bar
+      mode="indeterminate"
+      [attr.aria-label]="'checkout.processingOrder' | translate"
+    />
   }
   @if (loading) {
-    <p class="state" aria-live="polite">Đang tải thông tin đơn hàng...</p>
+    <p class="state" aria-live="polite">
+      {{ "checkout.loadingOrderInformation" | translate }}
+    </p>
   } @else if (lines.length === 0) {
     <mat-card appearance="outlined" class="empty-card">
       <mat-card-content>
         @if (pending) {
           <p>
-            Chưa tải được sản phẩm. Bạn vẫn có thể xác nhận lại yêu cầu đã gửi.
+            {{
+              "checkout.productsCouldNotBeLoadedYouCanStillRetry" | translate
+            }}
           </p>
           <button
             mat-flat-button
@@ -33,11 +42,13 @@
             [disabled]="submitting"
             (click)="submit()"
           >
-            Xác nhận lại yêu cầu
+            {{ "checkout.retryRequest" | translate }}
           </button>
         } @else {
-          <p>Chưa có sản phẩm để đặt hàng.</p>
-          <a mat-flat-button routerLink="/products">Chọn sản phẩm</a>
+          <p>{{ "checkout.noProductsToOrder" | translate }}</p>
+          <a mat-flat-button routerLink="/products">{{
+            "checkout.chooseProducts" | translate
+          }}</a>
         }
       </mat-card-content>
     </mat-card>
@@ -46,15 +57,19 @@
       <mat-card appearance="outlined">
         <mat-card-content>
           <div class="section-heading">
-            <h2>Thông tin nhận hàng</h2>
-            <a mat-button routerLink="/account/addresses">Sổ địa chỉ</a>
+            <h2>{{ "common.deliveryInformation" | translate }}</h2>
+            <a mat-button routerLink="/account/addresses">{{
+              "common.addressBook" | translate
+            }}</a>
           </div>
           @if (addressError) {
             <p class="error-notice" role="alert">{{ addressError }}</p>
           }
           @if (addresses.length) {
             <mat-form-field appearance="outline">
-              <mat-label>Chọn địa chỉ đã lưu</mat-label>
+              <mat-label>{{
+                "checkout.chooseASavedAddress" | translate
+              }}</mat-label>
               <mat-select
                 [disabled]="submitting || !!pending"
                 (selectionChange)="selectAddress($event.value)"
@@ -70,7 +85,7 @@
           }
           <div class="recipient-fields">
             <mat-form-field appearance="outline"
-              ><mat-label>Họ tên người nhận</mat-label
+              ><mat-label>{{ "checkout.recipientName" | translate }}</mat-label
               ><input
                 matInput
                 formControlName="recipientName"
@@ -78,11 +93,13 @@
                 maxlength="100"
               />
               @if (form.controls.recipientName.invalid) {
-                <mat-error>Nhập họ tên, tối đa 100 ký tự.</mat-error>
+                <mat-error>{{
+                  "checkout.enterANameOfAtMost100Characters" | translate
+                }}</mat-error>
               }
             </mat-form-field>
             <mat-form-field appearance="outline"
-              ><mat-label>Số điện thoại</mat-label
+              ><mat-label>{{ "common.phoneNumber" | translate }}</mat-label
               ><input
                 matInput
                 formControlName="phoneNumber"
@@ -90,12 +107,14 @@
                 inputmode="tel"
               />
               @if (form.controls.phoneNumber.invalid) {
-                <mat-error>Nhập số điện thoại hợp lệ, 9–15 ký tự.</mat-error>
+                <mat-error>{{
+                  "checkout.enterAValidPhoneNumber915Characters" | translate
+                }}</mat-error>
               }
             </mat-form-field>
           </div>
           <mat-form-field appearance="outline"
-            ><mat-label>Địa chỉ giao hàng</mat-label
+            ><mat-label>{{ "checkout.deliveryAddress" | translate }}</mat-label
             ><textarea
               matInput
               rows="3"
@@ -104,57 +123,75 @@
               maxlength="255"
             ></textarea>
             @if (form.controls.shippingAddress.invalid) {
-              <mat-error>Nhập địa chỉ, tối đa 255 ký tự.</mat-error>
+              <mat-error>{{
+                "checkout.enterAnAddressOfAtMost255Characters" | translate
+              }}</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline"
-            ><mat-label>Ghi chú (không bắt buộc)</mat-label
+            ><mat-label>{{ "checkout.noteOptional" | translate }}</mat-label
             ><textarea
               matInput
               rows="2"
               formControlName="note"
               maxlength="500"
             ></textarea
-            ><mat-hint>Tối đa 500 ký tự</mat-hint></mat-form-field
+            ><mat-hint>{{
+              "checkout.atMost500Characters" | translate
+            }}</mat-hint></mat-form-field
           >
           <mat-divider />
-          <h2>Giao hàng & thanh toán</h2>
+          <h2>
+            {{ "checkout.shipping" | translate }} &
+            {{ "checkout.payment" | translate }}
+          </h2>
           <mat-form-field appearance="outline"
-            ><mat-label>Giao hàng (phí demo)</mat-label>
+            ><mat-label>{{
+              "checkout.shippingDemoFees" | translate
+            }}</mat-label>
             <mat-select formControlName="shippingMethod"
-              ><mat-option value="STANDARD">Tiêu chuẩn</mat-option
-              ><mat-option value="EXPRESS">Nhanh</mat-option></mat-select
+              ><mat-option value="STANDARD">{{
+                "common.standard" | translate
+              }}</mat-option
+              ><mat-option value="EXPRESS">{{
+                "common.express" | translate
+              }}</mat-option></mat-select
             >
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Phương thức thanh toán</mat-label>
+            <mat-label>{{ "checkout.paymentMethod" | translate }}</mat-label>
             <mat-select formControlName="paymentMethod">
-              <mat-option value="COD">Khi nhận hàng (COD)</mat-option>
-              <mat-option value="VNPAY" [disabled]="!vnpayEnabled"
-                >VNPAY Sandbox (thử nghiệm)</mat-option
-              >
+              <mat-option value="COD">{{
+                "common.cashOnDeliveryCod2" | translate
+              }}</mat-option>
+              <mat-option value="VNPAY" [disabled]="!vnpayEnabled">{{
+                "checkout.vnpaySandboxTest" | translate
+              }}</mat-option>
             </mat-select>
             <mat-hint>{{
               vnpayEnabled
-                ? "Sandbox chỉ dùng thẻ test, không thanh toán tiền thật."
-                : "VNPAY đang chờ cấu hình; COD vẫn hoạt động."
+                ? ("checkout.useTestCardsOnlyNoRealPaymentIsMade" | translate)
+                : ("checkout.vnpayConfigurationIsPendingCodIsAvailable"
+                  | translate)
             }}</mat-hint>
           </mat-form-field>
           <div class="voucher-row">
             <mat-form-field appearance="outline"
-              ><mat-label>Mã giảm giá</mat-label
+              ><mat-label>{{ "checkout.discountCode" | translate }}</mat-label
               ><input
                 matInput
                 formControlName="voucherCode"
-                placeholder="Nhập mã voucher"
+                [placeholder]="'checkout.enterAVoucherCode' | translate"
                 maxlength="40"
               />
               @if (form.controls.voucherCode.invalid) {
-                <mat-error>Mã gồm 3–40 chữ, số, dấu _ hoặc -.</mat-error>
+                <mat-error>{{
+                  "checkout.use340LettersDigitsUnderscoresOrHyphens" | translate
+                }}</mat-error>
               }
-              <mat-hint
-                >Nhấn Áp mã để sử dụng; để trống và áp lại để bỏ mã.</mat-hint
-              >
+              <mat-hint>{{
+                "checkout.selectApplyCodeToUseItClearTheField" | translate
+              }}</mat-hint>
             </mat-form-field>
             <button
               mat-stroked-button
@@ -162,7 +199,7 @@
               [disabled]="quoting || submitting || !!pending"
               (click)="applyVoucher()"
             >
-              Áp mã
+              {{ "checkout.applyCode" | translate }}
             </button>
           </div>
           @if (quoteError) {
@@ -174,7 +211,7 @@
                 [disabled]="quoting || submitting || !!pending"
                 (click)="refreshQuote()"
               >
-                Thử lại tổng tiền
+                {{ "checkout.retryTotal" | translate }}
               </button>
             }
           }
@@ -182,7 +219,7 @@
       </mat-card>
       <mat-card appearance="outlined" class="checkout-summary">
         <mat-card-content>
-          <h2>Đơn hàng của bạn</h2>
+          <h2>{{ "checkout.yourOrder" | translate }}</h2>
           @for (
             line of lines;
             track line.product.id + ":" + (line.variantId ?? "")
@@ -193,68 +230,64 @@
                 @if (line.variantName) {
                   <small>{{ line.variantName }}</small>
                 }
-                <small>Số lượng: {{ line.quantity }}</small>
+                <small>{{
+                  "checkout.quantity" | translate: { p0: line.quantity }
+                }}</small>
               </div>
-              <span>{{
-                line.lineTotal | currency: "VND" : "symbol" : "1.0-0"
-              }}</span>
+              <span>{{ line.lineTotal | shopMoney }}</span>
             </div>
           }
           <mat-divider />
           <div class="cost-row">
-            <span>Tạm tính</span
-            ><strong>{{
-              quote?.subtotal ?? subtotal | currency: "VND" : "symbol" : "1.0-0"
-            }}</strong>
+            <span>{{ "common.subtotal" | translate }}</span
+            ><strong>{{ quote?.subtotal ?? subtotal | shopMoney }}</strong>
           </div>
           @if (quoting) {
             <mat-progress-bar
               mode="indeterminate"
-              aria-label="Đang tính tổng tiền"
+              [attr.aria-label]="'checkout.calculatingTotal' | translate"
             />
           }
           @if (quote; as price) {
             <div class="cost-row">
-              <span>Phí giao hàng</span
-              ><strong>{{
-                price.shippingFee | currency: "VND" : "symbol" : "1.0-0"
-              }}</strong>
+              <span>{{ "checkout.shippingFee" | translate }}</span
+              ><strong>{{ price.shippingFee | shopMoney }}</strong>
             </div>
             @if (price.discount > 0) {
               <div class="cost-row">
-                <span>Giảm giá {{ price.voucherCode }}</span
-                ><strong
-                  >−{{
-                    price.discount | currency: "VND" : "symbol" : "1.0-0"
-                  }}</strong
-                >
+                <span>{{
+                  "checkout.discount" | translate: { p0: price.voucherCode }
+                }}</span
+                ><strong>−{{ price.discount | shopMoney }}</strong>
               </div>
             }
             <mat-divider />
             <div class="cost-row total">
-              <span>Tổng thanh toán</span
-              ><strong>{{
-                price.total | currency: "VND" : "symbol" : "1.0-0"
-              }}</strong>
+              <span>{{ "checkout.totalPayment" | translate }}</span
+              ><strong>{{ price.total | shopMoney }}</strong>
             </div>
           } @else if (pending) {
             @if (pending.payload.expectedTotal != null) {
               <div class="cost-row total">
-                <span>Tổng tiền yêu cầu đã gửi</span
+                <span>{{ "checkout.submittedRequestTotal" | translate }}</span
                 ><strong>{{
-                  pending.payload.expectedTotal
-                    | currency: "VND" : "symbol" : "1.0-0"
+                  pending.payload.expectedTotal | shopMoney
                 }}</strong>
               </div>
             }
           } @else {
             <p class="summary-note">
-              Điền thông tin nhận hàng để hệ thống cập nhật tổng tiền. Nếu có mã
-              giảm giá, nhấn Áp mã để sử dụng.
+              {{
+                "checkout.enterDeliveryInformationToUpdateTheTotalIfYou"
+                  | translate
+              }}
             </p>
           }
           <p class="summary-note">
-            Giá, tồn kho và voucher được kiểm tra lại khi đặt hàng.
+            {{
+              "checkout.pricesStockAndVouchersAreCheckedAgainWhenYou"
+                | translate
+            }}
           </p>
           <button
             mat-flat-button
@@ -266,10 +299,10 @@
           >
             {{
               submitting
-                ? "Đang xử lý…"
+                ? ("checkout.processing" | translate)
                 : pending
-                  ? "Xác nhận lại yêu cầu"
-                  : "Xác nhận đặt hàng"
+                  ? ("checkout.retryRequest" | translate)
+                  : ("checkout.confirmOrder" | translate)
             }}
           </button>
         </mat-card-content>

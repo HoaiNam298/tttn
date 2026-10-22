@@ -1,3 +1,5 @@
+import { ErrorMessageService } from '../../services/error-message.service';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   Component,
   inject,
@@ -19,6 +21,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 @Component({
   selector: 'app-login',
   imports: [
+    TranslatePipe,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -32,6 +35,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   showPassword = false;
@@ -79,9 +83,9 @@ export class LoginComponent implements OnInit {
         next: (value) => {
           void this.router.navigateByUrl(this.destination(value.user.role));
         },
-        error: () => {
+        error: (response) => {
           this.form.enable({ emitEvent: false });
-          this.error = 'Thông tin đăng nhập không chính xác.';
+          this.error = this.errorMessages.message(response);
           this.loading = false;
         },
       });

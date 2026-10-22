@@ -24,22 +24,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateOrderRequest {
 
-    @NotBlank(message = "Recipient name is required")
-    @Size(max = 100, message = "Recipient name must not exceed 100 characters")
+    @NotBlank(message = "{validation.notblank}")
+    @Size(max = 100, message = "{validation.size}")
     private String recipientName;
 
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^[0-9+]{9,15}$", message = "Phone number is invalid")
+    @NotBlank(message = "{validation.notblank}")
+    @Pattern(regexp = "^[0-9+]{9,15}$", message = "{validation.pattern}")
     private String phoneNumber;
 
-    @NotBlank(message = "Shipping address is required")
-    @Size(max = 255, message = "Shipping address must not exceed 255 characters")
+    @NotBlank(message = "{validation.notblank}")
+    @Size(max = 255, message = "{validation.size}")
     private String shippingAddress;
 
-    @Size(max = 500, message = "Note must not exceed 500 characters")
+    @Size(max = 500, message = "{validation.size}")
     private String note;
 
-    @NotEmpty(message = "Cart must contain at least one product")
+    @NotEmpty(message = "{validation.notempty}")
     @Size(max = 100)
     private List<@NotNull @Valid OrderItemRequest> items;
 

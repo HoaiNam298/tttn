@@ -1,5 +1,8 @@
 package com.project.shopapp.configuration;
 
+import com.project.shopapp.components.MessageKeys;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -33,8 +36,7 @@ public class VnpayProperties {
                     || uri.getRawFragment() != null
                     || uri.getUserInfo() != null
                     || !uri.getPath().isEmpty()) {
-                throw new IllegalArgumentException(
-                        "VNPAY requires merchant credentials and an HTTPS public origin");
+                throw new LocalizedArgumentException(MessageKeys.PAYMENT_INVALID_CONFIGURATION);
             }
         }
     }
@@ -45,7 +47,7 @@ public class VnpayProperties {
 
     public void requireEnabled() {
         if (!enabled) {
-            throw new IllegalStateException("VNPAY Sandbox is not configured");
+            throw new LocalizedStateException(MessageKeys.PAYMENT_NOT_CONFIGURED);
         }
     }
 

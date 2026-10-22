@@ -1,3 +1,5 @@
+import { ShopMoneyPipe } from '../shared/shop-money.pipe';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
@@ -13,11 +15,19 @@ import { OrderService } from '../../services/order.service';
 
 @Component({
   selector: 'app-order-success',
-  imports: [CommonModule, RouterLink, MatButtonModule, MatCardModule],
+  imports: [
+    ShopMoneyPipe,
+    TranslatePipe,
+    CommonModule,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './order-success.component.html',
 })
 export class OrderSuccessComponent implements OnInit {
+  private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly orders = inject(OrderService);
 
@@ -28,7 +38,10 @@ export class OrderSuccessComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.orders.findById(id).subscribe({
       next: (order) => (this.order = order),
-      error: () => (this.error = 'Không thể tải thông tin đơn hàng.'),
+      error: () =>
+        (this.error = this.translate.instant(
+          'orders.cannotLoadOrderInformation',
+        )),
     });
   }
 }

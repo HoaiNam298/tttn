@@ -3,7 +3,7 @@
     mat-button
     class="back-link"
     [routerLink]="adminMode ? '/admin/orders' : '/orders'"
-    >← Danh sách đơn hàng</a
+    >{{ "orders.orderList" | translate }}</a
   >
   @if (error) {
     <mat-card appearance="outlined" class="detail-card"
@@ -12,11 +12,13 @@
   } @else if (order; as value) {
     <div class="detail-heading">
       <div>
-        <p class="eyebrow">Chi tiết đơn hàng</p>
-        <h1>Đơn hàng #{{ value.id }}</h1>
+        <p class="eyebrow">{{ "orders.orderDetails" | translate }}</p>
+        <h1>{{ "orders.order" | translate: { p0: value.id } }}</h1>
         <p class="order-reference">{{ value.orderNumber }}</p>
         <p class="muted">
-          Đặt lúc {{ value.createdAt | date: "dd/MM/yyyy HH:mm" }}
+          {{
+            "orders.placedAt" | translate: { p0: (value.createdAt | shopDate) }
+          }}
         </p>
       </div>
       <span class="status-badge" [ngClass]="'status-' + value.status">{{
@@ -29,11 +31,13 @@
     <div class="detail-layout">
       <div class="detail-main">
         <mat-card appearance="outlined" class="detail-card">
-          <h2>Sản phẩm trong đơn</h2>
+          <h2>{{ "orders.orderItems" | translate }}</h2>
           <div class="table-wrap">
             <table mat-table [dataSource]="value.items">
               <ng-container matColumnDef="product"
-                ><th mat-header-cell *matHeaderCellDef>Sản phẩm</th>
+                ><th mat-header-cell *matHeaderCellDef>
+                  {{ "common.products" | translate }}
+                </th>
                 <td mat-cell *matCellDef="let item">
                   <strong>{{ item.productName }}</strong>
                   @if (item.variantName) {
@@ -42,25 +46,33 @@
                 </td></ng-container
               >
               <ng-container matColumnDef="price"
-                ><th mat-header-cell *matHeaderCellDef>Đơn giá</th>
+                ><th mat-header-cell *matHeaderCellDef>
+                  {{ "orders.unitPrice" | translate }}
+                </th>
                 <td mat-cell *matCellDef="let item">
-                  {{ item.unitPrice | currency: "VND" : "symbol" : "1.0-0" }}
+                  {{ item.unitPrice | shopMoney }}
                 </td></ng-container
               >
               <ng-container matColumnDef="quantity"
-                ><th mat-header-cell *matHeaderCellDef>Số lượng</th>
+                ><th mat-header-cell *matHeaderCellDef>
+                  {{ "common.quantityOf" | translate }}
+                </th>
                 <td mat-cell *matCellDef="let item">
                   {{ item.quantity }}
                 </td></ng-container
               >
               <ng-container matColumnDef="total"
-                ><th mat-header-cell *matHeaderCellDef>Thành tiền</th>
+                ><th mat-header-cell *matHeaderCellDef>
+                  {{ "orders.lineTotal" | translate }}
+                </th>
                 <td mat-cell *matCellDef="let item">
-                  {{ item.lineTotal | currency: "VND" : "symbol" : "1.0-0" }}
+                  {{ item.lineTotal | shopMoney }}
                 </td></ng-container
               >
               <ng-container matColumnDef="review"
-                ><th mat-header-cell *matHeaderCellDef>Đánh giá</th>
+                ><th mat-header-cell *matHeaderCellDef>
+                  {{ "orders.review" | translate }}
+                </th>
                 <td mat-cell *matCellDef="let item">
                   <a
                     mat-stroked-button
@@ -70,7 +82,11 @@
                       variantId: item.variantId,
                     }"
                     fragment="reviews"
-                    >{{ isReviewed(item) ? "Đã đánh giá" : "Đánh giá" }}</a
+                    >{{
+                      isReviewed(item)
+                        ? ("orders.reviewed" | translate)
+                        : ("orders.review" | translate)
+                    }}</a
                   >
                 </td></ng-container
               >
@@ -80,7 +96,7 @@
           </div>
         </mat-card>
         <mat-card appearance="outlined" class="detail-card">
-          <h2>Lịch sử đơn hàng</h2>
+          <h2>{{ "orders.orderHistory" | translate }}</h2>
           <ol class="timeline">
             @for (event of value.history ?? []; track $index) {
               <li>
@@ -88,81 +104,103 @@
                 <div>
                   <strong>{{ statusLabels[event.status] }}</strong>
                   <p class="muted">
-                    <time>{{
-                      event.occurredAt | date: "dd/MM/yyyy HH:mm"
-                    }}</time>
+                    <time>{{ event.occurredAt | shopDate }}</time>
                     ·
                     {{
                       event.actor === "CUSTOMER"
-                        ? "Khách hàng"
+                        ? ("orders.customer" | translate)
                         : event.actor === "ADMIN"
-                          ? "Cửa hàng"
-                          : "Hệ thống"
+                          ? ("orders.store" | translate)
+                          : ("orders.system" | translate)
                     }}
                   </p>
                   @if (event.imported) {
-                    <small class="muted"
-                      >Trạng thái ghi nhận khi nâng cấp; lịch sử trước đó không
-                      có dữ liệu.</small
-                    >
+                    <small class="muted">{{
+                      "orders.statusRecordedDuringAnUpgradeEarlierHistoryIsUnavailable"
+                        | translate
+                    }}</small>
                   }
                 </div>
               </li>
             } @empty {
-              <li class="muted">Chưa có dữ liệu lịch sử.</li>
+              <li class="muted">
+                {{ "orders.noOrderHistoryAvailable" | translate }}
+              </li>
             }
           </ol>
         </mat-card>
       </div>
       <aside class="detail-summary">
         <mat-card appearance="outlined" class="detail-card">
-          <h2>Thông tin nhận hàng</h2>
+          <h2>{{ "common.deliveryInformation" | translate }}</h2>
           <strong>{{ value.recipientName }}</strong>
           <p>{{ value.phoneNumber }}</p>
           <p class="address">{{ value.shippingAddress }}</p>
           <p class="muted">
-            Giao hàng:
-            {{ value.shippingMethod === "EXPRESS" ? "Nhanh" : "Tiêu chuẩn" }}
+            {{
+              "orders.shipping2"
+                | translate
+                  : {
+                      p0:
+                        value.shippingMethod === "EXPRESS"
+                          ? ("common.express" | translate)
+                          : ("common.standard" | translate),
+                    }
+            }}
           </p>
           <p class="muted">
-            Thanh toán:
             {{
-              value.paymentMethod === "COD"
-                ? "Khi nhận hàng (COD)"
-                : value.paymentMethod
+              "orders.payment2"
+                | translate
+                  : {
+                      p0:
+                        value.paymentMethod === "COD"
+                          ? ("common.cashOnDeliveryCod2" | translate)
+                          : value.paymentMethod,
+                    }
             }}
           </p>
           @if (value.note) {
-            <p class="order-note">Ghi chú: {{ value.note }}</p>
+            <p class="order-note">
+              {{ "orders.note" | translate: { p0: value.note } }}
+            </p>
           }
         </mat-card>
         <mat-card appearance="outlined" class="detail-card">
-          <h2>Thanh toán</h2>
+          <h2>{{ "common.checkout" | translate }}</h2>
           <p role="status">
             {{ paymentLabels[value.paymentStatus ?? "UNPAID"] }}
           </p>
           @if (value.paymentMethod === "VNPAY") {
-            <p class="muted">VNPAY Sandbox — chỉ sử dụng thẻ test.</p>
+            <p class="muted">
+              {{ "orders.vnpaySandboxUseTestCardsOnly" | translate }}
+            </p>
             @if (
               value.paymentStatus === "EXPIRED" ||
               value.paymentStatus === "CANCELLED" ||
               value.paymentStatus === "FAILED"
             ) {
               <p class="muted">
-                Nếu bạn đã thanh toán, không thanh toán lại. Liên hệ quản trị để
-                đối soát; kết quả đến muộn sẽ được ghi nhận cần kiểm tra.
+                {{ "orders.ifYouHaveAlreadyPaidDoNotPayAgain" | translate }}
               </p>
             }
             @if (value.paymentExpiresAt && value.paymentStatus === "PENDING") {
               <p>
-                Hạn thanh toán:
-                {{ value.paymentExpiresAt | date: "dd/MM/yyyy HH:mm:ss" }}
+                {{
+                  "orders.paymentDeadline"
+                    | translate
+                      : {
+                          p0: (value.paymentExpiresAt | shopDate: "seconds"),
+                        }
+                }}
               </p>
             }
             @if (value.paymentStatus === "REVIEW_REQUIRED") {
               <p class="error" role="alert">
-                Giao dịch cần đối soát do đơn đã đóng hoặc kết quả đến muộn.
-                Không thanh toán lại; liên hệ quản trị để kiểm tra.
+                {{
+                  "orders.thisTransactionRequiresReconciliationBecauseTheOrderIsClosed"
+                    | translate
+                }}
               </p>
             }
             @if (!adminMode && value.paymentStatus === "PENDING") {
@@ -172,7 +210,11 @@
                   [disabled]="paying || checkingPayment || cancelling"
                   (click)="pay()"
                 >
-                  {{ paying ? "Đang mở VNPAY..." : "Thanh toán VNPAY Sandbox" }}
+                  {{
+                    paying
+                      ? ("orders.openingVnpay" | translate)
+                      : ("orders.payWithVnpaySandbox" | translate)
+                  }}
                 </button>
               }
               <button
@@ -182,15 +224,15 @@
               >
                 {{
                   checkingPayment
-                    ? "Đang xác nhận..."
-                    : "Kiểm tra kết quả thanh toán"
+                    ? ("orders.confirming" | translate)
+                    : ("orders.checkPaymentResult" | translate)
                 }}
               </button>
             }
             @if (paying || checkingPayment) {
               <mat-progress-bar
                 mode="indeterminate"
-                aria-label="Đang xử lý thanh toán"
+                [attr.aria-label]="'orders.processingPayment' | translate"
               />
             }
             @if (paymentError) {
@@ -198,32 +240,24 @@
             }
           }
           <div class="cost-row">
-            <span>Tiền hàng</span
-            ><strong>{{
-              value.subtotal | currency: "VND" : "symbol" : "1.0-0"
-            }}</strong>
+            <span>{{ "orders.itemsSubtotal" | translate }}</span
+            ><strong>{{ value.subtotal | shopMoney }}</strong>
           </div>
           <div class="cost-row">
-            <span>Phí vận chuyển</span
-            ><strong>{{
-              value.shippingFee | currency: "VND" : "symbol" : "1.0-0"
-            }}</strong>
+            <span>{{ "orders.shippingFee2" | translate }}</span
+            ><strong>{{ value.shippingFee | shopMoney }}</strong>
           </div>
           @if (value.voucherCode) {
             <div class="cost-row">
-              <span>Giảm giá {{ value.voucherCode }}</span
-              ><strong
-                >−{{
-                  value.discount | currency: "VND" : "symbol" : "1.0-0"
-                }}</strong
-              >
+              <span>{{
+                "orders.discount2" | translate: { p0: value.voucherCode }
+              }}</span
+              ><strong>−{{ value.discount | shopMoney }}</strong>
             </div>
           }
           <div class="cost-row grand-total">
-            <span>Tổng cộng</span
-            ><strong>{{
-              value.total | currency: "VND" : "symbol" : "1.0-0"
-            }}</strong>
+            <span>{{ "orders.total" | translate }}</span
+            ><strong>{{ value.total | shopMoney }}</strong>
           </div>
           @if (
             !adminMode &&
@@ -237,7 +271,11 @@
               [disabled]="cancelling || paying || checkingPayment"
               (click)="cancel()"
             >
-              {{ cancelling ? "Đang hủy..." : "Hủy đơn hàng" }}
+              {{
+                cancelling
+                  ? ("orders.cancelling" | translate)
+                  : ("orders.cancelOrder" | translate)
+              }}
             </button>
           }
           @if (
@@ -246,20 +284,29 @@
           ) {
             <button mat-flat-button [disabled]="reordering" (click)="reorder()">
               {{
-                reordering ? "Đang kiểm tra..." : "Mua lại theo giá hiện tại"
+                reordering
+                  ? ("orders.checking" | translate)
+                  : ("orders.buyAgainAtCurrentPrices" | translate)
               }}
             </button>
           }
           @if (!adminMode && value.status === "DELIVERED") {
             <p class="receipt-hint">
-              Hãy xác nhận sau khi bạn thực sự nhận được hàng.
+              {{
+                "orders.confirmOnlyAfterYouHaveActuallyReceivedTheGoods"
+                  | translate
+              }}
             </p>
             <button
               mat-flat-button
               [disabled]="confirming"
               (click)="confirmReceipt()"
             >
-              {{ confirming ? "Đang xác nhận..." : "Đã nhận được hàng" }}
+              {{
+                confirming
+                  ? ("orders.confirming" | translate)
+                  : ("orders.iHaveReceivedTheGoods" | translate)
+              }}
             </button>
           }
           @if (actionError) {
@@ -272,7 +319,12 @@
       </aside>
     </div>
   } @else {
-    <mat-progress-bar mode="indeterminate" aria-label="Đang tải đơn hàng" />
-    <p class="state" role="status">Đang tải đơn hàng...</p>
+    <mat-progress-bar
+      mode="indeterminate"
+      [attr.aria-label]="'orders.loadingOrder' | translate"
+    />
+    <p class="state" role="status">
+      {{ "orders.loadingOrder2" | translate }}
+    </p>
   }
 </main>

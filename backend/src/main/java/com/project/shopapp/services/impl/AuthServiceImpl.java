@@ -1,10 +1,10 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.dtos.request.RegisterRequest;
 import com.project.shopapp.dtos.response.UserResponse;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.IdentityProviderException;
-import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.User;
 import com.project.shopapp.repositories.UserRepository;
 import com.project.shopapp.services.AuthService;
@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
@@ -34,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserResponse register(RegisterRequest request) {
         if (users.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new DuplicateResourceException("Phone number is already registered");
+            throw new DuplicateResourceException(MessageKeys.PHONE_ALREADY_REGISTERED);
         }
         String subject = accounts.createDisabled(request);
         try {
@@ -68,14 +67,5 @@ public class AuthServiceImpl implements AuthService {
             log.error("Keycloak registration compensation required subject={}", subject);
             throw new IdentityProviderException();
         }
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public UserResponse currentUser(String subject, boolean admin) {
-        var user =
-                users.findByKeycloakUserId(subject)
-                        .orElseThrow(() -> new ResourceNotFoundException("User profile not found"));
-        return UserResponse.from(user, admin ? "ADMIN" : "USER");
     }
 }

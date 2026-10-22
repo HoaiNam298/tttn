@@ -1,26 +1,32 @@
 <main class="container account-layout">
   <mat-card appearance="outlined" class="panel account-menu">
-    <p class="eyebrow">Tài khoản của tôi</p>
+    <p class="eyebrow">{{ "common.myAccount" | translate }}</p>
     <h2>{{ auth.session()?.user?.fullName }}</h2>
-    <nav aria-label="Thông tin cá nhân">
-      <a mat-button routerLink="profile" routerLinkActive="active"
-        >Thông tin cá nhân</a
-      >
-      <a mat-button routerLink="addresses" routerLinkActive="active"
-        >Sổ địa chỉ</a
-      >
-      <a mat-button routerLink="/orders">Đơn mua</a>
-      <a mat-button routerLink="favorites" routerLinkActive="active"
-        >Sản phẩm yêu thích</a
-      >
-      <a mat-button routerLink="notifications" routerLinkActive="active"
-        >Thông báo</a
-      >
+    <nav [attr.aria-label]="'account.personalInformation' | translate">
+      <a mat-button routerLink="profile" routerLinkActive="active">{{
+        "account.personalInformation" | translate
+      }}</a>
+      <a mat-button routerLink="addresses" routerLinkActive="active">{{
+        "common.addressBook" | translate
+      }}</a>
+      <a mat-button routerLink="/orders">{{ "common.myOrders" | translate }}</a>
+      <a mat-button routerLink="favorites" routerLinkActive="active">{{
+        "account.favoriteProducts" | translate
+      }}</a>
+      <a mat-button routerLink="notifications" routerLinkActive="active">{{
+        "account.notifications" | translate
+      }}</a>
       @if (auth.isAdmin()) {
-        <a mat-button routerLink="/admin">Quản trị cửa hàng</a>
+        <a mat-button routerLink="/admin">{{
+          "account.storeAdministration" | translate
+        }}</a>
       }
       <button mat-stroked-button [disabled]="loggingOut" (click)="logout()">
-        {{ loggingOut ? "Đang đăng xuất..." : "Đăng xuất" }}
+        {{
+          loggingOut
+            ? ("account.loggingOut" | translate)
+            : ("account.logOut" | translate)
+        }}
       </button>
     </nav>
   </mat-card>

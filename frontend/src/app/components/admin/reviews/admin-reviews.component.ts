@@ -1,3 +1,6 @@
+import { ShopDatePipe } from '../../shared/shop-date.pipe';
+import { ErrorMessageService } from '../../../services/error-message.service';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -37,6 +40,8 @@ import { ProductReview } from '../../../models/product.model';
   ],
   styleUrl: './admin-reviews.component.scss',
   imports: [
+    ShopDatePipe,
+    TranslatePipe,
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
@@ -52,6 +57,7 @@ import { ProductReview } from '../../../models/product.model';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class AdminReviewsComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly catalog = inject(CatalogService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -123,8 +129,11 @@ export class AdminReviewsComponent implements OnInit {
           this.totalElements = result.totalElements;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Không tải được đánh giá.';
+        error: (error) => {
+          this.error = this.errorMessages.message(
+            error,
+            'admin.cannotLoadReviews',
+          );
           this.loading = false;
         },
       });
@@ -164,10 +173,12 @@ export class AdminReviewsComponent implements OnInit {
           this.close();
           this.load(this.page);
         },
-        error: () => {
+        error: (error) => {
           this.saving = false;
-          this.replyError =
-            'Không lưu được phản hồi. Nếu đánh giá đã thay đổi, đóng popup và tải lại danh sách.';
+          this.replyError = this.errorMessages.message(
+            error,
+            'admin.cannotSaveReplyIfTheReviewHasChangedClose',
+          );
         },
       });
   }

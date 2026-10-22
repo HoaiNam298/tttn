@@ -1,5 +1,5 @@
 <ng-template #dialog>
-  <h2 mat-dialog-title>Ảnh, phân loại và tồn kho</h2>
+  <h2 mat-dialog-title>{{ "admin.imagesVariantsAndInventory" | translate }}</h2>
   <form [formGroup]="form" (ngSubmit)="save()">
     <mat-dialog-content>
       @if (error) {
@@ -8,18 +8,32 @@
       @if (loading || uploading) {
         <mat-progress-bar
           mode="indeterminate"
-          [attr.aria-label]="loading ? 'Đang tải sản phẩm' : 'Đang upload ảnh'"
+          [attr.aria-label]="
+            loading
+              ? ('catalog.loadingProducts2' | translate)
+              : ('admin.uploadingImage' | translate)
+          "
         />
         <p role="status">
-          {{ loading ? "Đang tải sản phẩm..." : "Đang upload ảnh..." }}
+          {{
+            loading
+              ? ("common.loadingProducts" | translate)
+              : ("admin.uploadingImage2" | translate)
+          }}
         </p>
       }
       @if (product) {
         <h3>{{ product.name }}</h3>
-        <section class="gallery-section" aria-label="Ảnh sản phẩm">
+        <section
+          class="gallery-section"
+          [attr.aria-label]="'admin.productImages' | translate"
+        >
           <div class="section-heading">
             <h3>
-              Gallery <small>{{ images.length }}/10 ảnh</small>
+              {{ "admin.gallery" | translate }}
+              <small>{{
+                "admin.imageCount" | translate: { p0: images.length }
+              }}</small>
             </h3>
             <button
               mat-stroked-button
@@ -27,7 +41,7 @@
               [disabled]="busy || images.length >= 10"
               (click)="galleryFile.click()"
             >
-              Thêm ảnh
+              {{ "admin.addImage" | translate }}
             </button>
             <input
               #galleryFile
@@ -39,7 +53,7 @@
             />
           </div>
           <p class="helper-text">
-            Ảnh đầu tiên là ảnh đại diện. JPEG/PNG, tối đa 5 MB và 16 megapixel.
+            {{ "admin.theFirstImageIsTheCoverImageJpegPng" | translate }}
           </p>
           <div class="inventory-images">
             @for (image of images; track $index; let i = $index) {
@@ -48,11 +62,16 @@
                   [src]="image"
                   [alt]="
                     i === 0
-                      ? 'Ảnh đại diện sản phẩm'
-                      : 'Ảnh sản phẩm ' + (i + 1)
+                      ? ('admin.productCoverImage' | translate)
+                      : ('admin.productImageNumber'
+                        | translate: { number: i + 1 })
                   "
                 />
-                <small>{{ i === 0 ? "Ảnh đại diện" : "Ảnh " + (i + 1) }}</small>
+                <small>{{
+                  i === 0
+                    ? ("admin.coverImage" | translate)
+                    : ("admin.imageNumber" | translate: { number: i + 1 })
+                }}</small>
                 <div class="image-actions">
                   <button
                     mat-button
@@ -60,7 +79,7 @@
                     [disabled]="busy || i === 0"
                     (click)="makePrimary(i)"
                   >
-                    Đại diện
+                    {{ "admin.cover" | translate }}
                   </button>
                   <button
                     mat-button
@@ -69,20 +88,22 @@
                     [disabled]="busy"
                     (click)="removeImage(i)"
                   >
-                    Bỏ ảnh
+                    {{ "catalog.removePhoto" | translate }}
                   </button>
                 </div>
               </div>
             } @empty {
               <p class="empty-gallery">
-                Chưa có ảnh. Thêm ảnh để hiển thị sản phẩm trong cửa hàng.
+                {{
+                  "admin.noImagesYetAddImagesToDisplayThisProduct" | translate
+                }}
               </p>
             }
           </div>
         </section>
         @if (!variants.length) {
           <mat-form-field appearance="outline"
-            ><mat-label>Tồn kho sản phẩm</mat-label
+            ><mat-label>{{ "admin.productStock" | translate }}</mat-label
             ><input
               matInput
               type="number"
@@ -90,15 +111,16 @@
               min="0"
               max="1000000"
               step="1"
-            /><mat-error
-              >Tồn kho sản phẩm không hợp lệ.</mat-error
-            ></mat-form-field
+            /><mat-error>{{
+              "admin.invalidProductStock" | translate
+            }}</mat-error></mat-form-field
           >
         }
         <section formArrayName="variants">
           <div class="section-heading">
             <h3>
-              Phân loại SKU <small>{{ variants.length }}/50</small>
+              {{ "admin.skuVariants" | translate }}
+              <small>{{ variants.length }}/50</small>
             </h3>
             <button
               mat-stroked-button
@@ -106,12 +128,11 @@
               [disabled]="busy || variants.length >= 50"
               (click)="addVariant()"
             >
-              Thêm SKU
+              {{ "admin.addSku" | translate }}
             </button>
           </div>
           <p class="helper-text">
-            SKU đã lưu không bị xóa. Tắt “Đang bán” để ngừng bán và giữ lịch sử
-            đơn hàng.
+            {{ "admin.savedSkusCannotBeDeletedTurnOffOnSale" | translate }}
           </p>
           <mat-accordion multi>
             @for (variant of variants.controls; track variant; let i = $index) {
@@ -121,82 +142,88 @@
               >
                 <mat-expansion-panel-header
                   ><mat-panel-title>{{
-                    variant.controls.name.value || "SKU mới"
+                    variant.controls.name.value || ("admin.newSku" | translate)
                   }}</mat-panel-title
                   ><mat-panel-description
                     >{{
-                      variant.controls.active.value ? "Đang bán" : "Ngừng bán"
+                      variant.controls.active.value
+                        ? ("admin.onSale" | translate)
+                        : ("admin.discontinued" | translate)
                     }}
-                    · Kho
+                    · {{ "admin.stock" | translate }}
                     {{ variant.controls.stock.value }}</mat-panel-description
                   ></mat-expansion-panel-header
                 >
                 <div class="variant-form-grid">
                   <mat-form-field appearance="outline"
-                    ><mat-label>Mã SKU</mat-label
+                    ><mat-label>{{ "admin.skuCode" | translate }}</mat-label
                     ><input
                       matInput
                       type="text"
                       formControlName="sku"
                       maxlength="64"
-                    /><mat-error
-                      >Mã SKU không hợp lệ.</mat-error
-                    ></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidSkuCode" | translate
+                    }}</mat-error></mat-form-field
                   >
                   <mat-form-field appearance="outline"
-                    ><mat-label>Tên phân loại</mat-label
+                    ><mat-label>{{ "admin.variantName" | translate }}</mat-label
                     ><input
                       matInput
                       type="text"
                       formControlName="name"
                       maxlength="150"
-                    /><mat-error
-                      >Tên phân loại không hợp lệ.</mat-error
-                    ></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidVariantName" | translate
+                    }}</mat-error></mat-form-field
                   >
                   <mat-form-field appearance="outline"
-                    ><mat-label>Màu</mat-label
+                    ><mat-label>{{ "admin.color" | translate }}</mat-label
                     ><input
                       matInput
                       type="text"
                       formControlName="color"
                       maxlength="60"
-                    /><mat-error>Màu không hợp lệ.</mat-error></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidColor" | translate
+                    }}</mat-error></mat-form-field
                   >
                   <mat-form-field appearance="outline"
-                    ><mat-label>Size</mat-label
+                    ><mat-label>{{ "admin.size" | translate }}</mat-label
                     ><input
                       matInput
                       type="text"
                       formControlName="size"
                       maxlength="60"
-                    /><mat-error>Size không hợp lệ.</mat-error></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidSize" | translate
+                    }}</mat-error></mat-form-field
                   >
                   <mat-form-field appearance="outline"
-                    ><mat-label>Dung lượng</mat-label
+                    ><mat-label>{{ "admin.capacity" | translate }}</mat-label
                     ><input
                       matInput
                       type="text"
                       formControlName="capacity"
                       maxlength="60"
-                    /><mat-error
-                      >Dung lượng không hợp lệ.</mat-error
-                    ></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidCapacity" | translate
+                    }}</mat-error></mat-form-field
                   >
                   <mat-form-field appearance="outline"
-                    ><mat-label>Giá (đ)</mat-label
+                    ><mat-label>{{ "admin.priceVnd2" | translate }}</mat-label
                     ><input
                       matInput
                       type="number"
                       formControlName="price"
                       min="0"
                       step="0.01"
-                    /><mat-error
-                      >Giá (đ) không hợp lệ.</mat-error
-                    ></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidPriceVnd" | translate
+                    }}</mat-error></mat-form-field
                   >
                   <mat-form-field appearance="outline"
-                    ><mat-label>Tồn kho</mat-label
+                    ><mat-label>{{ "admin.stock" | translate }}</mat-label
                     ><input
                       matInput
                       type="number"
@@ -204,20 +231,20 @@
                       min="0"
                       max="1000000"
                       step="1"
-                    /><mat-error
-                      >Tồn kho không hợp lệ.</mat-error
-                    ></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidStock" | translate
+                    }}</mat-error></mat-form-field
                   >
                   <mat-form-field appearance="outline"
-                    ><mat-label>Ảnh SKU (URL)</mat-label
+                    ><mat-label>{{ "admin.skuImageUrl" | translate }}</mat-label
                     ><input
                       matInput
                       type="text"
                       formControlName="imageUrl"
                       maxlength="500"
-                    /><mat-error
-                      >Ảnh SKU (URL) không hợp lệ.</mat-error
-                    ></mat-form-field
+                    /><mat-error>{{
+                      "admin.invalidSkuImageUrl" | translate
+                    }}</mat-error></mat-form-field
                   >
                 </div>
                 <div class="variant-actions">
@@ -225,7 +252,7 @@
                     <img
                       class="variant-image"
                       [src]="variant.controls.imageUrl.value"
-                      alt="Ảnh SKU"
+                      [attr.alt]="'admin.skuImage' | translate"
                     />
                   }
                   <button
@@ -234,7 +261,7 @@
                     [disabled]="busy"
                     (click)="skuFile.click()"
                   >
-                    Upload ảnh SKU
+                    {{ "admin.uploadSkuImage" | translate }}
                   </button>
                   <input
                     #skuFile
@@ -244,7 +271,9 @@
                     [disabled]="busy"
                     (change)="upload($event, i)"
                   />
-                  <mat-checkbox formControlName="active">Đang bán</mat-checkbox>
+                  <mat-checkbox formControlName="active">{{
+                    "admin.onSale" | translate
+                  }}</mat-checkbox>
                   <button
                     mat-button
                     class="delete-action"
@@ -252,7 +281,11 @@
                     [disabled]="busy"
                     (click)="removeVariant(i)"
                   >
-                    {{ variant.controls.id.value ? "Ngừng bán" : "Bỏ SKU" }}
+                    {{
+                      variant.controls.id.value
+                        ? ("admin.discontinued" | translate)
+                        : ("admin.removeSku" | translate)
+                    }}
                   </button>
                 </div>
               </mat-expansion-panel>
@@ -263,14 +296,18 @@
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" [disabled]="busy" (click)="close()">
-        Hủy
+        {{ "account.cancel" | translate }}
       </button>
       <button
         mat-flat-button
         type="submit"
         [disabled]="busy || !product || form.invalid"
       >
-        {{ saving ? "Đang lưu..." : "Lưu ảnh và tồn kho" }}
+        {{
+          saving
+            ? ("account.saving" | translate)
+            : ("admin.saveImagesAndInventory" | translate)
+        }}
       </button>
     </mat-dialog-actions>
   </form>

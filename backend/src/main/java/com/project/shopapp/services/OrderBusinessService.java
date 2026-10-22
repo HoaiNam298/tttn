@@ -22,8 +22,6 @@ public interface OrderBusinessService {
             String note,
             BigDecimal shippingFee);
 
-    void addItem(Order order, Product product, int quantity);
-
     void addItem(Order order, Product product, ProductVariant variant, int quantity);
 
     void selectShipping(Order order, ShippingMethod method);
@@ -33,8 +31,6 @@ public interface OrderBusinessService {
     void selectOnlinePayment(Order order, Instant expiresAt);
 
     void recordPayment(Order order, PaymentStatus result);
-
-    OrderStatusHistory updateStatus(Order order, OrderStatus nextStatus);
 
     OrderStatusHistory updateStatus(Order order, OrderStatus nextStatus, String actor);
 }

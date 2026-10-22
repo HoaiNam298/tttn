@@ -2,48 +2,51 @@
   <mat-card appearance="outlined" class="auth-card">
     <div class="auth-heading">
       <a class="auth-brand" routerLink="/">ShopApp</a>
-      <h1>Tạo tài khoản</h1>
-      <p>Khám phá sản phẩm và theo dõi đơn hàng của bạn.</p>
+      <h1>{{ "auth.createAccount" | translate }}</h1>
+      <p>{{ "auth.exploreProductsAndTrackYourOrders" | translate }}</p>
     </div>
     @if (loading) {
-      <mat-progress-bar mode="indeterminate" aria-label="Đang đăng ký" />
+      <mat-progress-bar
+        mode="indeterminate"
+        [attr.aria-label]="'auth.registering' | translate"
+      />
     }
     <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
       <mat-form-field appearance="outline"
-        ><mat-label>Họ tên</mat-label
+        ><mat-label>{{ "auth.fullName2" | translate }}</mat-label
         ><input
           matInput
           type="text"
           formControlName="fullName"
           autocomplete="name"
-        /><mat-error
-          >Họ tên bắt buộc, tối đa 100 ký tự.</mat-error
-        ></mat-form-field
+        /><mat-error>{{
+          "auth.aNameIsRequiredUpTo100Characters" | translate
+        }}</mat-error></mat-form-field
       >
       <mat-form-field appearance="outline"
-        ><mat-label>Số điện thoại</mat-label
+        ><mat-label>{{ "common.phoneNumber" | translate }}</mat-label
         ><input
           matInput
           type="tel"
           formControlName="phoneNumber"
           autocomplete="tel"
-        /><mat-error
-          >Số điện thoại từ 9 đến 15 chữ số.</mat-error
-        ></mat-form-field
+        /><mat-error>{{
+          "auth.phoneNumberMustContain9To15Digits" | translate
+        }}</mat-error></mat-form-field
       >
       <mat-form-field appearance="outline"
-        ><mat-label>Địa chỉ</mat-label
+        ><mat-label>{{ "common.address" | translate }}</mat-label
         ><input
           matInput
           type="text"
           formControlName="address"
           autocomplete="street-address"
-        /><mat-error
-          >Địa chỉ bắt buộc, tối đa 255 ký tự.</mat-error
-        ></mat-form-field
+        /><mat-error>{{
+          "auth.anAddressIsRequiredUpTo255Characters" | translate
+        }}</mat-error></mat-form-field
       >
       <mat-form-field appearance="outline">
-        <mat-label>Mật khẩu</mat-label
+        <mat-label>{{ "auth.password" | translate }}</mat-label
         ><input
           matInput
           [type]="showPassword ? 'text' : 'password'"
@@ -56,14 +59,22 @@
           type="button"
           [disabled]="loading"
           (click)="showPassword = !showPassword"
-          [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+          [attr.aria-label]="
+            showPassword
+              ? ('auth.hidePassword' | translate)
+              : ('auth.showPassword' | translate)
+          "
           [attr.aria-pressed]="showPassword"
         >
-          {{ showPassword ? "Ẩn" : "Hiện" }}
+          {{
+            showPassword ? ("auth.hide" | translate) : ("auth.show" | translate)
+          }}
         </button>
-        <mat-error>Mật khẩu từ 8 đến 72 ký tự.</mat-error></mat-form-field
+        <mat-error>{{
+          "auth.passwordMustContain8To72Characters" | translate
+        }}</mat-error></mat-form-field
       ><mat-form-field appearance="outline">
-        <mat-label>Nhập lại mật khẩu</mat-label
+        <mat-label>{{ "auth.confirmPassword" | translate }}</mat-label
         ><input
           matInput
           [type]="showPassword ? 'text' : 'password'"
@@ -76,12 +87,20 @@
           type="button"
           [disabled]="loading"
           (click)="showPassword = !showPassword"
-          [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+          [attr.aria-label]="
+            showPassword
+              ? ('auth.hidePassword' | translate)
+              : ('auth.showPassword' | translate)
+          "
           [attr.aria-pressed]="showPassword"
         >
-          {{ showPassword ? "Ẩn" : "Hiện" }}
+          {{
+            showPassword ? ("auth.hide" | translate) : ("auth.show" | translate)
+          }}
         </button>
-        <mat-error>Vui lòng nhập lại mật khẩu.</mat-error></mat-form-field
+        <mat-error>{{
+          "auth.pleaseConfirmYourPassword" | translate
+        }}</mat-error></mat-form-field
       >
       @if (error) {
         <p class="auth-error" role="alert">{{ error }}</p>
@@ -92,13 +111,20 @@
         class="submit-button"
         [disabled]="loading"
       >
-        {{ loading ? "Đang đăng ký..." : "Tạo tài khoản" }}
+        {{
+          loading
+            ? ("auth.registering2" | translate)
+            : ("auth.createAccount" | translate)
+        }}
       </button>
     </form>
     <p class="auth-switch">
-      Đã có tài khoản?
-      <a mat-button routerLink="/login" [queryParams]="{ returnUrl: returnUrl }"
-        >Đăng nhập</a
+      {{ "auth.alreadyHaveAnAccount" | translate }}
+      <a
+        mat-button
+        routerLink="/login"
+        [queryParams]="{ returnUrl: returnUrl }"
+        >{{ "common.logIn" | translate }}</a
       >
     </p>
   </mat-card>

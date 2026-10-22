@@ -1,3 +1,7 @@
+import { ShopDatePipe } from '../shared/shop-date.pipe';
+import { ShopMoneyPipe } from '../shared/shop-money.pipe';
+import { ErrorMessageService } from '../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
@@ -28,6 +32,9 @@ import { EMPTY, Subscription, catchError, exhaustMap, take, timer } from 'rxjs';
 @Component({
   selector: 'app-order-detail',
   imports: [
+    ShopDatePipe,
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     RouterLink,
     MatButtonModule,
@@ -40,6 +47,8 @@ import { EMPTY, Subscription, catchError, exhaustMap, take, timer } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class OrderDetailComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly confirmations = inject(MatDialog);
   private confirmationOpen = false;
 
@@ -71,15 +80,31 @@ export class OrderDetailComponent implements OnInit {
             );
           }
         },
-        error: () => {
-          this.reviewStatusError =
-            'Chưa tải được trạng thái đánh giá. Quyền đánh giá sẽ được kiểm tra tại trang sản phẩm.';
+        error: (response) => {
+          this.reviewStatusError = this.errorMessages.message(
+            response,
+            'orders.reviewStatusCouldNotBeLoadedEligibilityWillBe',
+          );
         },
       });
   }
 
-  readonly statusLabels = ORDER_STATUS_LABELS;
-  readonly paymentLabels = PAYMENT_STATUS_LABELS;
+  get statusLabels(): typeof ORDER_STATUS_LABELS {
+    return Object.fromEntries(
+      Object.keys(ORDER_STATUS_LABELS).map((status) => [
+        status,
+        this.translate.instant('orderStatus.' + status),
+      ]),
+    ) as typeof ORDER_STATUS_LABELS;
+  }
+  get paymentLabels(): typeof PAYMENT_STATUS_LABELS {
+    return Object.fromEntries(
+      Object.keys(PAYMENT_STATUS_LABELS).map((status) => [
+        status,
+        this.translate.instant('paymentStatus.' + status),
+      ]),
+    ) as typeof PAYMENT_STATUS_LABELS;
+  }
   paying = false;
   checkingPayment = false;
   paymentError = '';
@@ -118,14 +143,17 @@ export class OrderDetailComponent implements OnInit {
             this.orders.openSandboxPayment(link.paymentUrl);
           } catch {
             this.paying = false;
-            this.paymentError = 'Không thể mở trang VNPAY Sandbox.';
+            this.paymentError = this.translate.instant(
+              'orders.cannotOpenVnpaySandbox',
+            );
           }
         },
         error: (response) => {
           this.paying = false;
-          this.paymentError =
-            response.error?.message ??
-            'Chưa tạo được link thanh toán. Bạn có thể thử lại với đơn này.';
+          this.paymentError = this.errorMessages.message(
+            response,
+            'orders.cannotCreateAPaymentLinkYouCanRetryFor',
+          );
         },
       });
   }
@@ -149,8 +177,9 @@ export class OrderDetailComponent implements OnInit {
         exhaustMap(() =>
           this.orders.findById(id).pipe(
             catchError(() => {
-              this.paymentError =
-                'Chưa kiểm tra được thanh toán. Vui lòng thử lại sau.';
+              this.paymentError = this.translate.instant(
+                'orders.cannotCheckPaymentPleaseTryAgainLater',
+              );
               return EMPTY;
             }),
           ),
@@ -168,8 +197,9 @@ export class OrderDetailComponent implements OnInit {
         complete: () => {
           this.checkingPayment = false;
           if (this.order?.paymentStatus === 'PENDING') {
-            this.paymentError =
-              'Chưa nhận được xác nhận IPN. Không thanh toán lại nếu bạn đã trả tiền; hãy kiểm tra lại hoặc liên hệ quản trị.';
+            this.paymentError = this.translate.instant(
+              'orders.ipnConfirmationHasNotArrivedIfYouAlreadyPaid',
+            );
           }
         },
       });
@@ -211,9 +241,10 @@ export class OrderDetailComponent implements OnInit {
           this.cancelling = false;
         },
         error: (response) => {
-          this.actionError =
-            response.error?.message ??
-            'Không hủy được đơn. Vui lòng tải lại trạng thái.';
+          this.actionError = this.errorMessages.message(
+            response,
+            'orders.cannotCancelTheOrderPleaseReloadItsStatus',
+          );
           this.cancelling = false;
         },
       });
@@ -241,7 +272,9 @@ export class OrderDetailComponent implements OnInit {
         error: (response) => {
           this.actionError =
             response.message ??
-            'Sản phẩm hoặc phân loại không còn khả dụng. Hãy chọn lại từ cửa hàng.';
+            this.translate.instant(
+              'orders.thisProductOrVariantIsNoLongerAvailablePlease',
+            );
           this.reordering = false;
         },
       });
@@ -272,9 +305,11 @@ export class OrderDetailComponent implements OnInit {
           this.confirming = false;
           this.loadReviewStatuses();
         },
-        error: () => {
-          this.confirmationError =
-            'Không thể xác nhận nhận hàng. Vui lòng tải lại đơn và thử lại.';
+        error: (response) => {
+          this.confirmationError = this.errorMessages.message(
+            response,
+            'orders.cannotConfirmReceiptReloadTheOrderAndTryAgain',
+          );
           this.confirming = false;
         },
       });
@@ -283,7 +318,7 @@ export class OrderDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isInteger(id) || id <= 0) {
-      this.error = 'Mã đơn hàng không hợp lệ.';
+      this.error = this.translate.instant('orders.invalidOrderId');
       return;
     }
     const request = this.adminMode
@@ -305,7 +340,8 @@ export class OrderDetailComponent implements OnInit {
           }
         }
       },
-      error: () => (this.error = 'Không tìm thấy đơn hàng.'),
+      error: () =>
+        (this.error = this.translate.instant('orders.orderNotFound')),
     });
   }
 
@@ -323,7 +359,9 @@ export class OrderDetailComponent implements OnInit {
     this.confirmationOpen = true;
     this.confirmations
       .open(ConfirmationDialogComponent, {
-        data: 'Hủy đơn hàng này? Tồn kho và lượt voucher sẽ được hoàn.',
+        data: this.translate.instant(
+          'orders.cancelThisOrderStockAndVoucherUsageWillBe',
+        ),
         width: '440px',
         maxWidth: 'calc(100vw - 32px)',
       })

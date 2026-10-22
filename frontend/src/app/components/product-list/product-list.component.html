@@ -1,13 +1,14 @@
 <main class="container catalog-page">
-  <nav class="breadcrumb" aria-label="Đường dẫn">
-    <a routerLink="/">Trang chủ</a><span>/</span><span>Sản phẩm</span>
+  <nav class="breadcrumb" [attr.aria-label]="'common.breadcrumb' | translate">
+    <a routerLink="/">{{ "catalog.home" | translate }}</a
+    ><span>/</span><span>{{ "common.products" | translate }}</span>
   </nav>
   <div class="page-heading">
     <div>
-      <p class="eyebrow">Khám phá cửa hàng</p>
-      <h1>Sản phẩm dành cho bạn</h1>
+      <p class="eyebrow">{{ "catalog.exploreTheStore2" | translate }}</p>
+      <h1>{{ "catalog.productsForYou" | translate }}</h1>
       <p class="page-description">
-        Tìm sản phẩm phù hợp theo danh mục và ngân sách của bạn.
+        {{ "catalog.findProductsThatFitYourCategoryAndBudget" | translate }}
       </p>
     </div>
   </div>
@@ -15,61 +16,77 @@
     <mat-card-content>
       <form class="catalog-filters" [formGroup]="form" (ngSubmit)="load()">
         <mat-form-field appearance="outline">
-          <mat-label>Tìm kiếm</mat-label>
+          <mat-label>{{ "catalog.search" | translate }}</mat-label>
           <input
             matInput
             formControlName="keyword"
-            placeholder="Tên sản phẩm"
+            [placeholder]="'catalog.productName' | translate"
           />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Danh mục</mat-label>
+          <mat-label>{{ "catalog.category" | translate }}</mat-label>
           <mat-select formControlName="categoryId">
-            <mat-option [value]="null">Tất cả danh mục</mat-option>
+            <mat-option [value]="null">{{
+              "catalog.allCategories" | translate
+            }}</mat-option>
             @for (category of categories; track category.id) {
               <mat-option [value]="category.id">{{ category.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Sắp xếp</mat-label>
+          <mat-label>{{ "catalog.sortBy" | translate }}</mat-label>
           <mat-select formControlName="sort">
-            <mat-option value="newest">Mới nhất</mat-option>
-            <mat-option value="priceAsc">Giá: thấp đến cao</mat-option>
-            <mat-option value="priceDesc">Giá: cao đến thấp</mat-option>
+            <mat-option value="newest">{{
+              "catalog.newest" | translate
+            }}</mat-option>
+            <mat-option value="priceAsc">{{
+              "catalog.priceLowToHigh" | translate
+            }}</mat-option>
+            <mat-option value="priceDesc">{{
+              "catalog.priceHighToLow" | translate
+            }}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Giá từ</mat-label>
+          <mat-label>{{ "catalog.minimumPrice" | translate }}</mat-label>
           <input
             matInput
             type="number"
             min="0"
             formControlName="minPrice"
-            placeholder="Không giới hạn"
+            [placeholder]="'catalog.noLimit' | translate"
           />
-          <span matTextSuffix>đ</span>
+          <span matTextSuffix>{{ "catalog.label" | translate }}</span>
           @if (form.controls.minPrice.hasError("min")) {
-            <mat-error>Giá phải lớn hơn hoặc bằng 0.</mat-error>
+            <mat-error>{{
+              "catalog.priceMustBeAtLeast0" | translate
+            }}</mat-error>
           }
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Giá đến</mat-label>
+          <mat-label>{{ "catalog.maximumPrice" | translate }}</mat-label>
           <input
             matInput
             type="number"
             min="0"
             formControlName="maxPrice"
-            placeholder="Không giới hạn"
+            [placeholder]="'catalog.noLimit' | translate"
           />
-          <span matTextSuffix>đ</span>
+          <span matTextSuffix>{{ "catalog.label" | translate }}</span>
           @if (form.controls.maxPrice.hasError("min")) {
-            <mat-error>Giá phải lớn hơn hoặc bằng 0.</mat-error>
+            <mat-error>{{
+              "catalog.priceMustBeAtLeast0" | translate
+            }}</mat-error>
           }
         </mat-form-field>
         <div class="filter-actions">
-          <button mat-flat-button type="submit">Áp dụng bộ lọc</button>
-          <button mat-button type="button" (click)="clear()">Đặt lại</button>
+          <button mat-flat-button type="submit">
+            {{ "catalog.applyFilters" | translate }}
+          </button>
+          <button mat-button type="button" (click)="clear()">
+            {{ "catalog.reset" | translate }}
+          </button>
         </div>
       </form>
       @if (filterError) {
@@ -83,24 +100,31 @@
   <section
     class="catalog-results"
     [attr.aria-busy]="loading"
-    aria-label="Kết quả tìm kiếm"
+    [attr.aria-label]="'catalog.searchResults' | translate"
   >
     @if (loading) {
-      <mat-progress-bar mode="indeterminate" aria-label="Đang tải sản phẩm" />
-      <p class="state" aria-live="polite">Đang tải sản phẩm...</p>
+      <mat-progress-bar
+        mode="indeterminate"
+        [attr.aria-label]="'catalog.loadingProducts2' | translate"
+      />
+      <p class="state" aria-live="polite">
+        {{ "common.loadingProducts" | translate }}
+      </p>
     } @else if (error) {
       <mat-card appearance="outlined" class="result-state">
         <mat-card-content>
           <p role="alert">{{ error }}</p>
           <button mat-stroked-button type="button" (click)="retry()">
-            Thử lại
+            {{ "common.retry" | translate }}
           </button>
         </mat-card-content>
       </mat-card>
     } @else {
       <div class="results-heading" aria-live="polite">
-        <h2>Kết quả tìm kiếm</h2>
-        <span>{{ totalElements }} sản phẩm phù hợp</span>
+        <h2>{{ "catalog.searchResults" | translate }}</h2>
+        <span>{{
+          "catalog.matchingProducts" | translate: { p0: totalElements }
+        }}</span>
       </div>
       <div class="product-grid">
         @for (product of products; track product.id) {
@@ -110,10 +134,12 @@
       @if (products.length === 0) {
         <mat-card appearance="outlined" class="result-state">
           <mat-card-content>
-            <h2>Chưa tìm thấy sản phẩm</h2>
-            <p>Thử thay đổi từ khóa hoặc nới rộng khoảng giá.</p>
+            <h2>{{ "catalog.noProductsFound" | translate }}</h2>
+            <p>
+              {{ "catalog.tryADifferentKeywordOrAWiderPriceRange" | translate }}
+            </p>
             <button mat-stroked-button type="button" (click)="clear()">
-              Xóa bộ lọc
+              {{ "catalog.clearFilters" | translate }}
             </button>
           </mat-card-content>
         </mat-card>
@@ -127,7 +153,7 @@
           [hidePageSize]="true"
           [showFirstLastButtons]="true"
           (page)="load($event.pageIndex)"
-          aria-label="Phân trang sản phẩm"
+          [attr.aria-label]="'catalog.productPagination' | translate"
         />
       }
     }

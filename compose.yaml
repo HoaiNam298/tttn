@@ -4,7 +4,7 @@ services:
     container_name: shopapp-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${SHOPAPP_POSTGRES_DB:-shopapp}
+      POSTGRES_DB: ${SHOPAPP_APP_DB:-shopapp_keycloak}
       POSTGRES_USER: ${SHOPAPP_DB_USERNAME:-shopapp}
       POSTGRES_PASSWORD: ${SHOPAPP_DB_PASSWORD}
     ports:
@@ -48,7 +48,7 @@ services:
     container_name: shopapp-backend
     restart: unless-stopped
     environment:
-      SHOPAPP_DB_URL: jdbc:postgresql://postgres:5432/${SHOPAPP_APP_DB:-${SHOPAPP_POSTGRES_DB:-shopapp}}
+      SHOPAPP_DB_URL: jdbc:postgresql://postgres:5432/${SHOPAPP_APP_DB:-shopapp_keycloak}
       SHOPAPP_DB_USERNAME: ${SHOPAPP_DB_USERNAME:-shopapp}
       SHOPAPP_DB_PASSWORD: ${SHOPAPP_DB_PASSWORD}
       SHOPAPP_KEYCLOAK_ISSUER: http://localhost:8081/realms/shopapp

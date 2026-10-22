@@ -10,7 +10,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -43,9 +42,8 @@ public class KeycloakAuthenticationConverter
                                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                                 .toList()
                         : List.<SimpleGrantedAuthority>of();
-        // Compatibility boundary for domain services that still accept the local
-        // unique phone number. It is resolved from verified sub, never token phone/username.
-        // The JWT principal retains sub; no fallback to a matching local phone exists.
-        return new JwtAuthenticationToken(jwt, authorities, user.getPhoneNumber());
+        // Resolve the business identity only from verified sub. Keep the JWT principal
+        // and the local phone-based name used by domain services; never trust token phone.
+        return new ShopAppAuthenticationToken(jwt, authorities, user);
     }
 }

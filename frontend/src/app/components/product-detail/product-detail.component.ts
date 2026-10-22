@@ -1,3 +1,8 @@
+import { ShopDatePipe } from '../shared/shop-date.pipe';
+import { ShopNumberPipe } from '../shared/shop-number.pipe';
+import { ShopMoneyPipe } from '../shared/shop-money.pipe';
+import { ErrorMessageService } from '../../services/error-message.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import {
   MatDialog,
   MatDialogRef,
@@ -43,6 +48,10 @@ import { FavoriteService } from '../../services/favorite.service';
   ],
   selector: 'app-product-detail',
   imports: [
+    ShopDatePipe,
+    ShopNumberPipe,
+    ShopMoneyPipe,
+    TranslatePipe,
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
@@ -60,6 +69,8 @@ import { FavoriteService } from '../../services/favorite.service';
   styleUrl: './product-detail.component.scss',
 })
 export class ProductDetailComponent implements OnInit {
+  private readonly errorMessages = inject(ErrorMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly auth = inject(AuthService);
   private readonly favorites = inject(FavoriteService);
   favorite = false;
@@ -141,7 +152,7 @@ export class ProductDetailComponent implements OnInit {
       this.imageDialog = this.dialog.open(this.imagePreview, {
         width: '900px',
         maxWidth: 'calc(100vw - 32px)',
-        ariaLabel: 'Ảnh sản phẩm phóng to',
+        ariaLabel: this.translate.instant('catalog.enlargedProductImage'),
       });
       this.imageDialog
         .afterClosed()
@@ -247,7 +258,7 @@ export class ProductDetailComponent implements OnInit {
           this.loadReviews(id);
           return this.catalog.product(id).pipe(
             catchError(() => {
-              this.error = 'Không tìm thấy sản phẩm.';
+              this.error = this.translate.instant('catalog.productNotFound');
               return EMPTY;
             }),
           );
@@ -284,10 +295,13 @@ export class ProductDetailComponent implements OnInit {
             this.favoriteBusy = false;
           }
         },
-        error: () => {
+        error: (response) => {
           if (this.currentProductId === value.id) {
             this.favoriteBusy = false;
-            this.favoriteError = 'Không tải được trạng thái yêu thích.';
+            this.favoriteError = this.errorMessages.message(
+              response,
+              'catalog.cannotLoadFavoriteStatus',
+            );
           }
         },
       });
@@ -305,9 +319,12 @@ export class ProductDetailComponent implements OnInit {
               .slice(0, 6);
           }
         },
-        error: () => {
+        error: (response) => {
           if (this.currentProductId === value.id) {
-            this.relatedError = 'Chưa tải được sản phẩm liên quan.';
+            this.relatedError = this.errorMessages.message(
+              response,
+              'catalog.relatedProductsCouldNotBeLoaded',
+            );
           }
         },
       });
@@ -345,11 +362,13 @@ export class ProductDetailComponent implements OnInit {
             this.favoriteBusy = false;
           }
         },
-        error: () => {
+        error: (response) => {
           if (this.currentProductId === productId) {
             this.favoriteBusy = false;
-            this.favoriteError =
-              'Không cập nhật được yêu thích. Vui lòng thử lại.';
+            this.favoriteError = this.errorMessages.message(
+              response,
+              'catalog.cannotUpdateFavoritesPleaseTryAgain',
+            );
           }
         },
       });
@@ -389,12 +408,15 @@ export class ProductDetailComponent implements OnInit {
           this.reviewTotalPages = overview.reviews.totalPages;
           this.reviewTotalElements = overview.reviews.totalElements;
         },
-        error: () => {
+        error: (response) => {
           if (
             this.currentProductId === productId &&
             request === this.reviewRequest
           ) {
-            this.reviewLoadError = 'Chưa tải được đánh giá. Vui lòng thử lại.';
+            this.reviewLoadError = this.errorMessages.message(
+              response,
+              'catalog.cannotLoadReviewsPleaseTryAgain',
+            );
           }
         },
       });
@@ -434,16 +456,20 @@ export class ProductDetailComponent implements OnInit {
           this.canReview = false;
           this.alreadyReviewed = true;
           this.reviewFiles = [];
-          this.reviewMessage = 'Cảm ơn bạn đã đánh giá sản phẩm.';
+          this.reviewMessage = this.translate.instant(
+            'catalog.thankYouForReviewingThisProduct',
+          );
           this.reviewError = '';
           this.orderId = undefined;
           this.loadReviews(this.product!.id);
         },
-        error: () => {
+        error: (response) => {
           if (this.currentProductId === productId) {
             this.reviewSaving = false;
-            this.reviewError =
-              'Không thể gửi đánh giá. Vui lòng kiểm tra ảnh hoặc tải lại trạng thái đánh giá.';
+            this.reviewError = this.errorMessages.message(
+              response,
+              'catalog.cannotSubmitTheReviewCheckYourPhotosOrReload',
+            );
             this.checkEligibility();
           }
         },
@@ -469,7 +495,9 @@ export class ProductDetailComponent implements OnInit {
           file.size > 5 * 1024 * 1024,
       )
     ) {
-      this.reviewError = 'Chọn tối đa 5 ảnh JPEG/PNG, mỗi ảnh không quá 5 MB.';
+      this.reviewError = this.translate.instant(
+        'catalog.chooseUpTo5JpegPngImagesEachAt',
+      );
       return;
     }
     this.reviewError = '';
@@ -502,11 +530,13 @@ export class ProductDetailComponent implements OnInit {
             this.eligibilityLoading = false;
           }
         },
-        error: () => {
+        error: (response) => {
           if (request === this.eligibilityRequest) {
             this.eligibilityLoading = false;
-            this.reviewError =
-              'Chỉ có thể đánh giá đơn của bạn sau khi xác nhận đã nhận hàng.';
+            this.reviewError = this.errorMessages.message(
+              response,
+              'catalog.youCanReviewYourOwnOrderAfterConfirmingReceipt',
+            );
           }
         },
       });

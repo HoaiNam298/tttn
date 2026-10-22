@@ -1,3 +1,5 @@
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { LanguageSelectorComponent } from '../shared/language-selector.component';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -27,6 +29,8 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-admin',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
+    TranslatePipe,
+    LanguageSelectorComponent,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -40,6 +44,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './admin.component.scss',
 })
 export class AdminComponent {
+  private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -47,12 +52,12 @@ export class AdminComponent {
   @ViewChild('drawer') private drawer?: MatSidenav;
   readonly compact = signal(this.breakpoints.isMatched('(max-width: 900px)'));
   readonly navigation = [
-    { path: '/admin/dashboard', label: 'Tổng quan' },
-    { path: '/admin/products', label: 'Sản phẩm' },
-    { path: '/admin/categories', label: 'Danh mục' },
-    { path: '/admin/orders', label: 'Đơn hàng' },
-    { path: '/admin/vouchers', label: 'Voucher' },
-    { path: '/admin/reviews', label: 'Đánh giá' },
+    { path: '/admin/dashboard', label: 'admin.overview' },
+    { path: '/admin/products', label: 'common.products' },
+    { path: '/admin/categories', label: 'admin.navigationCategories' },
+    { path: '/admin/orders', label: 'footer.orders' },
+    { path: '/admin/vouchers', label: 'admin.vouchers' },
+    { path: '/admin/reviews', label: 'admin.navigationReviews' },
   ] as const;
   loggingOut = false;
 
@@ -74,7 +79,10 @@ export class AdminComponent {
   }
 
   get displayName(): string {
-    return this.auth.session()?.user?.fullName?.trim() || 'Quản trị viên';
+    return (
+      this.auth.session()?.user?.fullName?.trim() ||
+      this.translate.instant('admin.administrator')
+    );
   }
 
   get initials(): string {

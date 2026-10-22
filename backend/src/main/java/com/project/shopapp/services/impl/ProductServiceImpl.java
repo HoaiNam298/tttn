@@ -1,11 +1,14 @@
 package com.project.shopapp.services.impl;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.components.TransactionLog;
 import com.project.shopapp.dtos.request.ProductInventoryRequest;
 import com.project.shopapp.dtos.request.ProductRequest;
 import com.project.shopapp.dtos.response.ProductDetailResponse;
 import com.project.shopapp.dtos.response.ProductResponse;
 import com.project.shopapp.enums.OrderStatus;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import com.project.shopapp.exceptions.ResourceNotFoundException;
 import com.project.shopapp.model.Product;
 import com.project.shopapp.model.ProductVariant;
@@ -58,12 +61,12 @@ public class ProductServiceImpl implements ProductService {
         if ((minPrice != null && minPrice.signum() < 0)
                 || (maxPrice != null && maxPrice.signum() < 0)
                 || (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0)) {
-            throw new IllegalArgumentException("Invalid price range");
+            throw new LocalizedArgumentException(MessageKeys.PRODUCT_INVALID_PRICE_RANGE);
         }
         Set<String> allowedSort = Set.of("id", "name", "price", "createdAt", "updatedAt");
         for (Sort.Order order : pageable.getSort()) {
             if (!allowedSort.contains(order.getProperty())) {
-                throw new IllegalArgumentException("Unsupported product sort field");
+                throw new LocalizedArgumentException(MessageKeys.PRODUCT_INVALID_SORT);
             }
         }
         String value = keyword == null ? "" : keyword.trim();
@@ -115,7 +118,9 @@ public class ProductServiceImpl implements ProductService {
                 repository
                         .findDetailById(id)
                         .orElseThrow(
-                                () -> new ResourceNotFoundException("Product not found: " + id));
+                                () ->
+                                        new ResourceNotFoundException(
+                                                MessageKeys.PRODUCT_NOT_FOUND, id));
         return ProductDetailResponse.from(product);
     }
 
@@ -124,7 +129,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductDetailResponse updateInventory(Long id, ProductInventoryRequest request) {
         Product product = getEntity(id);
         if (product.getVersion() != request.getVersion()) {
-            throw new IllegalStateException("Product inventory has changed. Reload before saving");
+            throw new LocalizedStateException(MessageKeys.PRODUCT_INVENTORY_CHANGED);
         }
         if (product.getVariants().isEmpty()
                 && !request.getVariants().isEmpty()
@@ -134,8 +139,7 @@ public class ProductServiceImpl implements ProductService {
                                 OrderStatus.PENDING,
                                 OrderStatus.CONFIRMED,
                                 OrderStatus.SHIPPING))) {
-            throw new IllegalStateException(
-                    "Finish or cancel existing orders before converting this product to variants");
+            throw new LocalizedStateException(MessageKeys.PRODUCT_CONVERSION_UNAVAILABLE);
         }
         var ids = new HashSet<Long>();
         var names = new HashSet<String>();
@@ -143,7 +147,7 @@ public class ProductServiceImpl implements ProductService {
         for (var input : request.getVariants()) {
             if (!names.add(input.getName().trim().toLowerCase(Locale.ROOT))
                     || !skus.add(input.getSku().trim().toUpperCase(Locale.ROOT))) {
-                throw new IllegalArgumentException("Duplicate variant name or SKU");
+                throw new LocalizedArgumentException(MessageKeys.PRODUCT_DUPLICATE_VARIANT);
             }
             ProductVariant variant;
             if (input.getId() == null) {
@@ -151,7 +155,7 @@ public class ProductServiceImpl implements ProductService {
                 product.addVariant(variant);
             } else {
                 if (!ids.add(input.getId())) {
-                    throw new IllegalArgumentException("Duplicate variant ID");
+                    throw new LocalizedArgumentException(MessageKeys.PRODUCT_DUPLICATE_VARIANT_ID);
                 }
                 variant = findVariant(product, input.getId());
             }
@@ -168,11 +172,10 @@ public class ProductServiceImpl implements ProductService {
         }
         if (product.getVariants().stream()
                 .anyMatch(item -> item.getId() != null && !ids.contains(item.getId()))) {
-            throw new IllegalArgumentException(
-                    "Keep existing variants and deactivate them instead of deleting");
+            throw new LocalizedArgumentException(MessageKeys.PRODUCT_VARIANT_REMOVAL_UNAVAILABLE);
         }
         if (request.getImages().stream().distinct().count() != request.getImages().size()) {
-            throw new IllegalArgumentException("Duplicate gallery image");
+            throw new LocalizedArgumentException(MessageKeys.PRODUCT_DUPLICATE_IMAGE);
         }
         product.changeInventory(request.getStock(), request.getImages());
         Product saved = repository.saveAndFlush(product);
@@ -226,7 +229,8 @@ public class ProductServiceImpl implements ProductService {
     public Product getEntity(Long id) {
         return repository
                 .findForUpdateById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(MessageKeys.PRODUCT_NOT_FOUND, id));
     }
 
     private ProductVariant findVariant(Product product, Long variantId) {
@@ -236,7 +240,7 @@ public class ProductServiceImpl implements ProductService {
                         .findFirst()
                         .orElse(null);
         if (variant == null) {
-            throw new IllegalArgumentException("Variant does not belong to this product");
+            throw new LocalizedArgumentException(MessageKeys.PRODUCT_VARIANT_WRONG_PRODUCT);
         }
         return variant;
     }

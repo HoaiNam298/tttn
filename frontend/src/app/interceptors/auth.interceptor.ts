@@ -24,9 +24,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
           })
         : request,
     );
+  const refreshAndSend = () =>
+    auth.refresh().pipe(switchMap((session) => send(session.accessToken)));
   const initial =
     !token && auth.session()
-      ? auth.refresh().pipe(switchMap((session) => send(session.accessToken)))
+      ? refreshAndSend()
       : send(token).pipe(
           catchError((error: HttpErrorResponse) => {
             if (error.status !== 401 || !auth.session() || !sameAccount()) {
@@ -36,9 +38,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
             if (latest && latest !== token) {
               return send(latest);
             }
-            return auth
-              .refresh()
-              .pipe(switchMap((session) => send(session.accessToken)));
+            return refreshAndSend();
           }),
         );
 

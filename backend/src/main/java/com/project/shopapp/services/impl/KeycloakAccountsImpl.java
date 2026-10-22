@@ -1,6 +1,7 @@
 package com.project.shopapp.services.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.dtos.request.RegisterRequest;
 import com.project.shopapp.exceptions.DuplicateResourceException;
 import com.project.shopapp.exceptions.IdentityProviderException;
@@ -82,7 +83,7 @@ public class KeycloakAccountsImpl implements KeycloakAccounts {
             return subject;
         } catch (RestClientResponseException exception) {
             if (exception.getStatusCode().value() == 409) {
-                throw new DuplicateResourceException("Phone number is already registered");
+                throw new DuplicateResourceException(MessageKeys.PHONE_ALREADY_REGISTERED);
             }
             throw new IdentityProviderException();
         } catch (RestClientException | IllegalArgumentException exception) {

@@ -1,6 +1,9 @@
 package com.project.shopapp.model;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.exceptions.InsufficientStockException;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -92,8 +95,7 @@ public class Product extends BaseEntity {
     public void changeInventory(Integer legacyStock, List<String> imageUrls) {
         if (variants.isEmpty()) {
             if (legacyStock == null) {
-                throw new IllegalArgumentException(
-                        "Stock is required for a product without variants");
+                throw new LocalizedArgumentException(MessageKeys.PRODUCT_STOCK_REQUIRED);
             }
             stock = legacyStock;
         } else {
@@ -136,7 +138,7 @@ public class Product extends BaseEntity {
     public void reserve(int quantity, ProductVariant variant) {
         if (variant == null) {
             if (!variants.isEmpty()) {
-                throw new IllegalStateException("Please select a product variant");
+                throw new LocalizedStateException(MessageKeys.PRODUCT_VARIANT_REQUIRED);
             }
             reserve(quantity);
         } else {

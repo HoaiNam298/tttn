@@ -1,10 +1,10 @@
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Quản trị</p>
-    <h1>Quản lý danh mục</h1>
+    <p class="eyebrow">{{ "common.admin" | translate }}</p>
+    <h1>{{ "admin.categoryManagement" | translate }}</h1>
   </div>
   <button mat-flat-button (click)="openCreate()" [disabled]="saving">
-    Thêm danh mục
+    {{ "admin.addCategory" | translate }}
   </button>
 </div>
 @if (message) {
@@ -12,7 +12,11 @@
 }
 <ng-template #editor>
   <h2 mat-dialog-title>
-    {{ editingId ? "Cập nhật danh mục" : "Thêm danh mục" }}
+    {{
+      editingId
+        ? ("admin.editCategory" | translate)
+        : ("admin.addCategory" | translate)
+    }}
   </h2>
   <form [formGroup]="form" (ngSubmit)="create()">
     <mat-dialog-content>
@@ -20,14 +24,16 @@
         <p class="error" role="alert">{{ formError }}</p>
       }
       <mat-form-field appearance="outline" class="full-field">
-        <mat-label>Tên danh mục</mat-label>
+        <mat-label>{{ "admin.categoryName" | translate }}</mat-label>
         <input
           matInput
           formControlName="name"
           [readOnly]="saving"
           maxlength="100"
         />
-        <mat-error>Tên danh mục bắt buộc, tối đa 100 ký tự.</mat-error>
+        <mat-error>{{
+          "admin.categoryNameIsRequiredUpTo100Characters" | translate
+        }}</mat-error>
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -37,10 +43,14 @@
         [disabled]="saving"
         (click)="cancelEdit()"
       >
-        Hủy
+        {{ "account.cancel" | translate }}
       </button>
       <button mat-flat-button type="submit" [disabled]="saving">
-        {{ saving ? "Đang lưu..." : "Lưu danh mục" }}
+        {{
+          saving
+            ? ("account.saving" | translate)
+            : ("admin.saveCategory" | translate)
+        }}
       </button>
     </mat-dialog-actions>
   </form>
@@ -48,24 +58,29 @@
 <mat-card appearance="outlined" class="management-card">
   <form class="material-filters" (ngSubmit)="load(0)">
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>Tìm danh mục</mat-label>
+      <mat-label>{{ "admin.searchCategories" | translate }}</mat-label>
       <input matInput name="keyword" [(ngModel)]="keyword" />
     </mat-form-field>
-    <button mat-flat-button type="submit" [disabled]="loading">Tìm kiếm</button>
+    <button mat-flat-button type="submit" [disabled]="loading">
+      {{ "catalog.search" | translate }}
+    </button>
   </form>
 </mat-card>
 @if (error) {
   <p class="error" role="alert">{{ error }}</p>
 }
 @if (loading) {
-  <mat-progress-bar mode="indeterminate" aria-label="Đang tải danh mục" />
+  <mat-progress-bar
+    mode="indeterminate"
+    [attr.aria-label]="'admin.loadingCategories' | translate"
+  />
 }
 <mat-card
   appearance="outlined"
   class="management-card"
   [attr.aria-busy]="loading"
 >
-  <h2>Danh mục ({{ totalElements }})</h2>
+  <h2>{{ "admin.categories" | translate: { p0: totalElements } }}</h2>
   <div class="table-wrap">
     <table mat-table [dataSource]="categories">
       <ng-container matColumnDef="id"
@@ -75,20 +90,24 @@
         </td></ng-container
       >
       <ng-container matColumnDef="name"
-        ><th mat-header-cell *matHeaderCellDef>Tên danh mục</th>
+        ><th mat-header-cell *matHeaderCellDef>
+          {{ "admin.categoryName" | translate }}
+        </th>
         <td mat-cell *matCellDef="let category">
           {{ category.name }}
         </td></ng-container
       >
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        <th mat-header-cell *matHeaderCellDef>
+          {{ "admin.actions" | translate }}
+        </th>
         <td mat-cell *matCellDef="let category" class="row-actions">
           <button
             mat-button
             [disabled]="loading || saving"
             (click)="edit(category)"
           >
-            Sửa
+            {{ "account.edit" | translate }}
           </button>
           <button
             mat-button
@@ -96,7 +115,7 @@
             [disabled]="loading || saving"
             (click)="delete(category)"
           >
-            Xóa
+            {{ "common.remove" | translate }}
           </button>
         </td>
       </ng-container>
@@ -104,7 +123,11 @@
       <tr mat-row *matRowDef="let row; columns: columns"></tr>
       <tr *matNoDataRow>
         <td colspan="3" class="state">
-          {{ loading ? "Đang tải danh mục..." : "Không có danh mục phù hợp." }}
+          {{
+            loading
+              ? ("admin.loadingCategories2" | translate)
+              : ("admin.noMatchingCategories" | translate)
+          }}
         </td>
       </tr>
     </table>
@@ -117,6 +140,6 @@
     [disabled]="loading"
     [showFirstLastButtons]="true"
     (page)="changePage($event)"
-    aria-label="Phân trang danh mục"
+    [attr.aria-label]="'admin.categoryPagination' | translate"
   />
 </mat-card>

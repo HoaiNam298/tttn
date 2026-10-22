@@ -1,7 +1,10 @@
 package com.project.shopapp.model;
 
+import com.project.shopapp.components.MessageKeys;
 import com.project.shopapp.dtos.request.VoucherRequest;
 import com.project.shopapp.enums.VoucherType;
+import com.project.shopapp.exceptions.LocalizedArgumentException;
+import com.project.shopapp.exceptions.LocalizedStateException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -84,11 +87,11 @@ public class Voucher extends BaseEntity {
                 || (request.getType() == VoucherType.PERCENT
                         && request.getAmount().compareTo(BigDecimal.valueOf(100)) > 0)
                 || request.getUsageLimit() < usedCount) {
-            throw new IllegalArgumentException("Invalid voucher dates, percentage or usage limit");
+            throw new LocalizedArgumentException(MessageKeys.VOUCHER_INVALID_CONFIGURATION);
         }
         String normalizedCode = request.getCode().trim().toUpperCase(Locale.ROOT);
         if (code != null && !code.equals(normalizedCode)) {
-            throw new IllegalArgumentException("Voucher code cannot be changed");
+            throw new LocalizedArgumentException(MessageKeys.VOUCHER_CODE_IMMUTABLE);
         }
         code = normalizedCode;
         type = request.getType();
@@ -111,7 +114,7 @@ public class Voucher extends BaseEntity {
                 || userUses >= perUserLimit
                 || (targetUserId != null && !targetUserId.equals(userId))
                 || subtotal.compareTo(minimumSubtotal) < 0) {
-            throw new IllegalStateException("Voucher is unavailable or this order is not eligible");
+            throw new LocalizedStateException(MessageKeys.VOUCHER_NOT_ELIGIBLE);
         }
         return calculateDiscount(subtotal);
     }
@@ -127,14 +130,14 @@ public class Voucher extends BaseEntity {
 
     public void reserve() {
         if (usedCount >= usageLimit) {
-            throw new IllegalStateException("Voucher usage limit reached");
+            throw new LocalizedStateException(MessageKeys.VOUCHER_LIMIT_REACHED);
         }
         usedCount++;
     }
 
     public void release() {
         if (usedCount < 1) {
-            throw new IllegalStateException("Invalid voucher usage count");
+            throw new LocalizedStateException(MessageKeys.VOUCHER_INVALID_USAGE);
         }
         usedCount--;
     }
