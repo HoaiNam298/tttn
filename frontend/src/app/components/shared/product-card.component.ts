@@ -1,6 +1,11 @@
 import { ShopMoneyPipe } from './shop-money.pipe';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnChanges,
+  input,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../models/product.model';
 import { MatCardModule } from '@angular/material/card';
@@ -12,7 +17,11 @@ import { MatCardModule } from '@angular/material/card';
   templateUrl: './product-card.component.html',
   styleUrl: './product-card.component.scss',
 })
-export class ProductCardComponent {
+export class ProductCardComponent implements OnChanges {
   readonly product = input.required<Product>();
   imageFailed = false;
+
+  ngOnChanges(): void {
+    this.imageFailed = false;
+  }
 }

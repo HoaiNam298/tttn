@@ -35,7 +35,12 @@
     <a mat-button routerLink="/products" routerLinkActive="active">{{
       "common.products" | translate
     }}</a>
-    <a mat-button routerLink="/cart" routerLinkActive="active"
+    <a
+      mat-button
+      class="cart-link"
+      routerLink="/cart"
+      routerLinkActive="active"
+      [attr.aria-label]="'common.cart' | translate: { count: cart.count() }"
       ><svg
         class="nav-icon"
         viewBox="0 0 24 24"
@@ -47,7 +52,10 @@
         <path d="m3 3 2 2 3 12h11l2-10H6" />
         <circle cx="9" cy="21" r="1" />
         <circle cx="18" cy="21" r="1" /></svg
-      >{{ "common.cart" | translate: { count: cart.count() } }}</a
+      ><span>{{ "common.customerCart" | translate }}</span
+      ><span class="cart-count" aria-hidden="true">{{
+        cart.count() > 99 ? "99+" : cart.count()
+      }}</span></a
     >
     @if (auth.userId() !== null && auth.token()) {
       <button
@@ -56,6 +64,9 @@
         [attr.aria-label]="'common.accountMenu' | translate"
       >
         {{ "common.account" | translate }} ▾
+        @if (notifications.unread() > 0) {
+          <span class="unread-dot" aria-hidden="true"></span>
+        }
       </button>
       <mat-menu #accountMenu="matMenu">
         <a mat-menu-item routerLink="/account">{{

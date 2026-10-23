@@ -36,3 +36,45 @@
     grid-template-columns: 1fr;
   }
 }
+
+.account-menu {
+  position: sticky;
+  top: 108px;
+  border-top: 4px solid #0f766e;
+  background: linear-gradient(#f0fdfa, white 240px);
+}
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: #0f766e;
+  color: white;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.account-menu a.active {
+  box-shadow: inset 3px 0 #0f766e;
+}
+.account-menu button {
+  color: #b91c1c;
+}
+@media (max-width: 760px) {
+  .account-menu {
+    position: static;
+  }
+  .account-menu nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .account-menu a {
+    white-space: normal;
+    height: auto;
+    min-height: 48px;
+    text-align: center;
+  }
+  .account-menu nav button {
+    grid-column: 1 / -1;
+  }
+}

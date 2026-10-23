@@ -29,11 +29,18 @@
           review.productName
         }}</a>
       </h3>
-      <p>
-        <strong>{{ review.reviewerName }}</strong> ·
-        <span class="review-rating">{{ review.rating }}/5 ★</span> ·
-        {{ review.createdAt | shopDate }}
-      </p>
+      <div class="review-meta">
+        <span class="review-avatar" aria-hidden="true">{{
+          review.reviewerName.slice(0, 1)
+        }}</span>
+        <strong>{{ review.reviewerName }}</strong>
+        <span class="review-rating"
+          >{{ review.rating }}/5 <span aria-hidden="true">★</span></span
+        >
+        <time [attr.datetime]="review.createdAt">{{
+          review.createdAt | shopDate
+        }}</time>
+      </div>
       <p class="review-comment">{{ review.comment }}</p>
       <div class="review-photos">
         @for (image of review.images; track image) {
@@ -48,7 +55,10 @@
         }
       </div>
       @if (review.shopReply) {
-        <blockquote class="shop-reply">{{ review.shopReply }}</blockquote>
+        <div class="reply-panel">
+          <strong>{{ "admin.storeReply" | translate }}</strong>
+          <blockquote class="shop-reply">{{ review.shopReply }}</blockquote>
+        </div>
       }
       <button
         mat-stroked-button
@@ -84,9 +94,12 @@
 </mat-card>
 <ng-template #replyDialog>
   <h2 mat-dialog-title>{{ "admin.replyToReview" | translate }}</h2>
-  <form [formGroup]="form" (ngSubmit)="save()">
+  <form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="saving">
     <mat-dialog-content>
-      <p class="review-comment">{{ selected?.comment }}</p>
+      <div class="reply-context">
+        <strong>{{ selected?.productName }}</strong>
+        <p class="review-comment">{{ selected?.comment }}</p>
+      </div>
       <mat-form-field appearance="outline" class="full-field"
         ><mat-label>{{ "admin.storeReply" | translate }}</mat-label
         ><textarea
@@ -94,7 +107,7 @@
           rows="5"
           formControlName="reply"
           maxlength="1000"
-          [readOnly]="saving"
+          [readonly]="saving"
         ></textarea
         ><mat-hint align="end"
           >{{ form.controls.reply.value.length }}/1000</mat-hint

@@ -24,23 +24,40 @@
     <p class="state">{{ "account.loadingNotifications" | translate }}</p>
   } @else {
     @for (notification of notifications; track notification.id) {
-      <article class="review-item">
-        <h3>
-          {{ notification.title }}
-          @if (!notification.read) {
-            <span class="badge">{{ "account.new" | translate }}</span>
-          }
-        </h3>
-        <p>{{ notification.body }}</p>
-        <small>{{ notification.createdAt | shopDate }}</small>
-        <div class="actions">
-          <button
-            mat-stroked-button
-            [disabled]="updating"
-            (click)="open(notification)"
+      <article class="notification-item" [class.unread]="!notification.read">
+        <span class="notification-icon" aria-hidden="true"
+          ><svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
           >
-            {{ "common.viewDetails" | translate }}
-          </button>
+            <path
+              d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"
+            /></svg
+        ></span>
+        <div class="notification-content">
+          <h3>
+            {{ notification.title }}
+            @if (!notification.read) {
+              <span class="badge">{{ "account.new" | translate }}</span>
+            }
+          </h3>
+          <p>{{ notification.body }}</p>
+          <time [attr.datetime]="notification.createdAt">{{
+            notification.createdAt | shopDate
+          }}</time>
+          <div class="actions">
+            <button
+              mat-stroked-button
+              [disabled]="updating"
+              (click)="open(notification)"
+            >
+              {{ "common.viewDetails" | translate }}
+            </button>
+          </div>
         </div>
       </article>
     } @empty {

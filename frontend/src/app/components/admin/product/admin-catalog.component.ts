@@ -3,6 +3,7 @@ import { ErrorMessageService } from '../../../services/error-message.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ConfirmationDialogComponent } from '../../shared/confirmation-dialog.component';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   Component,
   DestroyRef,
@@ -51,6 +52,7 @@ import { ProductInventoryEditorComponent } from './product-inventory-editor.comp
   ],
   styleUrl: './admin-catalog.component.scss',
   imports: [
+    RouterLink,
     ShopMoneyPipe,
     TranslatePipe,
     CommonModule,

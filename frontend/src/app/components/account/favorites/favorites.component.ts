@@ -37,6 +37,7 @@ import { ProductCardComponent } from '../../shared/product-card.component';
     MatPaginatorModule,
   ],
   templateUrl: './favorites.component.html',
+  styleUrl: './favorites.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class FavoritesComponent implements OnInit {

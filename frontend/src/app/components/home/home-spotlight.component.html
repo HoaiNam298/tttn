@@ -1,0 +1,58 @@
+@if (product(); as featured) {
+  <a class="spotlight" [routerLink]="['/products', featured.id]">
+    <span class="spotlight-label"
+      >{{ "home.productSpotlight" | translate }}
+      <span aria-hidden="true">↗</span></span
+    >
+    <div class="spotlight-image">
+      @if (featured.thumbnail && !imageFailed) {
+        <img
+          [src]="featured.thumbnail"
+          [alt]="featured.name"
+          width="480"
+          height="300"
+          fetchpriority="high"
+          decoding="async"
+          (error)="imageFailed = true"
+        />
+      } @else {
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          aria-hidden="true"
+        >
+          <path d="M4 4h16v12H4z M2 20h20l-2-4H4z" />
+        </svg>
+      }
+    </div>
+    <div class="spotlight-info">
+      <div>
+        <small>{{ featured.category.name }}</small>
+        <h2>{{ featured.name }}</h2>
+      </div>
+      <strong>{{ featured.price | shopMoney }}</strong>
+    </div>
+  </a>
+} @else {
+  <div class="spotlight spotlight-placeholder" [attr.aria-busy]="loading()">
+    <span class="spotlight-label">{{
+      "home.productSpotlight" | translate
+    }}</span>
+    @if (loading()) {
+      <div class="shop-skeleton spotlight-skeleton" aria-hidden="true"></div>
+    } @else {
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        aria-hidden="true"
+      >
+        <path d="M4 4h16v12H4z M2 20h20l-2-4H4z" />
+      </svg>
+    }
+    <p>{{ "home.onePlaceForAllYourTechnologyChoices" | translate }}</p>
+  </div>
+}

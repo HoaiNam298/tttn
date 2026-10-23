@@ -10,6 +10,7 @@ import { AuthService } from '../../../services/auth.service';
   imports: [TranslatePipe, RouterLink, MatCardModule, MatButtonModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './profile.component.html',
+  styleUrl: './profile.component.scss',
 })
 export class ProfileComponent {
   readonly auth = inject(AuthService);

@@ -46,13 +46,19 @@
   class="management-card"
   [attr.aria-busy]="loading"
 >
-  <div class="table-wrap">
+  <div
+    class="table-wrap"
+    tabindex="0"
+    role="region"
+    [attr.aria-label]="'admin.orderManagement' | translate"
+  >
     <table mat-table [dataSource]="items">
       <ng-container matColumnDef="number"
         ><th mat-header-cell *matHeaderCellDef>
           {{ "admin.orderNumber" | translate }}
         </th>
         <td mat-cell *matCellDef="let row">
+          <span class="order-id">#{{ row.id }}</span>
           <a
             class="order-number"
             [routerLink]="['/admin/orders', row.id]"
@@ -104,7 +110,11 @@
         </th>
         <td mat-cell *matCellDef="let row">
           {{ row.paymentMethod ?? "COD" }}
-          <small>{{ paymentLabel(row) }}</small>
+          <small
+            class="payment-state"
+            [class.paid]="row.paymentStatus === 'PAID'"
+            >{{ paymentLabel(row) }}</small
+          >
         </td>
       </ng-container>
       <ng-container matColumnDef="actions"
@@ -113,6 +123,14 @@
         </th>
         <td mat-cell *matCellDef="let row">
           <div class="row-actions">
+            <a
+              mat-stroked-button
+              [routerLink]="['/admin/orders', row.id]"
+              [attr.aria-label]="
+                'admin.viewOrderNumber' | translate: { number: row.orderNumber }
+              "
+              >{{ "common.viewDetails" | translate }}</a
+            >
             @for (status of availableStatuses(row); track status) {
               <button
                 mat-button

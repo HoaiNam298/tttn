@@ -42,3 +42,48 @@
   color: #64748b;
   font-size: 0.8rem;
 }
+
+h1 {
+  font-size: clamp(28px, 4vw, 36px);
+}
+.order-tabs {
+  border-radius: 16px;
+  background: #f8fafc;
+}
+.order-tabs button {
+  min-height: 44px;
+  color: #475569;
+}
+.order-tabs button.active {
+  background: #0f766e;
+  color: white;
+}
+.order-card {
+  border-radius: 20px;
+  border-top: 3px solid #ccfbf1;
+}
+.order-card-heading {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.order-card p {
+  margin: 10px 0;
+  line-height: 1.6;
+}
+.order-card-footer strong {
+  color: #c2410c;
+}
+.order-card-footer a {
+  min-height: 48px;
+}
+@media (max-width: 550px) {
+  .order-card-footer {
+    align-items: stretch;
+  }
+  .order-card-footer > span {
+    width: 100%;
+  }
+  .order-card-footer a {
+    width: 100%;
+  }
+}

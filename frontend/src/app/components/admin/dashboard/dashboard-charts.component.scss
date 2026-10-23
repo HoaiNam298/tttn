@@ -150,3 +150,24 @@ h2 {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.chart-card {
+  border-radius: 20px;
+}
+.chart-card h2 {
+  color: #17243b;
+}
+.chart-caption,
+.chart-hint {
+  font-size: 13px;
+}
+.revenue-point:focus,
+.product-bar:focus {
+  outline: 2px solid #c2410c;
+  outline-offset: 3px;
+}
+.product-legend a,
+.status-legend a {
+  color: #0f766e;
+  text-underline-offset: 3px;
+}

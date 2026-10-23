@@ -16,6 +16,16 @@
         }}</small></span
       >
     </a>
+    @if (compact()) {
+      <button
+        mat-button
+        class="drawer-close"
+        type="button"
+        (click)="drawer.close()"
+      >
+        {{ "account.close" | translate }} ×
+      </button>
+    }
     <p class="nav-caption">{{ "admin.administrationWorkspace" | translate }}</p>
     <mat-nav-list
       [attr.aria-label]="'admin.administrationNavigation' | translate"
@@ -28,6 +38,14 @@
           routerLinkActive="selected"
           ariaCurrentWhenActive="page"
         >
+          <svg
+            matListItemIcon
+            class="nav-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path [attr.d]="item.icon" />
+          </svg>
           <span matListItemTitle class="nav-label">{{
             item.label | translate
           }}</span>

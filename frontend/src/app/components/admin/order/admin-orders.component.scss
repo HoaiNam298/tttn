@@ -9,7 +9,7 @@
   margin-bottom: 24px;
   background: #fff;
   border-color: #e2e8f0;
-  border-radius: 16px;
+  border-radius: 20px;
 }
 h2 {
   margin-top: 0;
@@ -65,27 +65,6 @@ td small {
 .delete-action {
   color: #b91c1c;
 }
-.editor-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 16px;
-}
-.full-field {
-  width: 100%;
-}
-.report-note {
-  color: #52627b;
-  line-height: 1.6;
-}
-.review-comment,
-.shop-reply {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.review-rating {
-  color: #b45309;
-  font-weight: 700;
-}
 mat-paginator {
   border-top: 1px solid #e2e8f0;
 }
@@ -101,7 +80,76 @@ mat-paginator {
     flex: none;
     width: 100%;
   }
-  .editor-grid {
-    grid-template-columns: 1fr;
-  }
+}
+.page-heading {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.filter-card {
+  background: #f0fdfa;
+  border-top: 3px solid #0f766e;
+}
+.filter-summary {
+  flex-wrap: wrap;
+}
+.filter-summary strong {
+  font-size: 32px;
+}
+.material-filters button {
+  min-height: 48px;
+}
+.order-id {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.order-number {
+  display: block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  text-underline-offset: 3px;
+}
+.mat-column-customer {
+  min-width: 140px;
+  max-width: 240px;
+  overflow-wrap: anywhere;
+}
+.mat-column-created {
+  min-width: 130px;
+}
+.mat-column-total {
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 700;
+  color: #c2410c;
+}
+.row-actions {
+  min-width: 180px;
+}
+.row-actions button,
+.row-actions a {
+  min-height: 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+td .payment-state {
+  display: inline-block;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #854d0e;
+  line-height: 1.5;
+}
+td .payment-state.paid {
+  background: #ccfbf1;
+  color: #115e59;
+}
+.error {
+  padding: 14px 16px;
+  background: #fef2f2;
+  border-left: 4px solid #b91c1c;
+  border-radius: 12px;
 }

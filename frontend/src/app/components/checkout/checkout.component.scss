@@ -45,12 +45,6 @@ h2 {
   margin-top: 8px;
   flex-shrink: 0;
 }
-.payment-note {
-  background: #f0fdfa;
-  padding: 16px;
-  border-radius: 12px;
-  color: #0f766e;
-}
 .checkout-line,
 .cost-row {
   display: flex;
@@ -73,7 +67,7 @@ h2 {
 }
 .total strong {
   font-size: 22px;
-  color: #0f766e;
+  color: #c2410c;
 }
 .summary-note {
   color: #64748b;
@@ -102,7 +96,73 @@ h2 {
     gap: 0;
     margin-bottom: 20px;
   }
+  .voucher-row button {
+    margin-top: 24px;
+  }
   mat-card-content {
     padding: 20px 16px;
+  }
+}
+
+.page-heading {
+  display: block;
+  margin-bottom: 24px;
+}
+.page-heading h1 {
+  margin: 0;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-number {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 16px;
+}
+.checkout-summary {
+  position: sticky;
+  top: 108px;
+  border-top: 4px solid #0f766e;
+}
+.total {
+  padding: 16px 12px;
+  background: #fff7ed;
+  border-radius: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.submit-order {
+  min-height: 48px;
+}
+.submit-order:not(:disabled) {
+  background: #c2410c;
+  color: white;
+}
+.voucher-row {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #cbd5e1;
+}
+.cost-row strong {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+@media (max-width: 900px) {
+  .checkout-summary {
+    position: static;
   }
 }

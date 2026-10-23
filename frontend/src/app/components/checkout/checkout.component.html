@@ -3,8 +3,10 @@
     "checkout.continueShopping2" | translate
   }}</a>
   <div class="page-heading">
-    <p class="eyebrow">{{ "common.checkout" | translate }}</p>
-    <h1>{{ "checkout.confirmOrder" | translate }}</h1>
+    <div>
+      <p class="eyebrow">{{ "common.checkout" | translate }}</p>
+      <h1>{{ "checkout.confirmOrder" | translate }}</h1>
+    </div>
   </div>
   @if (error) {
     <p class="notice error-notice" role="alert">{{ error }}</p>
@@ -57,7 +59,10 @@
       <mat-card appearance="outlined">
         <mat-card-content>
           <div class="section-heading">
-            <h2>{{ "common.deliveryInformation" | translate }}</h2>
+            <h2>
+              <span class="section-number" aria-hidden="true">1</span
+              >{{ "common.deliveryInformation" | translate }}
+            </h2>
             <a mat-button routerLink="/account/addresses">{{
               "common.addressBook" | translate
             }}</a>
@@ -142,7 +147,8 @@
           >
           <mat-divider />
           <h2>
-            {{ "checkout.shipping" | translate }} &
+            <span class="section-number" aria-hidden="true">2</span
+            >{{ "checkout.shipping" | translate }} &
             {{ "checkout.payment" | translate }}
           </h2>
           <mat-form-field appearance="outline"
@@ -243,6 +249,9 @@
             ><strong>{{ quote?.subtotal ?? subtotal | shopMoney }}</strong>
           </div>
           @if (quoting) {
+            <p class="summary-note" role="status">
+              {{ "checkout.calculatingTotal" | translate }}
+            </p>
             <mat-progress-bar
               mode="indeterminate"
               [attr.aria-label]="'checkout.calculatingTotal' | translate"

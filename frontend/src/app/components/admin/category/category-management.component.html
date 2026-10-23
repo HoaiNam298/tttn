@@ -18,7 +18,7 @@
         : ("admin.addCategory" | translate)
     }}
   </h2>
-  <form [formGroup]="form" (ngSubmit)="create()">
+  <form [formGroup]="form" (ngSubmit)="create()" [attr.aria-busy]="saving">
     <mat-dialog-content>
       @if (formError) {
         <p class="error" role="alert">{{ formError }}</p>
@@ -28,8 +28,9 @@
         <input
           matInput
           formControlName="name"
-          [readOnly]="saving"
+          [readonly]="saving"
           maxlength="100"
+          autocomplete="off"
         />
         <mat-error>{{
           "admin.categoryNameIsRequiredUpTo100Characters" | translate
@@ -81,12 +82,17 @@
   [attr.aria-busy]="loading"
 >
   <h2>{{ "admin.categories" | translate: { p0: totalElements } }}</h2>
-  <div class="table-wrap">
+  <div
+    class="table-wrap"
+    tabindex="0"
+    role="region"
+    [attr.aria-label]="'admin.categoryManagement' | translate"
+  >
     <table mat-table [dataSource]="categories">
       <ng-container matColumnDef="id"
         ><th mat-header-cell *matHeaderCellDef>ID</th>
         <td mat-cell *matCellDef="let category">
-          {{ category.id }}
+          <span class="category-id">#{{ category.id }}</span>
         </td></ng-container
       >
       <ng-container matColumnDef="name"
@@ -94,7 +100,20 @@
           {{ "admin.categoryName" | translate }}
         </th>
         <td mat-cell *matCellDef="let category">
-          {{ category.name }}
+          <div class="category-identity">
+            <span class="category-icon" aria-hidden="true"
+              ><svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <path d="M3 6h7l2 3h9v11H3V6Z M3 6V4h7l2 2" /></svg
+            ></span>
+            <strong>{{ category.name }}</strong>
+          </div>
         </td></ng-container
       >
       <ng-container matColumnDef="actions">
@@ -106,6 +125,9 @@
             mat-button
             [disabled]="loading || saving"
             (click)="edit(category)"
+            [attr.aria-label]="
+              ('account.edit' | translate) + ': ' + category.name
+            "
           >
             {{ "account.edit" | translate }}
           </button>
@@ -114,6 +136,9 @@
             class="delete-action"
             [disabled]="loading || saving"
             (click)="delete(category)"
+            [attr.aria-label]="
+              ('common.remove' | translate) + ': ' + category.name
+            "
           >
             {{ "common.remove" | translate }}
           </button>

@@ -33,7 +33,7 @@
           ><input
             matInput
             formControlName="name"
-            [readOnly]="saving"
+            [readonly]="saving"
             maxlength="350"
           />
           <mat-error>{{
@@ -47,7 +47,7 @@
             type="number"
             min="0"
             formControlName="price"
-            [readOnly]="saving"
+            [readonly]="saving"
           />
           <mat-error>{{
             "admin.priceIsRequiredAndCannotBeNegative" | translate
@@ -70,7 +70,7 @@
           ><input
             matInput
             formControlName="thumbnail"
-            [readOnly]="saving"
+            [readonly]="saving"
             maxlength="500"
           />
           <mat-error>{{
@@ -83,7 +83,7 @@
             matInput
             rows="5"
             formControlName="description"
-            [readOnly]="saving"
+            [readonly]="saving"
             maxlength="10000"
           ></textarea>
           <mat-error>{{
@@ -152,14 +152,36 @@
   [attr.aria-busy]="loading"
 >
   <h2>{{ "admin.products" | translate: { p0: totalElements } }}</h2>
-  <div class="table-wrap">
+  <div
+    class="table-wrap"
+    tabindex="0"
+    role="region"
+    [attr.aria-label]="'admin.productManagement' | translate"
+  >
     <table mat-table [dataSource]="products">
       <ng-container matColumnDef="name"
         ><th mat-header-cell *matHeaderCellDef>
           {{ "common.products" | translate }}
         </th>
         <td mat-cell *matCellDef="let product">
-          {{ product.name }}
+          <div class="product-identity">
+            <span class="product-thumbnail" aria-hidden="true">
+              <span>S</span>
+              @if (product.thumbnail) {
+                <img
+                  #thumbnail
+                  [src]="product.thumbnail"
+                  alt=""
+                  width="56"
+                  height="56"
+                  loading="lazy"
+                  decoding="async"
+                  (error)="thumbnail.hidden = true"
+                />
+              }
+            </span>
+            <a [routerLink]="['/products', product.id]">{{ product.name }}</a>
+          </div>
         </td></ng-container
       >
       <ng-container matColumnDef="category"

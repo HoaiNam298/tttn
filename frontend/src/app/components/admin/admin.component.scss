@@ -28,7 +28,8 @@
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: #0f766e;
+  background: #fbbf24;
+  color: #17243b;
 }
 .admin-brand small {
   display: block;
@@ -76,7 +77,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  height: 80px;
+  height: 72px;
   gap: 12px;
   padding: 0 28px;
   background: #fff;
@@ -153,5 +154,37 @@
   }
   .avatar {
     margin-right: 0;
+  }
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #a8b6cc;
+  stroke-width: 1.7;
+}
+.nav-link.selected .nav-icon {
+  stroke: #fbbf24;
+}
+.nav-link.selected {
+  box-shadow: inset 3px 0 #fbbf24;
+}
+.drawer-close {
+  color: #fff;
+  margin: 0 12px 16px;
+  border: 1px solid #64748b;
+}
+@media (max-width: 600px) {
+  .toolbar-heading {
+    display: none;
+  }
+  .admin-toolbar {
+    gap: 4px;
+    padding: 0 8px;
+  }
+  .account-button {
+    min-width: 44px;
+    padding: 0 6px;
   }
 }

@@ -14,79 +14,114 @@
   </div>
   <mat-card appearance="outlined" class="filter-card">
     <mat-card-content>
-      <form class="catalog-filters" [formGroup]="form" (ngSubmit)="load()">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ "catalog.search" | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="keyword"
-            [placeholder]="'catalog.productName' | translate"
-          />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ "catalog.category" | translate }}</mat-label>
-          <mat-select formControlName="categoryId">
-            <mat-option [value]="null">{{
-              "catalog.allCategories" | translate
-            }}</mat-option>
-            @for (category of categories; track category.id) {
-              <mat-option [value]="category.id">{{ category.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ "catalog.sortBy" | translate }}</mat-label>
-          <mat-select formControlName="sort">
-            <mat-option value="newest">{{
-              "catalog.newest" | translate
-            }}</mat-option>
-            <mat-option value="priceAsc">{{
-              "catalog.priceLowToHigh" | translate
-            }}</mat-option>
-            <mat-option value="priceDesc">{{
-              "catalog.priceHighToLow" | translate
-            }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ "catalog.minimumPrice" | translate }}</mat-label>
-          <input
-            matInput
-            type="number"
-            min="0"
-            formControlName="minPrice"
-            [placeholder]="'catalog.noLimit' | translate"
-          />
-          <span matTextSuffix>{{ "catalog.label" | translate }}</span>
-          @if (form.controls.minPrice.hasError("min")) {
-            <mat-error>{{
-              "catalog.priceMustBeAtLeast0" | translate
-            }}</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ "catalog.maximumPrice" | translate }}</mat-label>
-          <input
-            matInput
-            type="number"
-            min="0"
-            formControlName="maxPrice"
-            [placeholder]="'catalog.noLimit' | translate"
-          />
-          <span matTextSuffix>{{ "catalog.label" | translate }}</span>
-          @if (form.controls.maxPrice.hasError("min")) {
-            <mat-error>{{
-              "catalog.priceMustBeAtLeast0" | translate
-            }}</mat-error>
-          }
-        </mat-form-field>
-        <div class="filter-actions">
+      <form [formGroup]="form" (ngSubmit)="load()">
+        <div class="catalog-toolbar">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ "catalog.search" | translate }}</mat-label>
+            <input
+              matInput
+              formControlName="keyword"
+              [placeholder]="'catalog.productName' | translate"
+            />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ "catalog.sortBy" | translate }}</mat-label>
+            <mat-select formControlName="sort">
+              <mat-option value="newest">{{
+                "catalog.newest" | translate
+              }}</mat-option>
+              <mat-option value="priceAsc">{{
+                "catalog.priceLowToHigh" | translate
+              }}</mat-option>
+              <mat-option value="priceDesc">{{
+                "catalog.priceHighToLow" | translate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
           <button mat-flat-button type="submit">
-            {{ "catalog.applyFilters" | translate }}
+            {{ "catalog.search" | translate }}
           </button>
-          <button mat-button type="button" (click)="clear()">
-            {{ "catalog.reset" | translate }}
+          <button
+            mat-stroked-button
+            type="button"
+            class="filter-toggle"
+            (click)="filtersOpen = !filtersOpen"
+            [attr.aria-expanded]="filtersOpen"
+            aria-controls="catalog-advanced-filters"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18M6 12h12M9 18h6" />
+            </svg>
+            {{ "catalog.filters" | translate }}
+            @if (activeFilterCount) {
+              <span class="filter-count">{{ activeFilterCount }}</span>
+            }
+            <span aria-hidden="true">{{ filtersOpen ? "−" : "+" }}</span>
           </button>
+        </div>
+        <div
+          id="catalog-advanced-filters"
+          class="advanced-filters"
+          [hidden]="!filtersOpen"
+        >
+          <mat-form-field appearance="outline">
+            <mat-label>{{ "catalog.category" | translate }}</mat-label>
+            <mat-select formControlName="categoryId">
+              <mat-option [value]="null">{{
+                "catalog.allCategories" | translate
+              }}</mat-option>
+              @for (category of categories; track category.id) {
+                <mat-option [value]="category.id">{{
+                  category.name
+                }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>{{ "catalog.minimumPrice" | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              formControlName="minPrice"
+              [placeholder]="'catalog.noLimit' | translate"
+            />
+            <span matTextSuffix>{{ "catalog.label" | translate }}</span>
+            @if (form.controls.minPrice.hasError("min")) {
+              <mat-error>{{
+                "catalog.priceMustBeAtLeast0" | translate
+              }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>{{ "catalog.maximumPrice" | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              formControlName="maxPrice"
+              [placeholder]="'catalog.noLimit' | translate"
+            />
+            <span matTextSuffix>{{ "catalog.label" | translate }}</span>
+            @if (form.controls.maxPrice.hasError("min")) {
+              <mat-error>{{
+                "catalog.priceMustBeAtLeast0" | translate
+              }}</mat-error>
+            }
+          </mat-form-field>
+          <div class="filter-actions">
+            <button mat-flat-button type="submit">
+              {{ "catalog.applyFilters" | translate }}</button
+            ><button mat-button type="button" (click)="clear()">
+              {{ "catalog.reset" | translate }}
+            </button>
+          </div>
         </div>
       </form>
       @if (filterError) {
@@ -94,6 +129,37 @@
       }
       @if (categoryError) {
         <p class="filter-error" role="alert">{{ categoryError }}</p>
+      }
+      @if (activeFilterCount) {
+        <div
+          class="applied-filters"
+          [attr.aria-label]="'catalog.appliedFilters' | translate"
+        >
+          @if (appliedFilters.keyword) {
+            <span class="filter-chip"
+              >{{ "catalog.search" | translate }}:
+              {{ appliedFilters.keyword }}</span
+            >
+          }
+          @if (appliedFilters.categoryId != null) {
+            <span class="filter-chip">{{ appliedCategoryName }}</span>
+          }
+          @if (appliedFilters.minPrice != null) {
+            <span class="filter-chip"
+              >{{ "catalog.minimumPrice" | translate }}:
+              {{ appliedFilters.minPrice | shopMoney }}</span
+            >
+          }
+          @if (appliedFilters.maxPrice != null) {
+            <span class="filter-chip"
+              >{{ "catalog.maximumPrice" | translate }}:
+              {{ appliedFilters.maxPrice | shopMoney }}</span
+            >
+          }
+          <button mat-button type="button" (click)="clear()">
+            {{ "catalog.clearFilters" | translate }}
+          </button>
+        </div>
       }
     </mat-card-content>
   </mat-card>
@@ -103,6 +169,17 @@
     [attr.aria-label]="'catalog.searchResults' | translate"
   >
     @if (loading) {
+      <div class="product-grid" aria-hidden="true">
+        @for (placeholder of [1, 2, 3, 4]; track placeholder) {
+          <div class="shop-skeleton-card">
+            <div class="shop-skeleton shop-skeleton-image"></div>
+            <div class="shop-skeleton shop-skeleton-line"></div>
+            <div
+              class="shop-skeleton shop-skeleton-line shop-skeleton-short"
+            ></div>
+          </div>
+        }
+      </div>
       <mat-progress-bar
         mode="indeterminate"
         [attr.aria-label]="'catalog.loadingProducts2' | translate"
@@ -113,6 +190,7 @@
     } @else if (error) {
       <mat-card appearance="outlined" class="result-state">
         <mat-card-content>
+          <span class="state-icon" aria-hidden="true">!</span>
           <p role="alert">{{ error }}</p>
           <button mat-stroked-button type="button" (click)="retry()">
             {{ "common.retry" | translate }}
@@ -134,6 +212,7 @@
       @if (products.length === 0) {
         <mat-card appearance="outlined" class="result-state">
           <mat-card-content>
+            <span class="state-icon" aria-hidden="true">⌕</span>
             <h2>{{ "catalog.noProductsFound" | translate }}</h2>
             <p>
               {{ "catalog.tryADifferentKeywordOrAWiderPriceRange" | translate }}

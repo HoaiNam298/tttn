@@ -2,6 +2,7 @@ import { ShopDatePipe } from '../shared/shop-date.pipe';
 import { ShopNumberPipe } from '../shared/shop-number.pipe';
 import { ShopMoneyPipe } from '../shared/shop-money.pipe';
 import { ErrorMessageService } from '../../services/error-message.service';
+import { FeedbackService } from '../../services/feedback.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import {
   MatDialog,
@@ -69,6 +70,7 @@ import { FavoriteService } from '../../services/favorite.service';
   styleUrl: './product-detail.component.scss',
 })
 export class ProductDetailComponent implements OnInit {
+  private readonly feedback = inject(FeedbackService);
   private readonly errorMessages = inject(ErrorMessageService);
   private readonly translate = inject(TranslateService);
   private readonly auth = inject(AuthService);
@@ -102,6 +104,19 @@ export class ProductDetailComponent implements OnInit {
   relatedError = '';
   reviewLoadError = '';
   selectedVariantId?: number;
+  loading = true;
+  reviewsLoading = true;
+  private cartSaveFailed = false;
+
+  get purchaseError(): string {
+    return this.cartSaveFailed
+      ? this.translate.instant('catalog.cartCouldNotBeSaved')
+      : '';
+  }
+
+  get reviewLink(): string {
+    return `${this.router.url.split('#')[0]}#reviews`;
+  }
 
   get selectedVariant(): ProductVariant | undefined {
     return this.product?.variants?.find(
@@ -114,7 +129,12 @@ export class ProductDetailComponent implements OnInit {
   }
 
   get purchasePrice(): number {
-    return this.selectedVariant?.price ?? this.product?.price ?? 0;
+    if (this.selectedVariant) {
+      return this.selectedVariant.price;
+    }
+    return this.availableVariants.length
+      ? Math.min(...this.availableVariants.map((variant) => variant.price))
+      : (this.product?.price ?? 0);
   }
 
   get purchaseStock(): number {
@@ -124,9 +144,12 @@ export class ProductDetailComponent implements OnInit {
   }
 
   selectVariant(variant: ProductVariant): void {
+    if (!variant.active) {
+      return;
+    }
+    this.cartSaveFailed = false;
     this.selectedVariantId = variant.id;
     this.quantity = 1;
-    this.added = false;
     this.selectedImage =
       variant.imageUrl && !this.failedImages.has(variant.imageUrl)
         ? variant.imageUrl
@@ -194,7 +217,6 @@ export class ProductDetailComponent implements OnInit {
 
   product?: Product;
   error = '';
-  added = false;
   selectedImage = '';
   quantity = 1;
   reviews: ProductReview[] = [];
@@ -234,11 +256,12 @@ export class ProductDetailComponent implements OnInit {
           const id = Number(params.get('id'));
           this.currentProductId = id;
           this.product = undefined;
+          this.loading = true;
+          this.cartSaveFailed = false;
           this.failedImages.clear();
           this.selectedImage = '';
           this.quantity = 1;
           this.selectedVariantId = undefined;
-          this.added = false;
           this.error = '';
           this.relatedProducts = [];
           this.relatedError = '';
@@ -258,6 +281,7 @@ export class ProductDetailComponent implements OnInit {
           this.loadReviews(id);
           return this.catalog.product(id).pipe(
             catchError(() => {
+              this.loading = false;
               this.error = this.translate.instant('catalog.productNotFound');
               return EMPTY;
             }),
@@ -269,6 +293,7 @@ export class ProductDetailComponent implements OnInit {
   }
 
   private applyProduct(value: Product): void {
+    this.loading = false;
     this.product = value;
     this.checkEligibility();
     this.favorite = false;
@@ -334,8 +359,18 @@ export class ProductDetailComponent implements OnInit {
     if (!this.product || this.purchaseStock < this.quantity) {
       return;
     }
-    this.cart.add(this.product.id, this.quantity, this.selectedVariantId);
-    this.added = true;
+    this.cartSaveFailed = false;
+    try {
+      this.cart.add(this.product.id, this.quantity, this.selectedVariantId);
+    } catch {
+      this.cartSaveFailed = true;
+      return;
+    }
+    this.feedback.show({
+      kind: 'success',
+      messageKey: 'catalog.productAddedToYourCart',
+      action: { labelKey: 'feedback.viewCart', route: '/cart' },
+    });
   }
 
   toggleFavorite(): void {
@@ -389,6 +424,7 @@ export class ProductDetailComponent implements OnInit {
 
   loadReviews(productId: number, page = 0): void {
     const request = ++this.reviewRequest;
+    this.reviewsLoading = true;
     this.reviewLoadError = '';
     this.catalog
       .reviews(productId, page, this.reviewRating)
@@ -402,6 +438,7 @@ export class ProductDetailComponent implements OnInit {
             return;
           }
           this.reviews = overview.reviews.content;
+          this.reviewsLoading = false;
           this.averageRating = overview.averageRating;
           this.totalReviews = overview.totalReviews;
           this.reviewPage = overview.reviews.number;
@@ -413,6 +450,7 @@ export class ProductDetailComponent implements OnInit {
             this.currentProductId === productId &&
             request === this.reviewRequest
           ) {
+            this.reviewsLoading = false;
             this.reviewLoadError = this.errorMessages.message(
               response,
               'catalog.cannotLoadReviewsPleaseTryAgain',

@@ -1,0 +1,30 @@
+h1 {
+  font-size: clamp(24px, 4vw, 32px);
+  margin: 0;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.favorite-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+app-product-card {
+  flex: 1;
+}
+.favorite-item > button {
+  white-space: normal;
+  height: auto;
+  min-height: 44px;
+  color: #b91c1c;
+}
+.state {
+  grid-column: 1 / -1;
+}

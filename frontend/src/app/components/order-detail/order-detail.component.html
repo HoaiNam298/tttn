@@ -32,7 +32,12 @@
       <div class="detail-main">
         <mat-card appearance="outlined" class="detail-card">
           <h2>{{ "orders.orderItems" | translate }}</h2>
-          <div class="table-wrap">
+          <div
+            class="table-wrap"
+            role="region"
+            tabindex="0"
+            [attr.aria-label]="'orders.orderItems' | translate"
+          >
             <table mat-table [dataSource]="value.items">
               <ng-container matColumnDef="product"
                 ><th mat-header-cell *matHeaderCellDef>
@@ -168,7 +173,11 @@
         </mat-card>
         <mat-card appearance="outlined" class="detail-card">
           <h2>{{ "common.checkout" | translate }}</h2>
-          <p role="status">
+          <p
+            class="payment-state"
+            [class.paid]="value.paymentStatus === 'PAID'"
+            role="status"
+          >
             {{ paymentLabels[value.paymentStatus ?? "UNPAID"] }}
           </p>
           @if (value.paymentMethod === "VNPAY") {

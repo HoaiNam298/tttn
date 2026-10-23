@@ -44,7 +44,9 @@
         <mat-card appearance="outlined" class="panel order-card">
           <div class="order-card-heading">
             <strong>{{ "orders.order2" | translate: { p0: order.id } }}</strong
-            ><span class="badge">{{ labels[order.status] }}</span>
+            ><span class="status-badge" [ngClass]="'status-' + order.status">{{
+              labels[order.status]
+            }}</span>
           </div>
           <p class="order-reference">{{ order.orderNumber }}</p>
           <p>

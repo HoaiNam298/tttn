@@ -1,21 +1,40 @@
 <main class="container account-layout">
   <mat-card appearance="outlined" class="panel account-menu">
+    <div class="account-avatar" aria-hidden="true">
+      {{ auth.session()?.user?.fullName?.slice(0, 1) }}
+    </div>
     <p class="eyebrow">{{ "common.myAccount" | translate }}</p>
     <h2>{{ auth.session()?.user?.fullName }}</h2>
     <nav [attr.aria-label]="'account.personalInformation' | translate">
-      <a mat-button routerLink="profile" routerLinkActive="active">{{
-        "account.personalInformation" | translate
-      }}</a>
-      <a mat-button routerLink="addresses" routerLinkActive="active">{{
-        "common.addressBook" | translate
-      }}</a>
+      <a
+        mat-button
+        routerLink="profile"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >{{ "account.personalInformation" | translate }}</a
+      >
+      <a
+        mat-button
+        routerLink="addresses"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >{{ "common.addressBook" | translate }}</a
+      >
       <a mat-button routerLink="/orders">{{ "common.myOrders" | translate }}</a>
-      <a mat-button routerLink="favorites" routerLinkActive="active">{{
-        "account.favoriteProducts" | translate
-      }}</a>
-      <a mat-button routerLink="notifications" routerLinkActive="active">{{
-        "account.notifications" | translate
-      }}</a>
+      <a
+        mat-button
+        routerLink="favorites"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >{{ "account.favoriteProducts" | translate }}</a
+      >
+      <a
+        mat-button
+        routerLink="notifications"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >{{ "account.notifications" | translate }}</a
+      >
       @if (auth.isAdmin()) {
         <a mat-button routerLink="/admin">{{
           "account.storeAdministration" | translate
