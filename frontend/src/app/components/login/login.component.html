@@ -1,7 +1,9 @@
 <main class="auth-page">
   <mat-card appearance="outlined" class="auth-card">
     <div class="auth-heading">
-      <a class="auth-brand" routerLink="/">ShopApp</a>
+      <a class="auth-brand" routerLink="/"
+        ><span class="brand-icon" aria-hidden="true">S</span>ShopApp</a
+      >
       <h1>{{ "auth.welcomeBack" | translate }}</h1>
       <p>{{ "auth.logInToManageOrdersAndContinueShopping" | translate }}</p>
     </div>
@@ -21,12 +23,18 @@
         {{ "auth.youWereLoggedOutAfter30MinutesOfInactivity" | translate }}
       </p>
     }
-    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="auth-form"
+      [attr.aria-busy]="loading"
+    >
       <mat-form-field appearance="outline"
         ><mat-label>{{ "common.phoneNumber" | translate }}</mat-label
         ><input
           matInput
           type="tel"
+          inputmode="tel"
           formControlName="phoneNumber"
           autocomplete="username"
         /><mat-error>{{

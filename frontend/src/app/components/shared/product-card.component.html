@@ -1,23 +1,43 @@
-<a class="product-card-link" [routerLink]="['/products', product().id]">
+﻿<a class="product-card-link" [routerLink]="['/products', product().id]">
   <mat-card appearance="outlined" class="store-product-card">
     <div class="product-image">
       @if (product().thumbnail && !imageFailed) {
         <img
           [src]="product().thumbnail"
           [alt]="product().name"
+          width="400"
+          height="300"
           loading="lazy"
           decoding="async"
           (error)="imageFailed = true"
         />
       } @else {
-        <span>ShopApp</span>
+        <div class="image-placeholder">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            aria-hidden="true"
+          >
+            <path d="M3 4h18v16H3z M3 16l5-5 4 4 3-3 6 6 M15 8h2" /></svg
+          ><span>{{ "catalog.imageComingSoon" | translate }}</span>
+        </div>
+      }
+      @if (product().stock != null && product().stock! <= 0) {
+        <span class="stock-label">{{
+          "catalog.outOfStockCard" | translate
+        }}</span>
       }
     </div>
     <mat-card-content class="product-body">
-      <span class="badge">{{ product().category.name }}</span>
+      <span class="category-label">{{ product().category.name }}</span>
       <h2>{{ product().name }}</h2>
-      <strong>{{ product().price | shopMoney }}</strong>
-      <small>{{ "catalog.viewDetails2" | translate }}</small>
+      <strong class="card-price">{{ product().price | shopMoney }}</strong>
+      <div class="card-bottom">
+        <small>{{ "common.viewDetails" | translate }}</small
+        ><span class="detail-arrow" aria-hidden="true">↗</span>
+      </div>
     </mat-card-content>
   </mat-card>
 </a>

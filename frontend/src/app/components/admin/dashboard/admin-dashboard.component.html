@@ -34,7 +34,7 @@
   />
   <p class="state" role="status">{{ "admin.loadingReportData" | translate }}</p>
 } @else if (data; as report) {
-  <p>
+  <p class="report-note">
     {{
       "admin.revenueByOrderCompletionDateVietnamTimeAfterVouchers"
         | translate
@@ -53,7 +53,7 @@
     </p>
   }
   <section class="dashboard-stats metrics">
-    <mat-card appearance="outlined" class="stat-card">
+    <mat-card appearance="outlined" class="stat-card revenue-kpi">
       <span>{{ "admin.merchandiseRevenue" | translate }}</span
       ><strong>{{ report.revenue | shopMoney }}</strong
       ><small>{{
@@ -99,7 +99,12 @@
           | translate
       }}
     </p>
-    <div class="table-wrap">
+    <div
+      class="table-wrap"
+      tabindex="0"
+      role="region"
+      [attr.aria-label]="'admin.dashboard' | translate"
+    >
       <table mat-table [dataSource]="report.topProducts" class="daily-table">
         <ng-container matColumnDef="product">
           <th mat-header-cell *matHeaderCellDef>
@@ -140,7 +145,12 @@
     <p class="report-note">
       {{ "admin.paginationAppliesToTheTableChartsAboveShowThe" | translate }}
     </p>
-    <div class="table-wrap">
+    <div
+      class="table-wrap"
+      tabindex="0"
+      role="region"
+      [attr.aria-label]="'admin.dashboard' | translate"
+    >
       <table mat-table [dataSource]="dailyRows" class="daily-table">
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>
@@ -188,7 +198,12 @@
       <h2>{{ "admin.recentOrders" | translate }}</h2>
       <a routerLink="/admin/orders">{{ "home.viewAll" | translate }}</a>
     </div>
-    <div class="table-wrap">
+    <div
+      class="table-wrap"
+      tabindex="0"
+      role="region"
+      [attr.aria-label]="'admin.dashboard' | translate"
+    >
       <table mat-table [dataSource]="report.recentOrders" class="daily-table">
         <ng-container matColumnDef="number">
           <th mat-header-cell *matHeaderCellDef>

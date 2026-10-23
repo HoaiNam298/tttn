@@ -1,4 +1,12 @@
 {
+  "feedback": {
+    "success": "Success",
+    "info": "Information",
+    "warning": "Please note",
+    "error": "Action unsuccessful",
+    "close": "Dismiss notification",
+    "viewCart": "View cart"
+  },
   "common": {
     "language": "Language",
     "home": "ShopApp — Home",
@@ -217,6 +225,11 @@
     "cannotCalculateTheTotalCheckTheVoucherAndTry": "Cannot calculate the total. Check the voucher and try again."
   },
   "home": {
+    "productSpotlight": "Today's discovery",
+    "findYourNextFavorite": "Find your next favorite",
+    "newArrivalsDescription": "Discover the latest products added to ShopApp.",
+    "loadingCategories": "Loading categories...",
+    "noCategoriesYet": "Categories are being updated. You can browse all products.",
     "shopappEverydayTechnology": "ShopApp · Everyday technology",
     "exploreTechnology": "Explore technology.",
     "chooseWhatYouLove": "Choose what you love.",
@@ -351,6 +364,18 @@
     "cannotLoadOrderInformation": "Cannot load order information."
   },
   "catalog": {
+    "purchaseInformation": "Purchase information",
+    "noRatingsYet": "No ratings yet",
+    "loadingProductReviews": "Loading reviews...",
+    "priceStockRechecked": "Price and stock are checked again when you place the order.",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
+    "productImageNumber": "Product image {{index}}",
+    "cartCouldNotBeSaved": "Your cart could not be saved in this browser. Check storage permissions and try again.",
+    "filters": "Filters",
+    "appliedFilters": "Applied filters",
+    "imageComingSoon": "Image coming soon",
+    "outOfStockCard": "Out of stock",
     "home": "Home",
     "enlargeProductImage": "Enlarge product image",
     "clickTheImageToEnlarge": "Click the image to enlarge",

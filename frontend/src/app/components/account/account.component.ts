@@ -1,4 +1,4 @@
-import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
@@ -9,7 +9,7 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { FeedbackService } from '../../services/feedback.service';
 
 @Component({
   selector: 'app-account',
@@ -26,10 +26,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrl: './account.component.scss',
 })
 export class AccountComponent {
-  private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly snack = inject(MatSnackBar);
+  private readonly feedback = inject(FeedbackService);
   loggingOut = false;
 
   logout(): void {
@@ -44,13 +43,10 @@ export class AccountComponent {
       error: () => {
         this.loggingOut = false;
         void this.router.navigate(['/login']);
-        this.snack.open(
-          this.translate.instant(
-            'account.theBrowserSessionWasClearedButTheServerSession',
-          ),
-          this.translate.instant('account.close'),
-          { duration: 5000 },
-        );
+        this.feedback.show({
+          kind: 'warning',
+          messageKey: 'account.theBrowserSessionWasClearedButTheServerSession',
+        });
       },
     });
   }

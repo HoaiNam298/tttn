@@ -1,89 +1,161 @@
 <main class="container home">
-  <section class="home-banner">
-    <div>
+  <section class="home-banner" aria-labelledby="home-title">
+    <div class="banner-copy">
       <p class="eyebrow">
+        <span class="spark" aria-hidden="true">✦</span>
         {{ "home.shopappEverydayTechnology" | translate }}
       </p>
-      <h1>
-        {{ "home.exploreTechnology" | translate }}<br />{{
-          "home.chooseWhatYouLove" | translate
-        }}
+      <h1 id="home-title">
+        {{ "home.exploreTechnology" | translate }}
+        <span>{{ "home.chooseWhatYouLove" | translate }}</span>
       </h1>
-      <p>
+      <p class="banner-description">
         {{
           "home.phonesComputersAndAccessoriesFindProductsThatMeetYour"
             | translate
         }}
       </p>
-      <a mat-flat-button routerLink="/products">{{
+      <a mat-flat-button class="explore-button" routerLink="/products">{{
         "home.exploreTheStore" | translate
       }}</a>
+      <p class="banner-note">
+        <span aria-hidden="true">✓</span>
+        {{ "home.onePlaceForAllYourTechnologyChoices" | translate }}
+      </p>
     </div>
-    <div class="banner-visual">
-      <span class="banner-mark">SHOP<br />APP.</span>
-      <p>{{ "home.onePlaceForAllYourTechnologyChoices" | translate }}</p>
-    </div>
+    <app-home-spotlight [product]="featuredProduct" [loading]="loading" />
   </section>
   <section
     class="shopping-benefits"
     [attr.aria-label]="'home.shoppingExperience' | translate"
   >
     <div>
-      <strong>{{ "home.easyDiscovery" | translate }}</strong
-      ><span>{{ "home.searchByCategoryAndBudget" | translate }}</span>
+      <span class="benefit-icon" aria-hidden="true">⌕</span>
+      <div>
+        <strong>{{ "home.easyDiscovery" | translate }}</strong
+        ><span>{{ "home.searchByCategoryAndBudget" | translate }}</span>
+      </div>
     </div>
     <div>
-      <strong>{{ "home.codPayment" | translate }}</strong
-      ><span>{{ "home.payOnDelivery" | translate }}</span>
+      <span class="benefit-icon" aria-hidden="true">✓</span>
+      <div>
+        <strong>{{ "home.codPayment" | translate }}</strong
+        ><span>{{ "home.payOnDelivery" | translate }}</span>
+      </div>
     </div>
     <div>
-      <strong>{{ "home.trackYourOrders" | translate }}</strong
-      ><span>{{ "home.viewStatusUpdatesInYourAccount" | translate }}</span>
+      <span class="benefit-icon" aria-hidden="true">↗</span>
+      <div>
+        <strong>{{ "home.trackYourOrders" | translate }}</strong
+        ><span>{{ "home.viewStatusUpdatesInYourAccount" | translate }}</span>
+      </div>
     </div>
   </section>
-  <mat-card appearance="outlined" class="panel">
+  <section class="category-section" aria-labelledby="categories-title">
     <div class="section-heading">
-      <h2>{{ "home.shopByCategory" | translate }}</h2>
-      <a routerLink="/products">{{ "home.viewAll" | translate }}</a>
+      <div>
+        <p class="eyebrow">{{ "home.findYourNextFavorite" | translate }}</p>
+        <h2 id="categories-title">{{ "home.shopByCategory" | translate }}</h2>
+      </div>
+      <a mat-stroked-button routerLink="/products">{{
+        "home.viewAll" | translate
+      }}</a>
     </div>
-    @if (categoryError) {
-      <p class="error" role="alert">{{ categoryError }}</p>
+    @if (categoriesLoading) {
+      <div class="category-grid" aria-hidden="true">
+        @for (placeholder of [1, 2, 3, 4, 5]; track placeholder) {
+          <div class="shop-skeleton category-skeleton"></div>
+        }
+      </div>
+      <p class="muted" role="status">
+        {{ "home.loadingCategories" | translate }}
+      </p>
+    } @else if (categoryError) {
+      <div class="home-state">
+        <p class="error" role="alert">{{ categoryError }}</p>
+        <button mat-stroked-button type="button" (click)="loadCategories()">
+          {{ "common.retry" | translate }}
+        </button>
+      </div>
+    } @else {
+      <div class="category-grid">
+        @for (category of categories; track category.id) {
+          <a
+            class="category-tile"
+            routerLink="/products"
+            [queryParams]="{ categoryId: category.id }"
+            ><span class="category-icon" aria-hidden="true"
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path [attr.d]="categoryIcon(category)" /></svg></span
+            ><strong>{{ category.name }}</strong
+            ><span class="category-arrow" aria-hidden="true">↗</span></a
+          >
+        } @empty {
+          <p class="muted">{{ "home.noCategoriesYet" | translate }}</p>
+        }
+      </div>
     }
-    <div class="category-grid">
-      @for (category of categories; track category.id) {
-        <a
-          class="category-tile"
-          routerLink="/products"
-          [queryParams]="{ categoryId: category.id }"
-          ><span aria-hidden="true">{{ category.name.slice(0, 1) }}</span
-          ><strong>{{ category.name }}</strong></a
-        >
-      }
-    </div>
-  </mat-card>
-  <section class="home-products">
+  </section>
+  <section
+    class="home-products"
+    aria-labelledby="arrivals-title"
+    [attr.aria-busy]="loading"
+  >
     <div class="section-heading">
       <div>
         <p class="eyebrow">{{ "home.discoverMore" | translate }}</p>
-        <h2>{{ "home.newArrivals" | translate }}</h2>
+        <h2 id="arrivals-title">{{ "home.newArrivals" | translate }}</h2>
+        <p class="muted">{{ "home.newArrivalsDescription" | translate }}</p>
       </div>
-      <a routerLink="/products">{{ "home.seeMore" | translate }}</a>
+      <a mat-stroked-button routerLink="/products">{{
+        "home.seeMore" | translate
+      }}</a>
     </div>
     @if (loading) {
       <mat-progress-bar
         mode="indeterminate"
         [attr.aria-label]="'common.loadingData' | translate"
       />
-      <p class="state">{{ "common.loadingProducts" | translate }}</p>
+      <p class="muted" role="status">
+        {{ "common.loadingProducts" | translate }}
+      </p>
+      <div class="product-grid" aria-hidden="true">
+        @for (placeholder of [1, 2, 3, 4]; track placeholder) {
+          <div class="shop-skeleton-card">
+            <div class="shop-skeleton shop-skeleton-image"></div>
+            <div class="shop-skeleton shop-skeleton-line"></div>
+            <div
+              class="shop-skeleton shop-skeleton-line shop-skeleton-short"
+            ></div>
+          </div>
+        }
+      </div>
     } @else if (error) {
-      <p class="state error" role="alert">{{ error }}</p>
-    } @else {
+      <div class="home-state">
+        <p class="error" role="alert">{{ error }}</p>
+        <button mat-stroked-button type="button" (click)="loadProducts()">
+          {{ "common.retry" | translate }}
+        </button>
+      </div>
+    } @else if (products.length) {
       <div class="product-grid">
         @for (product of products; track product.id) {
           <app-product-card [product]="product" />
-        } @empty {
-          <p>{{ "home.noProductsYet" | translate }}</p>
         }
+      </div>
+    } @else {
+      <div class="home-state">
+        <p>{{ "home.noProductsYet" | translate }}</p>
+        <a mat-stroked-button routerLink="/products">{{
+          "home.exploreTheStore" | translate
+        }}</a>
       </div>
     }
   </section>

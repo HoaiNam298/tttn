@@ -40,6 +40,7 @@ import { ShopNotification } from '../../../models/notification.model';
     MatPaginatorModule,
   ],
   templateUrl: './notifications.component.html',
+  styleUrl: './notifications.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class NotificationsComponent {

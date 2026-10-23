@@ -35,6 +35,7 @@
   @if (!loading && !error && lines.length === 0) {
     <mat-card appearance="outlined" class="empty-state">
       <mat-card-content>
+        <div class="empty-icon" aria-hidden="true">🛒</div>
         <h2>{{ "cart.yourCartIsEmpty" | translate }}</h2>
         <p>
           {{ "cart.exploreTheStoreAndAddTheProductsYouLike" | translate }}
@@ -89,6 +90,8 @@
                 <img
                   [src]="line.product.thumbnail"
                   [alt]="line.product.name"
+                  width="88"
+                  height="88"
                   loading="lazy"
                   decoding="async"
                 />

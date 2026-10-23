@@ -1,7 +1,9 @@
 <main class="auth-page">
   <mat-card appearance="outlined" class="auth-card">
     <div class="auth-heading">
-      <a class="auth-brand" routerLink="/">ShopApp</a>
+      <a class="auth-brand" routerLink="/"
+        ><span class="brand-icon" aria-hidden="true">S</span>ShopApp</a
+      >
       <h1>{{ "auth.createAccount" | translate }}</h1>
       <p>{{ "auth.exploreProductsAndTrackYourOrders" | translate }}</p>
     </div>
@@ -11,7 +13,12 @@
         [attr.aria-label]="'auth.registering' | translate"
       />
     }
-    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="auth-form"
+      [attr.aria-busy]="loading"
+    >
       <mat-form-field appearance="outline"
         ><mat-label>{{ "auth.fullName2" | translate }}</mat-label
         ><input
@@ -19,6 +26,7 @@
           type="text"
           formControlName="fullName"
           autocomplete="name"
+          maxlength="100"
         /><mat-error>{{
           "auth.aNameIsRequiredUpTo100Characters" | translate
         }}</mat-error></mat-form-field
@@ -28,6 +36,7 @@
         ><input
           matInput
           type="tel"
+          inputmode="tel"
           formControlName="phoneNumber"
           autocomplete="tel"
         /><mat-error>{{
@@ -41,6 +50,7 @@
           type="text"
           formControlName="address"
           autocomplete="street-address"
+          maxlength="255"
         /><mat-error>{{
           "auth.anAddressIsRequiredUpTo255Characters" | translate
         }}</mat-error></mat-form-field
@@ -70,6 +80,9 @@
             showPassword ? ("auth.hide" | translate) : ("auth.show" | translate)
           }}
         </button>
+        <mat-hint>{{
+          "auth.passwordMustContain8To72Characters" | translate
+        }}</mat-hint>
         <mat-error>{{
           "auth.passwordMustContain8To72Characters" | translate
         }}</mat-error></mat-form-field

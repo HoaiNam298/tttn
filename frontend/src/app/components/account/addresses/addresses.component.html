@@ -10,6 +10,14 @@
   </div>
   @if (error) {
     <p class="error" role="alert">{{ error }}</p>
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="loading"
+      (click)="load()"
+    >
+      {{ "common.retry" | translate }}
+    </button>
   }
   @if (loading) {
     <mat-progress-bar
@@ -19,7 +27,11 @@
     <p class="state">{{ "account.loadingAddresses" | translate }}</p>
   } @else {
     @for (address of addresses; track address.id) {
-      <mat-card appearance="outlined" class="panel address-card">
+      <mat-card
+        appearance="outlined"
+        class="panel address-card"
+        [class.default-address]="address.defaultAddress"
+      >
         <div>
           <h2>
             {{ address.recipientName }} <span>{{ address.phoneNumber }}</span>
@@ -42,9 +54,13 @@
         </div>
       </mat-card>
     } @empty {
-      <p class="panel state">
-        {{ "account.noAddressesYetAddAnAddressForFasterCheckout" | translate }}
-      </p>
+      @if (!error) {
+        <p class="panel state">
+          {{
+            "account.noAddressesYetAddAnAddressForFasterCheckout" | translate
+          }}
+        </p>
+      }
     }
   }
   <ng-template #editor
@@ -71,18 +87,31 @@
         <div class="editor-fields">
           <mat-form-field appearance="outline"
             ><mat-label>{{ "account.recipient" | translate }}</mat-label
-            ><input matInput formControlName="recipientName" /><mat-error>{{
+            ><input
+              matInput
+              autocomplete="name"
+              maxlength="100"
+              formControlName="recipientName"
+            /><mat-error>{{
               "account.pleaseEnterAValidRecipientName" | translate
             }}</mat-error></mat-form-field
           ><mat-form-field appearance="outline"
             ><mat-label>{{ "common.phoneNumber" | translate }}</mat-label
-            ><input matInput formControlName="phoneNumber" /><mat-error>{{
+            ><input
+              matInput
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              formControlName="phoneNumber"
+            /><mat-error>{{
               "account.pleaseEnterAValidPhoneNumber" | translate
             }}</mat-error></mat-form-field
           ><mat-form-field appearance="outline"
             ><mat-label>{{ "common.address" | translate }}</mat-label
             ><textarea
               matInput
+              autocomplete="street-address"
+              maxlength="255"
               formControlName="shippingAddress"
               rows="3"
             ></textarea

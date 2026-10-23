@@ -12,6 +12,7 @@ mat-form-field {
 }
 .editor-fields {
   gap: 8px;
+  padding-bottom: 80px;
 }
 .form {
   border: 0;
@@ -20,4 +21,68 @@ mat-form-field {
 }
 .actions {
   flex-wrap: wrap;
+}
+
+h1 {
+  font-size: clamp(24px, 4vw, 32px);
+}
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.address-card {
+  border-radius: 20px;
+  justify-content: space-between;
+}
+.default-address {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+.address-card h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+.address-card h2 span {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  color: #475569;
+  margin-top: 8px;
+}
+.badge {
+  background: #ccfbf1;
+  color: #115e59;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
+.editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+  padding: 12px 0;
+}
+.form > .actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 12px 0;
+  border-top: 1px solid #e2e8f0;
+}
+.editor-heading h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.editor-heading button {
+  min-width: 44px;
 }

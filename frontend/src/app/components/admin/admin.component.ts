@@ -52,12 +52,36 @@ export class AdminComponent {
   @ViewChild('drawer') private drawer?: MatSidenav;
   readonly compact = signal(this.breakpoints.isMatched('(max-width: 900px)'));
   readonly navigation = [
-    { path: '/admin/dashboard', label: 'admin.overview' },
-    { path: '/admin/products', label: 'common.products' },
-    { path: '/admin/categories', label: 'admin.navigationCategories' },
-    { path: '/admin/orders', label: 'footer.orders' },
-    { path: '/admin/vouchers', label: 'admin.vouchers' },
-    { path: '/admin/reviews', label: 'admin.navigationReviews' },
+    {
+      icon: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
+      path: '/admin/dashboard',
+      label: 'admin.overview',
+    },
+    {
+      icon: 'm3 7 9-4 9 4v10l-9 4-9-4V7Zm0 0 9 4 9-4M12 11v10',
+      path: '/admin/products',
+      label: 'common.products',
+    },
+    {
+      icon: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
+      path: '/admin/categories',
+      label: 'admin.navigationCategories',
+    },
+    {
+      icon: 'M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6M9 12h6',
+      path: '/admin/orders',
+      label: 'footer.orders',
+    },
+    {
+      icon: 'M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4V5Zm12 0v14',
+      path: '/admin/vouchers',
+      label: 'admin.vouchers',
+    },
+    {
+      icon: 'M4 3h16v14H9l-5 4V3Zm4 5h8M8 12h5',
+      path: '/admin/reviews',
+      label: 'admin.navigationReviews',
+    },
   ] as const;
   loggingOut = false;
 

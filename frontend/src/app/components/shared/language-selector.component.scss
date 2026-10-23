@@ -3,11 +3,12 @@
   align-items: center;
 }
 select {
-  border: 1px solid #9ba8b6;
-  border-radius: 8px;
-  padding: 7px;
-  background: white;
-  color: #172033;
+  border: 1px solid var(--shop-border);
+  border-radius: var(--shop-radius-control);
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--shop-surface);
+  color: var(--shop-text);
   max-width: 112px;
   font: inherit;
   font-size: 13px;

@@ -1,41 +1,103 @@
+﻿@use "@angular/material" as mat;
+.catalog-page {
+  padding-top: 28px;
+}
+.breadcrumb {
+  margin-bottom: 16px;
+}
+.page-heading {
+  margin-bottom: 20px;
+}
 .page-heading h1 {
   font-size: clamp(26px, 4vw, 36px);
+  letter-spacing: -0.8px;
 }
 .page-description {
-  color: #64748b;
-  margin: 12px 0 0;
+  color: var(--shop-muted);
+  margin: 8px 0 0;
+  font-size: 14px;
   line-height: 1.6;
 }
 .filter-card {
-  border-radius: 16px;
-  background: #fff;
+  border-radius: var(--shop-radius-card);
+  background: var(--shop-surface);
 }
 .filter-card mat-card-content {
-  padding: 24px;
+  padding: 16px;
 }
-.catalog-filters {
+.catalog-toolbar,
+.advanced-filters {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px 16px;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: 12px;
 }
-.catalog-filters mat-form-field {
+mat-form-field {
   width: 100%;
   min-width: 0;
+  @include mat.form-field-overrides(
+    (
+      container-height: 44px,
+      container-vertical-padding: 10px,
+      outlined-container-shape: 10px,
+    )
+  );
+}
+.catalog-toolbar > button {
+  margin-top: 2px;
+}
+.filter-toggle svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin: 0 4px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: var(--shop-primary-soft);
+  color: var(--shop-primary);
+  font-size: 11px;
+}
+.advanced-filters {
+  border-top: 1px solid var(--shop-border);
+  padding-top: 20px;
+  margin-top: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.advanced-filters[hidden] {
+  display: none;
 }
 .filter-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
   gap: 8px;
-  padding-top: 8px;
-}
-.filter-actions button {
-  min-height: 40px;
+  grid-column: 1 / -1;
 }
 .filter-error {
-  color: #b91c1c;
-  font-size: 14px;
+  color: var(--shop-error);
+  font-size: 13px;
   margin: 8px 0 0;
+}
+.applied-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-chip {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--shop-primary-soft);
+  color: var(--shop-primary-hover);
+  font-size: 12px;
 }
 .catalog-results {
   margin-top: 24px;
@@ -45,47 +107,77 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 .results-heading h2 {
   font-size: 20px;
   margin: 0;
 }
-.results-heading span {
-  font-size: 14px;
-  color: #64748b;
+.results-heading > span {
+  font-size: 13px;
+  color: var(--shop-muted);
 }
 .result-state {
   text-align: center;
-  border-radius: 16px;
-  background: #fff;
+  border-radius: var(--shop-radius-card);
+  background: var(--shop-surface);
 }
 .result-state mat-card-content {
-  padding: 40px 24px;
+  padding: 32px 20px;
 }
 .result-state h2 {
   font-size: 20px;
 }
 .result-state p {
-  color: #64748b;
+  color: var(--shop-muted);
   line-height: 1.6;
+}
+.state-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: var(--shop-accent-soft);
+  color: var(--shop-accent);
+  font-size: 32px;
 }
 .catalog-paginator {
   margin-top: 24px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--shop-border);
   border-radius: 12px;
 }
-@media (max-width: 800px) {
-  .catalog-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 700px) {
+  .catalog-page {
+    padding-top: 16px;
   }
-}
-@media (max-width: 480px) {
-  .catalog-filters {
-    grid-template-columns: 1fr;
+  .catalog-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .catalog-toolbar mat-form-field:first-child {
+    grid-column: 1 / -1;
+  }
+  .catalog-toolbar > button[type="submit"] {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .filter-toggle {
+    grid-column: 1 / -1;
+  }
+  .advanced-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .advanced-filters mat-form-field:first-child {
+    grid-column: 1 / -1;
+  }
+  .page-description {
+    display: none;
   }
   .filter-card mat-card-content {
-    padding: 20px 16px;
+    padding: 12px;
   }
 }

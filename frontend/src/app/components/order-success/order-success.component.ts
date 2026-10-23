@@ -25,6 +25,7 @@ import { OrderService } from '../../services/order.service';
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './order-success.component.html',
+  styleUrl: './order-success.component.scss',
 })
 export class OrderSuccessComponent implements OnInit {
   private readonly translate = inject(TranslateService);

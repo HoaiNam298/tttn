@@ -1,4 +1,4 @@
-<main class="container">
+<main class="container detail-page">
   <nav class="breadcrumb" [attr.aria-label]="'common.breadcrumb' | translate">
     <a routerLink="/">{{ "catalog.home" | translate }}</a
     ><span>/</span
@@ -12,8 +12,25 @@
       ><span>/</span><span>{{ value.name }}</span>
     }
   </nav>
-  @if (error) {
-    <p class="state error">{{ error }}</p>
+  @if (loading) {
+    <div class="detail-loading" role="status">
+      <div class="shop-skeleton shop-skeleton-image" aria-hidden="true"></div>
+      <div>
+        <p>{{ "common.loadingProducts" | translate }}</p>
+        <div class="shop-skeleton shop-skeleton-line" aria-hidden="true"></div>
+        <div
+          class="shop-skeleton shop-skeleton-line shop-skeleton-short"
+          aria-hidden="true"
+        ></div>
+      </div>
+    </div>
+  } @else if (error) {
+    <div class="panel state">
+      <p class="error" role="alert">{{ error }}</p>
+      <a mat-stroked-button routerLink="/products">{{
+        "common.products" | translate
+      }}</a>
+    </div>
   }
   @if (product; as value) {
     <mat-card appearance="outlined" class="product-detail-card panel">
@@ -30,6 +47,10 @@
             <img
               [src]="selectedImage"
               [alt]="value.name"
+              width="640"
+              height="480"
+              fetchpriority="high"
+              decoding="async"
               (error)="onImageError($event)"
             />
           } @else {
@@ -38,13 +59,18 @@
         </button>
         <small>{{ "catalog.clickTheImageToEnlarge" | translate }}</small>
         <div class="thumbnail-list">
-          @for (image of images; track image) {
+          @for (image of images; track image; let imageIndex = $index) {
             @if (image) {
               <button
                 mat-button
                 type="button"
                 class="thumbnail"
                 [class.selected]="image === selectedImage"
+                [attr.aria-pressed]="image === selectedImage"
+                [attr.aria-label]="
+                  'catalog.productImageNumber'
+                    | translate: { index: imageIndex + 1 }
+                "
                 (click)="selectedImage = image"
               >
                 <img
@@ -59,12 +85,16 @@
           }
         </div>
       </section>
-      <section class="product-purchase">
-        <span class="badge">{{ value.category.name }}</span>
-        <h1>{{ value.name }}</h1>
-        <div>
-          <button
+      <section
+        class="product-purchase"
+        [attr.aria-label]="'catalog.purchaseInformation' | translate"
+      >
+        <div class="purchase-meta">
+          <span class="badge">{{ value.category.name }}</span
+          ><button
             mat-stroked-button
+            type="button"
+            class="favorite-button"
             [disabled]="favoriteBusy"
             [attr.aria-pressed]="favorite"
             (click)="toggleFavorite()"
@@ -75,23 +105,38 @@
                 : ("catalog.addToFavorites" | translate)
             }}
           </button>
-          @if (favoriteError) {
-            <p class="error">{{ favoriteError }}</p>
-          }
         </div>
-        <div class="rating-summary">
-          <strong>{{ averageRating | shopNumber: "1.1-1" }}</strong
-          ><span class="stars">{{ starText(averageRating) }}</span
-          ><span>{{
-            "catalog.reviews" | translate: { p0: totalReviews }
-          }}</span>
-        </div>
-        <p class="price">
-          @if (value.variants?.length && !selectedVariant) {
-            {{ "catalog.from" | translate }}
+        @if (favoriteError) {
+          <p class="error" role="alert">{{ favoriteError }}</p>
+        }
+        <h1>{{ value.name }}</h1>
+        <a class="rating-summary" [href]="reviewLink">
+          @if (reviewsLoading) {
+            <span>{{ "catalog.loadingProductReviews" | translate }}</span>
+          } @else if (reviewLoadError) {
+            <span>{{ "catalog.productReviews" | translate }}</span>
+          } @else if (totalReviews) {
+            <strong>{{ averageRating | shopNumber: "1.1-1" }}</strong
+            ><span class="stars" aria-hidden="true">{{
+              starText(averageRating)
+            }}</span
+            ><span>{{
+              "catalog.reviews" | translate: { p0: totalReviews }
+            }}</span>
+          } @else {
+            <span>{{ "catalog.noRatingsYet" | translate }}</span>
           }
-          {{ purchasePrice | shopMoney }}
-        </p>
+          <span aria-hidden="true">↗</span>
+        </a>
+        <div class="purchase-price-panel">
+          <p class="price">
+            @if (value.variants?.length && !selectedVariant) {
+              <small>{{ "catalog.from" | translate }}</small>
+            }
+            {{ purchasePrice | shopMoney }}
+          </p>
+          <small>{{ "catalog.priceStockRechecked" | translate }}</small>
+        </div>
         @if (value.variants?.length) {
           <div
             class="variant-options"
@@ -115,7 +160,7 @@
               }
             </div>
             @if (!selectedVariant) {
-              <small>{{
+              <small class="variant-hint">{{
                 "catalog.chooseAVariantToViewItsPriceAndStock" | translate
               }}</small>
             } @else {
@@ -123,34 +168,44 @@
             }
           </div>
         }
-        <p class="stock">
-          {{
-            "catalog.productsAvailable" | translate: { count: purchaseStock }
-          }}
-          @if (selectedVariant) {
-            · {{ selectedVariant.name }}
-          }
-        </p>
+        @if (!value.variants?.length || selectedVariant) {
+          <p class="stock" [class.unavailable]="purchaseStock <= 0">
+            <span aria-hidden="true">{{ purchaseStock > 0 ? "✓" : "!" }}</span>
+            {{
+              "catalog.productsAvailable" | translate: { count: purchaseStock }
+            }}
+            @if (selectedVariant) {
+              · {{ selectedVariant.name }}
+            }
+          </p>
+        }
         <div class="quantity-control">
-          <span>{{ "common.quantityOf" | translate }}</span
-          ><button
-            mat-stroked-button
-            type="button"
-            [disabled]="quantity <= 1"
-            (click)="quantity = quantity - 1"
-          >
-            −</button
-          ><strong>{{ quantity }}</strong
-          ><button
-            mat-stroked-button
-            type="button"
-            [disabled]="quantity >= purchaseStock"
-            (click)="quantity = quantity + 1"
-          >
-            +
-          </button>
+          <span>{{ "common.quantityOf" | translate }}</span>
+          <div class="quantity-stepper">
+            <button
+              mat-stroked-button
+              type="button"
+              [attr.aria-label]="'catalog.decreaseQuantity' | translate"
+              [disabled]="quantity <= 1"
+              (click)="quantity = quantity - 1"
+            >
+              −</button
+            ><strong aria-live="polite">{{ quantity }}</strong
+            ><button
+              mat-stroked-button
+              type="button"
+              [attr.aria-label]="'catalog.increaseQuantity' | translate"
+              [disabled]="quantity >= purchaseStock"
+              (click)="quantity = quantity + 1"
+            >
+              +
+            </button>
+          </div>
         </div>
-        <div class="actions">
+        @if (purchaseError) {
+          <p class="error" role="alert">{{ purchaseError }}</p>
+        }
+        <div class="purchase-actions">
           <button
             mat-stroked-button
             type="button"
@@ -159,19 +214,20 @@
           >
             {{ "catalog.addToCart" | translate }}</button
           ><button
-            mat-stroked-button
+            mat-flat-button
+            class="buy-button"
             type="button"
             [disabled]="purchaseStock < quantity"
             (click)="buyNow()"
           >
             {{ "catalog.buyNow" | translate }}
+            <span aria-hidden="true">↗</span>
           </button>
         </div>
-        @if (added) {
-          <p class="success">
-            {{ "catalog.productAddedToYourCart" | translate }}
-          </p>
-        }
+        <p class="purchase-note">
+          <span aria-hidden="true">✓</span>
+          {{ "home.payOnDelivery" | translate }}
+        </p>
       </section>
     </mat-card>
     <mat-card appearance="outlined" class="panel product-description">
@@ -200,11 +256,20 @@
       @if (reviewLoadError) {
         <p class="error" role="alert">{{ reviewLoadError }}</p>
       }
-      <div class="review-overview">
-        <strong>{{ averageRating | shopNumber: "1.1-1" }}/5</strong
-        ><span class="stars">{{ starText(averageRating) }}</span
-        ><span>{{ "catalog.reviews2" | translate: { p0: totalReviews } }}</span>
-      </div>
+      @if (totalReviews) {
+        <div class="review-overview">
+          <strong
+            >{{ averageRating | shopNumber: "1.1-1" }}<small>/5</small></strong
+          ><span class="stars">{{ starText(averageRating) }}</span
+          ><span>{{
+            "catalog.reviews2" | translate: { p0: totalReviews }
+          }}</span>
+        </div>
+      } @else if (!reviewsLoading && !reviewLoadError) {
+        <p class="review-empty-heading">
+          {{ "catalog.noRatingsYet" | translate }}
+        </p>
+      }
       <div class="actions review-filters">
         <button
           mat-stroked-button
@@ -327,44 +392,53 @@
       @if (reviewError) {
         <p class="error">{{ reviewError }}</p>
       }
-      <div class="review-list">
-        @for (review of reviews; track review.id) {
-          <article class="review-item">
-            <div>
-              <strong>{{ review.reviewerName }}</strong
-              ><span class="stars">{{ starText(review.rating) }}</span>
-            </div>
-            <small>{{ review.createdAt | shopDate }}</small>
-            <p>{{ review.comment }}</p>
-            <div class="review-photos">
-              @for (image of review.images; track image) {
-                <a [href]="image" target="_blank" rel="noopener"
-                  ><img
-                    [src]="image"
-                    [attr.alt]="'catalog.buyerReviewPhoto' | translate"
-                    width="100"
-                    height="100"
-                    loading="lazy"
-                    decoding="async"
-                /></a>
+      @if (reviewsLoading) {
+        <p class="state" role="status">
+          {{ "catalog.loadingProductReviews" | translate }}
+        </p>
+      } @else {
+        <div class="review-list">
+          @for (review of reviews; track review.id) {
+            <article class="review-item">
+              <div class="review-author">
+                <span class="review-avatar" aria-hidden="true">{{
+                  review.reviewerName.slice(0, 1).toUpperCase()
+                }}</span>
+                <strong>{{ review.reviewerName }}</strong
+                ><span class="stars">{{ starText(review.rating) }}</span>
+              </div>
+              <small>{{ review.createdAt | shopDate }}</small>
+              <p>{{ review.comment }}</p>
+              <div class="review-photos">
+                @for (image of review.images; track image) {
+                  <a [href]="image" target="_blank" rel="noopener"
+                    ><img
+                      [src]="image"
+                      [attr.alt]="'catalog.buyerReviewPhoto' | translate"
+                      width="100"
+                      height="100"
+                      loading="lazy"
+                      decoding="async"
+                  /></a>
+                }
+              </div>
+              @if (review.shopReply) {
+                <blockquote class="shop-reply">
+                  <strong>{{ "catalog.storeReply" | translate }}</strong>
+                  <p>{{ review.shopReply }}</p>
+                  <small>{{ review.repliedAt | shopDate }}</small>
+                </blockquote>
               }
-            </div>
-            @if (review.shopReply) {
-              <blockquote class="shop-reply">
-                <strong>{{ "catalog.storeReply" | translate }}</strong>
-                <p>{{ review.shopReply }}</p>
-                <small>{{ review.repliedAt | shopDate }}</small>
-              </blockquote>
+            </article>
+          } @empty {
+            @if (!reviewLoadError) {
+              <p class="state">
+                {{ "catalog.noReviewsMatchTheSelectedFilter" | translate }}
+              </p>
             }
-          </article>
-        } @empty {
-          @if (!reviewLoadError) {
-            <p class="state">
-              {{ "catalog.noReviewsMatchTheSelectedFilter" | translate }}
-            </p>
           }
-        }
-      </div>
+        </div>
+      }
       @if (reviewTotalPages > 1) {
         <mat-paginator
           [length]="reviewTotalElements"

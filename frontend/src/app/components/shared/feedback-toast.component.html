@@ -1,0 +1,22 @@
+<div [class]="'feedback feedback-' + data.kind">
+  <span class="feedback-icon" aria-hidden="true">{{ icon }}</span>
+  <div class="feedback-content">
+    <div role="status" aria-live="polite" aria-atomic="true">
+      <strong>{{ "feedback." + data.kind | translate }}</strong>
+      <p>{{ data.messageKey | translate }}</p>
+    </div>
+    @if (data.action; as action) {
+      <a [routerLink]="action.route" (click)="close()"
+        >{{ action.labelKey | translate }} <span aria-hidden="true">→</span></a
+      >
+    }
+  </div>
+  <button
+    type="button"
+    class="feedback-close"
+    (click)="close()"
+    [attr.aria-label]="'feedback.close' | translate"
+  >
+    ×
+  </button>
+</div>

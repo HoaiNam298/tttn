@@ -68,6 +68,36 @@
 .delete-action {
   color: #b91c1c;
 }
+.gallery-section {
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+.image-card {
+  background: #f8fafc;
+}
+.image-card:first-child {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+.section-heading h3 {
+  margin: 8px 0;
+  font-size: 18px;
+}
+.variant-form-grid mat-form-field {
+  min-width: 0;
+}
+.variant-actions {
+  margin: 16px 0;
+}
+.image-actions button,
+.variant-actions button {
+  min-height: 44px;
+}
+h3 {
+  overflow-wrap: anywhere;
+}
 mat-expansion-panel {
   margin-bottom: 12px;
   border: 1px solid #e2e8f0;

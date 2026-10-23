@@ -1,4 +1,12 @@
 {
+  "feedback": {
+    "success": "Thành công",
+    "info": "Thông tin",
+    "warning": "Cần bạn lưu ý",
+    "error": "Chưa thực hiện được",
+    "close": "Đóng thông báo",
+    "viewCart": "Xem giỏ hàng"
+  },
   "common": {
     "language": "Ngôn ngữ",
     "home": "ShopApp — Trang chủ",
@@ -217,6 +225,11 @@
     "cannotCalculateTheTotalCheckTheVoucherAndTry": "Không tính được tổng tiền. Hãy kiểm tra voucher và thử lại."
   },
   "home": {
+    "productSpotlight": "Gợi ý hôm nay",
+    "findYourNextFavorite": "Tìm điều bạn thích",
+    "newArrivalsDescription": "Khám phá những sản phẩm vừa được cập nhật tại ShopApp.",
+    "loadingCategories": "Đang tải danh mục...",
+    "noCategoriesYet": "Danh mục đang được cập nhật. Bạn có thể xem tất cả sản phẩm.",
     "shopappEverydayTechnology": "ShopApp · Công nghệ mỗi ngày",
     "exploreTechnology": "Khám phá công nghệ.",
     "chooseWhatYouLove": "Chọn điều bạn thích.",
@@ -351,6 +364,18 @@
     "cannotLoadOrderInformation": "Không thể tải thông tin đơn hàng."
   },
   "catalog": {
+    "purchaseInformation": "Thông tin mua hàng",
+    "noRatingsYet": "Chưa có đánh giá",
+    "loadingProductReviews": "Đang tải đánh giá...",
+    "priceStockRechecked": "Giá và tồn kho được kiểm tra lại khi đặt hàng.",
+    "decreaseQuantity": "Giảm số lượng",
+    "increaseQuantity": "Tăng số lượng",
+    "productImageNumber": "Ảnh sản phẩm {{index}}",
+    "cartCouldNotBeSaved": "Không lưu được giỏ hàng trên trình duyệt. Vui lòng kiểm tra quyền lưu trữ và thử lại.",
+    "filters": "Bộ lọc",
+    "appliedFilters": "Bộ lọc đang áp dụng",
+    "imageComingSoon": "Ảnh đang cập nhật",
+    "outOfStockCard": "Hết hàng",
     "home": "Trang chủ",
     "enlargeProductImage": "Phóng to ảnh sản phẩm",
     "clickTheImageToEnlarge": "Bấm vào ảnh để phóng to",

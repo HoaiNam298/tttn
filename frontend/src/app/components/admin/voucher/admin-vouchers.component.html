@@ -37,14 +37,19 @@
       {{ "account.refresh" | translate }}
     </button>
   </div>
-  <div class="table-wrap">
+  <div
+    class="table-wrap"
+    tabindex="0"
+    role="region"
+    [attr.aria-label]="'admin.vouchers' | translate"
+  >
     <table mat-table [dataSource]="result?.content || []">
       <ng-container matColumnDef="code"
         ><th mat-header-cell *matHeaderCellDef>
           {{ "admin.code" | translate }}
         </th>
         <td mat-cell *matCellDef="let row">
-          <strong>{{ row.code }}</strong
+          <strong class="voucher-code">{{ row.code }}</strong
           ><small>{{
             row.targetUserId
               ? ("admin.forUser" | translate) + row.targetUserId
@@ -57,8 +62,19 @@
           {{ "admin.discount" | translate }}
         </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.amount | shopNumber }}
-          {{ row.type === "PERCENT" ? "%" : ("catalog.label" | translate) }}
+          <strong class="discount-value">
+            @if (row.type === "PERCENT") {
+              {{ row.amount | shopNumber }}%
+            } @else {
+              {{ row.amount | shopMoney }}
+            }
+          </strong>
+          @if (row.maximumDiscount != null) {
+            <small
+              >{{ "admin.maximumDiscountVnd" | translate }}:
+              {{ row.maximumDiscount | shopMoney }}</small
+            >
+          }
         </td></ng-container
       >
       <ng-container matColumnDef="minimum"
@@ -74,8 +90,11 @@
           {{ "admin.uses" | translate }}
         </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.usedCount }}/{{ row.usageLimit
-          }}<small>{{
+          <strong
+            >{{ row.usedCount | shopNumber }}/{{
+              row.usageLimit | shopNumber
+            }}</strong
+          ><small>{{
             "admin.perCustomer" | translate: { p0: row.perUserLimit }
           }}</small>
         </td></ng-container
@@ -85,7 +104,13 @@
           {{ "admin.expires" | translate }}
         </th>
         <td mat-cell *matCellDef="let row">
-          {{ row.endsAt | shopDate }}
+          <small
+            >{{ "admin.start" | translate }}:
+            {{ row.startsAt | shopDate }}</small
+          >
+          <span
+            >{{ "admin.end" | translate }}: {{ row.endsAt | shopDate }}</span
+          >
         </td></ng-container
       >
       <ng-container matColumnDef="active"
@@ -110,7 +135,12 @@
           {{ "admin.actions" | translate }}
         </th>
         <td mat-cell *matCellDef="let row">
-          <button mat-button [disabled]="saving || loading" (click)="open(row)">
+          <button
+            mat-stroked-button
+            [disabled]="saving || loading"
+            (click)="open(row)"
+            [attr.aria-label]="('account.edit' | translate) + ': ' + row.code"
+          >
             {{ "account.edit" | translate }}
           </button>
         </td></ng-container
@@ -147,23 +177,26 @@
         : ("admin.createVoucher" | translate)
     }}
   </h2>
-  <form [formGroup]="form" (ngSubmit)="save()">
+  <form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="saving">
     <mat-dialog-content>
       @if (editorError) {
         <p class="error" role="alert">{{ editorError }}</p>
       }
       <div class="editor-grid">
-        <mat-form-field appearance="outline"
-          ><mat-label>{{
-            "admin.codeCannotChangeAfterCreation" | translate
-          }}</mat-label
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"
+          ><mat-label>{{ "admin.code" | translate }}</mat-label
           ><input
             matInput
             type="text"
             formControlName="code"
             maxlength="40"
-            [readOnly]="saving || !!editing"
-          /><mat-error>{{
+            autocomplete="off"
+            autocapitalize="characters"
+            [readonly]="saving || !!editing"
+          /><mat-hint>{{
+            "admin.codeCannotChangeAfterCreation" | translate
+          }}</mat-hint
+          ><mat-error>{{
             "admin.pleaseEnterAValidCodeCannotChangeAfterCreation" | translate
           }}</mat-error></mat-form-field
         >
@@ -186,7 +219,7 @@
             formControlName="amount"
             min="0.01"
             step="0.01"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidDiscountValue" | translate
           }}</mat-error></mat-form-field
@@ -199,7 +232,7 @@
             formControlName="minimumSubtotal"
             min="0"
             step="0.01"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidMinimumOrderVnd" | translate
           }}</mat-error></mat-form-field
@@ -212,7 +245,7 @@
             formControlName="maximumDiscount"
             min="0.01"
             step="0.01"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidMaximumDiscountVnd" | translate
           }}</mat-error></mat-form-field
@@ -223,7 +256,7 @@
             matInput
             type="datetime-local"
             formControlName="startsAt"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidStartDate" | translate
           }}</mat-error></mat-form-field
@@ -234,7 +267,7 @@
             matInput
             type="datetime-local"
             formControlName="endsAt"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidEndDate" | translate
           }}</mat-error></mat-form-field
@@ -247,7 +280,7 @@
             formControlName="usageLimit"
             min="1"
             step="1"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidTotalUsageLimit" | translate
           }}</mat-error></mat-form-field
@@ -260,7 +293,7 @@
             formControlName="perUserLimit"
             min="1"
             step="1"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidPerCustomerLimit" | translate
           }}</mat-error></mat-form-field
@@ -275,7 +308,7 @@
             formControlName="targetUserId"
             min="1"
             step="1"
-            [readOnly]="saving"
+            [readonly]="saving"
           /><mat-error>{{
             "admin.pleaseEnterAValidUserIdBlankAllCustomers" | translate
           }}</mat-error></mat-form-field

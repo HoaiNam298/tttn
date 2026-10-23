@@ -26,6 +26,7 @@ import { Product } from '../../models/product.model';
 import { PageResponse } from '../../responses/page.response';
 import { ProductSort } from '../../models/product-filter.model';
 import { ProductCardComponent } from '../shared/product-card.component';
+import { ShopMoneyPipe } from '../shared/shop-money.pipe';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -46,6 +47,7 @@ import { createMaterialPaginatorIntl } from '../shared/material-paginator-intl';
     ReactiveFormsModule,
     RouterLink,
     ProductCardComponent,
+    ShopMoneyPipe,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -86,7 +88,34 @@ export class ProductListComponent implements OnInit {
   loading = true;
   error = '';
   categoryError = '';
-  filterError = '';
+  filtersOpen = false;
+  appliedFilters = this.form.getRawValue();
+  private invalidRange = false;
+
+  get filterError(): string {
+    return this.invalidRange
+      ? this.translate.instant(
+          'catalog.invalidPriceRangeTheMinimumMustNotExceedThe',
+        )
+      : '';
+  }
+
+  get activeFilterCount(): number {
+    const value = this.appliedFilters;
+    return (
+      Number(Boolean(value.keyword?.trim())) +
+      Number(value.categoryId != null) +
+      Number(value.minPrice != null || value.maxPrice != null)
+    );
+  }
+
+  get appliedCategoryName(): string {
+    return (
+      this.categories.find(
+        (category) => category.id === this.appliedFilters.categoryId,
+      )?.name ?? this.translate.instant('catalog.category')
+    );
+  }
 
   ngOnInit(): void {
     this.catalog
@@ -127,9 +156,8 @@ export class ProductListComponent implements OnInit {
         value.maxPrice != null &&
         value.minPrice > value.maxPrice)
     ) {
-      this.filterError = this.translate.instant(
-        'catalog.invalidPriceRangeTheMinimumMustNotExceedThe',
-      );
+      this.invalidRange = true;
+      this.filtersOpen = true;
       return;
     }
     void this.router.navigate(['/products'], {
@@ -166,8 +194,9 @@ export class ProductListComponent implements OnInit {
     const page = this.parseNonNegativeNumber(params.get('page')) ?? 0;
     this.loading = true;
     this.error = '';
-    this.filterError = '';
+    this.invalidRange = false;
     const value = this.form.getRawValue();
+    this.appliedFilters = { ...value };
     return this.catalog
       .products(
         value.keyword ?? '',

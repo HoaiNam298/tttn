@@ -1,0 +1,140 @@
+:host {
+  display: block;
+}
+:host {
+  position: relative;
+  min-width: 0;
+  padding: 8px;
+}
+:host::before {
+  content: "";
+  position: absolute;
+  width: 88%;
+  aspect-ratio: 1;
+  top: -10px;
+  right: -40px;
+  border-radius: 50%;
+  background: #fbbf24;
+  opacity: 0.7;
+}
+.spotlight {
+  position: relative;
+  display: block;
+  padding: 18px;
+  border: 1px solid #ffffff;
+  border-radius: 20px;
+  background: #ffffffed;
+  box-shadow: var(--shop-shadow-raised);
+  text-decoration: none;
+  color: var(--shop-text);
+  transition: transform var(--shop-duration-fast);
+}
+.spotlight-label {
+  display: flex;
+  justify-content: space-between;
+  color: var(--shop-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.spotlight-label span {
+  font-size: 20px;
+  line-height: 1;
+}
+.spotlight-image {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 8 / 5;
+  margin: 12px 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f4f7fa;
+}
+.spotlight-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.spotlight svg {
+  width: 120px;
+  height: 120px;
+  color: var(--shop-primary);
+}
+.spotlight-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+}
+.spotlight-info small {
+  color: var(--shop-muted);
+  font-size: 11px;
+}
+.spotlight-info h2 {
+  margin: 4px 0 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.spotlight-info strong {
+  color: var(--shop-accent);
+  font-size: 18px;
+  white-space: nowrap;
+}
+.spotlight-placeholder {
+  min-height: 310px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.spotlight-placeholder p {
+  color: var(--shop-muted);
+  font-size: 13px;
+}
+.spotlight-skeleton {
+  width: 100%;
+  height: 180px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spotlight:hover {
+    transform: translateY(-3px);
+  }
+}
+@media (max-width: 1000px) {
+  .spotlight-info {
+    display: block;
+  }
+  .spotlight-info strong {
+    display: block;
+    margin-top: 8px;
+  }
+}
+@media (max-width: 760px) {
+  :host {
+    padding: 0;
+  }
+  :host::before {
+    right: -35px;
+  }
+  .spotlight-info {
+    display: flex;
+  }
+}
+@media (max-width: 480px) {
+  .spotlight {
+    padding: 14px;
+  }
+  .spotlight-info {
+    display: block;
+  }
+  .spotlight-image {
+    aspect-ratio: 2 / 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight:hover {
+    transform: none;
+  }
+}

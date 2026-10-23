@@ -17,7 +17,7 @@
   } @else {
     <div class="product-grid">
       @for (product of products; track product.id) {
-        <div>
+        <div class="favorite-item">
           <app-product-card [product]="product" /><button
             mat-stroked-button
             [disabled]="removingId !== undefined"
