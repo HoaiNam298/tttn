@@ -1,11 +1,27 @@
+@use "@angular/material" as mat;
+
 :host {
   display: block;
 }
 .admin-shell {
-  min-height: 100dvh;
+  height: 100dvh;
   background: #f5f7fb;
 }
+.admin-shell > mat-sidenav-content {
+  height: 100%;
+  overflow: auto;
+}
 .admin-sidebar {
+  @include mat.list-overrides(
+    (
+      list-item-label-text-color: #d2dbe9,
+      list-item-hover-label-text-color: #fff,
+      list-item-focus-label-text-color: #fff,
+      list-item-hover-state-layer-color: #fff,
+      list-item-focus-state-layer-color: #fff,
+    )
+  );
+
   width: 248px;
   background: #18243c;
   border: 0;
@@ -52,6 +68,14 @@
   color: #d2dbe9;
   font-size: 14px;
   font-weight: 500;
+}
+.nav-link:hover .nav-label,
+.nav-link:focus-visible .nav-label {
+  color: #fff;
+}
+.nav-link:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: -2px;
 }
 .nav-link.selected {
   background: #0f766e;
