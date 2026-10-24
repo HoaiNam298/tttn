@@ -22,7 +22,8 @@ import { RouterLink } from '@angular/router';
 import {
   OrderSummary,
   OrderStatus,
-  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUSES,
+  PaymentStatus,
 } from '../../models/order.model';
 import { EMPTY, Subject, catchError, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -50,13 +51,13 @@ import { OrderService } from '../../services/order.service';
 })
 export class OrderHistoryComponent implements OnInit {
   private readonly translate = inject(TranslateService);
-  get paymentLabels(): typeof PAYMENT_STATUS_LABELS {
+  get paymentLabels(): Record<PaymentStatus, string> {
     return Object.fromEntries(
-      Object.keys(PAYMENT_STATUS_LABELS).map((status) => [
+      PAYMENT_STATUSES.map((status) => [
         status,
         this.translate.instant('paymentStatus.' + status),
       ]),
-    ) as typeof PAYMENT_STATUS_LABELS;
+    ) as Record<PaymentStatus, string>;
   }
   private readonly orders = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);

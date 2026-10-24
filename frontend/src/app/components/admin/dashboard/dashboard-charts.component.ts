@@ -18,7 +18,7 @@ import { ChartPoint } from '../../../models/chart-point.model';
 import { ChartTick } from '../../../models/chart-tick.model';
 import { ChartBar } from '../../../models/chart-bar.model';
 import { ChartSegment } from '../../../models/chart-segment.model';
-import { ORDER_STATUS_LABELS, OrderStatus } from '../../../models/order.model';
+import { ORDER_STATUSES, OrderStatus } from '../../../models/order.model';
 
 @Component({
   selector: 'app-dashboard-charts',
@@ -148,7 +148,7 @@ export class DashboardChartsComponent implements OnChanges {
   }
 
   private buildStatuses(): void {
-    const statuses = Object.keys(ORDER_STATUS_LABELS) as OrderStatus[];
+    const statuses = ORDER_STATUSES;
     this.totalOrders = statuses.reduce(
       (total, status) => total + (this.report.statusCounts[status] ?? 0),
       0,

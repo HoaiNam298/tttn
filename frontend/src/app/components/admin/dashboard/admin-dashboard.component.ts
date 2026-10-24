@@ -31,7 +31,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { DailyRevenue } from '../../../models/daily-revenue.model';
 import { DashboardService } from '../../../services/dashboard.service';
 import { DashboardReport } from '../../../responses/dashboard.response';
-import { ORDER_STATUS_LABELS, OrderStatus } from '../../../models/order.model';
+import { ORDER_STATUSES, OrderStatus } from '../../../models/order.model';
 import { DashboardChartsComponent } from './dashboard-charts.component';
 
 function createPaginatorIntl(): MatPaginatorIntl {
@@ -94,13 +94,13 @@ export class AdminDashboardComponent implements OnInit {
     ],
     to: [this.today, Validators.required],
   });
-  get labels(): typeof ORDER_STATUS_LABELS {
+  get labels(): Record<OrderStatus, string> {
     return Object.fromEntries(
-      Object.keys(ORDER_STATUS_LABELS).map((status) => [
+      ORDER_STATUSES.map((status) => [
         status,
         this.translate.instant('orderStatus.' + status),
       ]),
-    ) as typeof ORDER_STATUS_LABELS;
+    ) as Record<OrderStatus, string>;
   }
   readonly processingStates = [
     'PENDING',

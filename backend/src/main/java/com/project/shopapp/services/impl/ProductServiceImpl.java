@@ -47,10 +47,6 @@ public class ProductServiceImpl implements ProductService {
         this.orders = orders;
     }
 
-    public Page<ProductResponse> findAll(String keyword, Long categoryId, Pageable pageable) {
-        return findAll(keyword, categoryId, null, null, pageable);
-    }
-
     @Override
     public Page<ProductResponse> findAll(
             String keyword,

@@ -105,7 +105,11 @@
                 [routerLink]="['/products', line.product.id]"
                 >{{ line.product.name }}</a
               >
-              @if (line.variantName) {
+              @if (line.variantMessageKey) {
+                <p class="variant-name">
+                  {{ line.variantMessageKey | translate }}
+                </p>
+              } @else if (line.variantName) {
                 <p class="variant-name">
                   {{ "cart.variant" | translate: { p0: line.variantName } }}
                 </p>

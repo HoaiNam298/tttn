@@ -99,10 +99,6 @@ export class CartService {
     );
   }
 
-  clear(): void {
-    this.save([]);
-  }
-
   addOrder(order: Order): Observable<void> {
     const accountKey = this.storageKey();
     const productIds = [...new Set(order.items.map((item) => item.productId))];

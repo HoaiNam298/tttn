@@ -1,38 +1,25 @@
-export type OrderStatus =
-  | 'PENDING'
-  | 'CONFIRMED'
-  | 'SHIPPING'
-  | 'DELIVERED'
-  | 'COMPLETED'
-  | 'CANCELLED';
+export const ORDER_STATUSES = [
+  'PENDING',
+  'CONFIRMED',
+  'SHIPPING',
+  'DELIVERED',
+  'COMPLETED',
+  'CANCELLED',
+] as const;
 
-export type PaymentStatus =
-  | 'UNPAID'
-  | 'PENDING'
-  | 'PAID'
-  | 'FAILED'
-  | 'EXPIRED'
-  | 'CANCELLED'
-  | 'REVIEW_REQUIRED';
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  UNPAID: 'Chưa thanh toán',
-  PENDING: 'Chờ thanh toán',
-  PAID: 'Đã thanh toán',
-  FAILED: 'Thanh toán thất bại',
-  EXPIRED: 'Hết hạn thanh toán',
-  CANCELLED: 'Đã hủy thanh toán',
-  REVIEW_REQUIRED: 'Đã nhận thông báo tiền — cần kiểm tra',
-};
+export const PAYMENT_STATUSES = [
+  'UNPAID',
+  'PENDING',
+  'PAID',
+  'FAILED',
+  'EXPIRED',
+  'CANCELLED',
+  'REVIEW_REQUIRED',
+] as const;
 
-export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING: 'Chờ xác nhận',
-  CONFIRMED: 'Chờ vận chuyển',
-  SHIPPING: 'Đang vận chuyển',
-  DELIVERED: 'Đã giao · Chờ nhận hàng',
-  COMPLETED: 'Hoàn thành',
-  CANCELLED: 'Đã hủy',
-};
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 export interface OrderItem {
   variantId?: number | null;

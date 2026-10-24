@@ -92,12 +92,12 @@ public class Product extends BaseEntity {
         variants.add(variant);
     }
 
-    public void changeInventory(Integer legacyStock, List<String> imageUrls) {
+    public void changeInventory(Integer productStock, List<String> imageUrls) {
         if (variants.isEmpty()) {
-            if (legacyStock == null) {
+            if (productStock == null) {
                 throw new LocalizedArgumentException(MessageKeys.PRODUCT_STOCK_REQUIRED);
             }
-            stock = legacyStock;
+            stock = productStock;
         } else {
             refreshVariantSummary();
         }

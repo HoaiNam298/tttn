@@ -3,6 +3,9 @@ import { Product } from './product.model';
 export interface CartLine {
   variantId?: number;
   variantName?: string;
+  variantMessageKey?:
+    | 'cart.variantUnavailable'
+    | 'cart.variantReselectionRequired';
   product: Product;
   quantity: number;
   lineTotal: number;
@@ -29,10 +32,13 @@ export function toCartLine(
     ...(variantId != null
       ? {
           variantId,
-          variantName: variant?.name ?? 'Phân loại không còn khả dụng',
+          variantName: variant?.name,
+          ...(!variant
+            ? { variantMessageKey: 'cart.variantUnavailable' as const }
+            : {}),
         }
       : needsVariant
-        ? { variantName: 'Cần chọn lại phân loại sản phẩm' }
+        ? { variantMessageKey: 'cart.variantReselectionRequired' as const }
         : {}),
   };
 }
