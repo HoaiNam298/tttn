@@ -1,17 +1,74 @@
 <mat-card appearance="outlined" class="panel">
   <p class="eyebrow">{{ "common.account" | translate }}</p>
   <h1>{{ "account.personalInformation" | translate }}</h1>
-  @if (auth.session()?.user; as user) {
-    <dl>
-      <dt>{{ "account.fullName" | translate }}</dt>
-      <dd>{{ user.fullName }}</dd>
-      <dt>{{ "common.phoneNumber" | translate }}</dt>
-      <dd>{{ user.phoneNumber }}</dd>
-      <dt>{{ "account.registeredAddress" | translate }}</dt>
-      <dd>{{ user.address || ("account.notProvided" | translate) }}</dd>
-    </dl>
+  @if (auth.session()?.user?.profileSyncPending) {
+    <p role="status">{{ "account.profileSyncPending" | translate }}</p>
   }
-  <a mat-stroked-button routerLink="/account/addresses">{{
+  <form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="saving">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ "account.fullName" | translate }}</mat-label>
+      <input
+        matInput
+        formControlName="fullName"
+        autocomplete="name"
+        maxlength="100"
+      />
+      <mat-error>{{ "account.profileNameInvalid" | translate }}</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ "common.phoneNumber" | translate }}</mat-label>
+      <input
+        matInput
+        [value]="auth.session()?.user?.phoneNumber || ''"
+        readonly
+        autocomplete="tel"
+      />
+      <mat-hint>{{ "account.phoneReadOnly" | translate }}</mat-hint>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ "account.registeredAddress" | translate }}</mat-label>
+      <textarea
+        matInput
+        formControlName="address"
+        autocomplete="street-address"
+        maxlength="255"
+        rows="3"
+      ></textarea>
+      <mat-error>{{ "account.profileAddressInvalid" | translate }}</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ "account.dateOfBirth" | translate }}</mat-label>
+      <input
+        matInput
+        type="date"
+        formControlName="dateOfBirth"
+        autocomplete="bday"
+        [max]="today"
+      />
+      <mat-error>{{ "account.birthDateInvalid" | translate }}</mat-error>
+    </mat-form-field>
+    @if (error) {
+      <p class="form-error" role="alert">{{ error }}</p>
+    }
+    <div class="actions">
+      <button
+        mat-flat-button
+        type="submit"
+        [disabled]="saving || form.pristine"
+      >
+        {{ (saving ? "account.saving" : "account.save") | translate }}
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="reset()"
+        [disabled]="saving || form.pristine"
+      >
+        {{ "account.cancel" | translate }}
+      </button>
+    </div>
+  </form>
+  <a mat-button routerLink="/account/addresses">{{
     "account.manageDeliveryAddresses" | translate
   }}</a>
 </mat-card>

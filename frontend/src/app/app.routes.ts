@@ -48,6 +48,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'security',
+        loadComponent: () =>
+          import('./components/account/security/security.component').then(
+            (m) => m.SecurityComponent,
+          ),
+      },
+      {
         path: 'addresses',
         loadComponent: () =>
           import('./components/account/addresses/addresses.component').then(

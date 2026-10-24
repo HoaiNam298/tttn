@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN profile_sync_pending BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN session_revocation_pending BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN password_change_id VARCHAR(36);

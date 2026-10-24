@@ -35,10 +35,13 @@ import { StoredAuthSession } from '../models/stored-auth-session.model';
 import { AuthSessionStorage } from './auth-session-storage.service';
 import { AuthResponse } from '../responses/auth.response';
 import { KeycloakTokenResponse } from '../responses/keycloak-token.response';
+import { UpdateProfilePayload } from '../dtos/update-profile.dto';
+import { ChangePasswordPayload } from '../dtos/change-password.dto';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = new HttpClient(inject(HttpBackend));
+  private readonly api = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly zone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
@@ -133,6 +136,79 @@ export class AuthService {
 
   session(): AuthResponse | null {
     return this.current();
+  }
+
+  updateProfile(payload: UpdateProfilePayload): Observable<AuthUser> {
+    return defer(() => {
+      const sessionId = this.stored?.id;
+      const version = this.revision;
+      if (!sessionId) {
+        return throwError(() => new Error('No active session'));
+      }
+      return this.api
+        .put<AuthUser>(`${environment.apiUrl}/auth/me`, payload)
+        .pipe(
+          timeout(30000),
+          map((user) => {
+            if (
+              this.checkIdle() ||
+              version !== this.revision ||
+              this.stored?.id !== sessionId ||
+              !this.current() ||
+              user.id !== this.current()?.user.id
+            ) {
+              throw new Error('Session changed while saving profile');
+            }
+            this.current.update((session) =>
+              session ? { ...session, user } : session,
+            );
+            return user;
+          }),
+        );
+    });
+  }
+
+  changePassword(payload: ChangePasswordPayload): Observable<void> {
+    return defer(() => {
+      const sessionId = this.stored?.id;
+      const version = this.revision;
+      const sameSession = () =>
+        this.stored?.id === sessionId && this.revision === version;
+      if (!sessionId) {
+        return throwError(() => new Error('No active session'));
+      }
+      return this.api
+        .post<void>(`${environment.apiUrl}/auth/change-password`, payload)
+        .pipe(
+          timeout(60000),
+          map(() => {
+            if (!sameSession()) {
+              throw new Error('Session changed while changing password');
+            }
+            this.clearSession();
+          }),
+          catchError((error: unknown) => {
+            const code =
+              error instanceof HttpErrorResponse
+                ? error.error?.code
+                : undefined;
+            if (
+              sameSession() &&
+              (error instanceof TimeoutError ||
+                (error instanceof HttpErrorResponse && error.status === 0) ||
+                [
+                  'PASSWORD_POLICY',
+                  'PASSWORD_CHANGED_LOGOUT_PENDING',
+                  'PASSWORD_CHANGE_UNCERTAIN',
+                  'PASSWORD_CHANGE_PENDING',
+                ].includes(code))
+            ) {
+              this.clearSession();
+            }
+            return throwError(() => error);
+          }),
+        );
+    });
   }
 
   token(): string | null {
