@@ -25,6 +25,8 @@ public class UserResponse {
 
     private String role;
 
+    private boolean profileSyncPending;
+
     public static UserResponse from(User user, String role) {
         return UserResponse.builder()
                 .id(user.getId())
@@ -33,6 +35,7 @@ public class UserResponse {
                 .address(user.getAddress())
                 .dateOfBirth(user.getDateOfBirth())
                 .role(role)
+                .profileSyncPending(user.isProfileSyncPending())
                 .build();
     }
 }

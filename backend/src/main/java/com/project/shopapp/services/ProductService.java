@@ -9,8 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductService {
-    Page<ProductResponse> findAll(String keyword, Long categoryId, Pageable pageable);
-
     Page<ProductResponse> findAll(
             String keyword,
             Long categoryId,

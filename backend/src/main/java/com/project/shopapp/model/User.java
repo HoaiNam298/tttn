@@ -41,6 +41,15 @@ public class User extends BaseEntity {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    @Column(name = "profile_sync_pending", nullable = false)
+    private boolean profileSyncPending;
+
+    @Column(name = "session_revocation_pending", nullable = false)
+    private boolean sessionRevocationPending;
+
+    @Column(name = "password_change_id", length = 36)
+    private String passwordChangeId;
+
     public User(
             String fullName,
             String phoneNumber,

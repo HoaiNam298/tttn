@@ -233,7 +233,9 @@
             <div class="checkout-line">
               <div>
                 <strong>{{ line.product.name }}</strong>
-                @if (line.variantName) {
+                @if (line.variantMessageKey) {
+                  <small>{{ line.variantMessageKey | translate }}</small>
+                } @else if (line.variantName) {
                   <small>{{ line.variantName }}</small>
                 }
                 <small>{{

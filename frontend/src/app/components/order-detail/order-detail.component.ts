@@ -20,8 +20,10 @@ import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import {
   Order,
   OrderItem,
-  ORDER_STATUS_LABELS,
-  PAYMENT_STATUS_LABELS,
+  ORDER_STATUSES,
+  PAYMENT_STATUSES,
+  OrderStatus,
+  PaymentStatus,
 } from '../../models/order.model';
 import { CatalogService } from '../../services/catalog.service';
 import { OrderService } from '../../services/order.service';
@@ -89,21 +91,21 @@ export class OrderDetailComponent implements OnInit {
       });
   }
 
-  get statusLabels(): typeof ORDER_STATUS_LABELS {
+  get statusLabels(): Record<OrderStatus, string> {
     return Object.fromEntries(
-      Object.keys(ORDER_STATUS_LABELS).map((status) => [
+      ORDER_STATUSES.map((status) => [
         status,
         this.translate.instant('orderStatus.' + status),
       ]),
-    ) as typeof ORDER_STATUS_LABELS;
+    ) as Record<OrderStatus, string>;
   }
-  get paymentLabels(): typeof PAYMENT_STATUS_LABELS {
+  get paymentLabels(): Record<PaymentStatus, string> {
     return Object.fromEntries(
-      Object.keys(PAYMENT_STATUS_LABELS).map((status) => [
+      PAYMENT_STATUSES.map((status) => [
         status,
         this.translate.instant('paymentStatus.' + status),
       ]),
-    ) as typeof PAYMENT_STATUS_LABELS;
+    ) as Record<PaymentStatus, string>;
   }
   paying = false;
   checkingPayment = false;

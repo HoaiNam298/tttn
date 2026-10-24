@@ -8,41 +8,23 @@ h1 {
   font-size: clamp(24px, 4vw, 32px);
   margin: 0 0 24px;
 }
-dl {
+form {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr);
-  margin: 0 0 24px;
-  border-top: 1px solid #e2e8f0;
+  gap: 12px;
+  margin-bottom: 20px;
 }
-dt,
-dd {
-  margin: 0;
-  padding: 20px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  line-height: 1.6;
+mat-form-field {
+  width: 100%;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.form-error {
+  color: var(--mat-sys-error, #b91c1c);
   overflow-wrap: anywhere;
-}
-dt {
-  color: #475569;
-  background: #f8fafc;
-}
-dd {
-  font-weight: 600;
 }
 a {
   align-self: start;
-}
-@media (max-width: 550px) {
-  dl {
-    grid-template-columns: 1fr;
-  }
-  dt {
-    padding: 12px 0 0;
-    border: 0;
-    background: transparent;
-    font-size: 13px;
-  }
-  dd {
-    padding: 8px 0 16px;
-  }
 }

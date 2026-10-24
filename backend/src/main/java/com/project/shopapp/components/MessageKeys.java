@@ -1,6 +1,12 @@
 package com.project.shopapp.components;
 
 public final class MessageKeys {
+    public static final String PASSWORD_CURRENT_INVALID = "password.current_invalid";
+    public static final String PASSWORD_POLICY = "password.policy";
+    public static final String PASSWORD_UNCHANGED = "password.unchanged";
+    public static final String PASSWORD_CHANGE_PENDING = "password.change_pending";
+    public static final String PASSWORD_CHANGE_UNCERTAIN = "password.change_uncertain";
+    public static final String PASSWORD_CHANGED_LOGOUT_PENDING = "password.changed_logout_pending";
     public static final String PAYMENT_INVALID_AMOUNT = "payment.invalid_amount";
     public static final String PAYMENT_AMOUNT_LIMIT = "payment.amount_limit";
     public static final String PAYMENT_INVALID_CONFIGURATION = "payment.invalid_configuration";

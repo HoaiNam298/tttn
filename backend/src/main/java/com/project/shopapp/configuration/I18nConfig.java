@@ -31,6 +31,12 @@ public class I18nConfig implements WebMvcConfigurer {
     public LocalValidatorFactoryBean validator(MessageSource messageSource) {
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.setValidationMessageSource(messageSource);
+        validator.setConfigurationInitializer(
+                configuration ->
+                        configuration.clockProvider(
+                                () ->
+                                        java.time.Clock.system(
+                                                java.time.ZoneId.of("Asia/Ho_Chi_Minh"))));
         return validator;
     }
 

@@ -1,0 +1,67 @@
+<mat-card appearance="outlined" class="panel">
+  <p class="eyebrow">{{ "common.account" | translate }}</p>
+  <h1>{{ "account.changePassword" | translate }}</h1>
+  <p>{{ "account.passwordHelp" | translate }}</p>
+  <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="saving">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ "account.currentPassword" | translate }}</mat-label>
+      <input
+        matInput
+        formControlName="currentPassword"
+        [type]="showPassword ? 'text' : 'password'"
+        autocomplete="current-password"
+        maxlength="1024"
+      />
+      <mat-error>{{ "account.currentPasswordRequired" | translate }}</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ "account.newPassword" | translate }}</mat-label>
+      <input
+        matInput
+        formControlName="newPassword"
+        [type]="showPassword ? 'text' : 'password'"
+        autocomplete="new-password"
+        maxlength="72"
+      />
+      <mat-error>{{ "account.passwordLengthInvalid" | translate }}</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ "account.confirmPassword" | translate }}</mat-label>
+      <input
+        matInput
+        formControlName="confirmPassword"
+        [type]="showPassword ? 'text' : 'password'"
+        autocomplete="new-password"
+        maxlength="72"
+      />
+      <mat-error>{{ "account.confirmPasswordRequired" | translate }}</mat-error>
+    </mat-form-field>
+    @if (form.touched && form.hasError("mismatch")) {
+      <p class="form-error" role="alert">
+        {{ "account.passwordMismatch" | translate }}
+      </p>
+    }
+    @if (form.touched && form.hasError("unchanged")) {
+      <p class="form-error" role="alert">
+        {{ "account.passwordUnchanged" | translate }}
+      </p>
+    }
+    <button
+      mat-button
+      type="button"
+      (click)="showPassword = !showPassword"
+      [attr.aria-pressed]="showPassword"
+    >
+      {{
+        (showPassword ? "account.hidePasswords" : "account.showPasswords")
+          | translate
+      }}
+    </button>
+    @if (error) {
+      <p class="form-error" role="alert">{{ error }}</p>
+    }
+    <button mat-flat-button type="submit" [disabled]="saving">
+      {{ (saving ? "account.saving" : "account.changePassword") | translate }}
+    </button>
+  </form>
+</mat-card>

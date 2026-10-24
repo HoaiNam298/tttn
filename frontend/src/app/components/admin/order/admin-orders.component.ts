@@ -28,10 +28,11 @@ import {
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import {
-  ORDER_STATUS_LABELS,
-  PAYMENT_STATUS_LABELS,
+  ORDER_STATUSES,
+  PAYMENT_STATUSES,
   OrderStatus,
   OrderSummary,
+  PaymentStatus,
 } from '../../../models/order.model';
 import { OrderService } from '../../../services/order.service';
 
@@ -66,21 +67,21 @@ export class AdminOrdersComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly orders = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);
-  get labels(): typeof ORDER_STATUS_LABELS {
+  get labels(): Record<OrderStatus, string> {
     return Object.fromEntries(
-      Object.keys(ORDER_STATUS_LABELS).map((status) => [
+      ORDER_STATUSES.map((status) => [
         status,
         this.translate.instant('orderStatus.' + status),
       ]),
-    ) as typeof ORDER_STATUS_LABELS;
+    ) as Record<OrderStatus, string>;
   }
-  get paymentLabels(): typeof PAYMENT_STATUS_LABELS {
+  get paymentLabels(): Record<PaymentStatus, string> {
     return Object.fromEntries(
-      Object.keys(PAYMENT_STATUS_LABELS).map((status) => [
+      PAYMENT_STATUSES.map((status) => [
         status,
         this.translate.instant('paymentStatus.' + status),
       ]),
-    ) as typeof PAYMENT_STATUS_LABELS;
+    ) as Record<PaymentStatus, string>;
   }
   paymentLabel(order: OrderSummary): string {
     return this.paymentLabels[order.paymentStatus ?? 'UNPAID'];

@@ -4,4 +4,6 @@ export interface AuthUser {
   phoneNumber: string;
   address: string;
   role: string;
+  dateOfBirth?: string | null;
+  profileSyncPending?: boolean;
 }

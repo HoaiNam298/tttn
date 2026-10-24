@@ -9,6 +9,11 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    @Query(
+            "select u.id from User u where u.id > :afterId and (u.profileSyncPending = true or u.sessionRevocationPending = true) order by u.id")
+    java.util.List<Long> findIdentitySyncPendingAfter(
+            Long afterId, org.springframework.data.domain.Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.id = :id")
     Optional<User> findForUpdateById(Long id);
